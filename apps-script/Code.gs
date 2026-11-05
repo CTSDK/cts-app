@@ -12,7 +12,7 @@
  * (Script Properties) og aldrig i koden.
  */
 
-var VERSION = '1.0.3';
+var VERSION = '1.0.4';
 
 // ---------- Faner og kolonner ----------
 var FANE = {
@@ -45,6 +45,7 @@ function onOpen() {
     .createMenu('CTS')
     .addItem('1. Opsæt testark', 'opsaetTestark')
     .addItem('2. Vis API-nøgle', 'visNoegle')
+    .addItem('Opdatér formler (bevarer data)', 'opdaterFormler')
     .addSeparator()
     .addItem('Lav ny API-nøgle', 'nyNoegle')
     .addItem('Tjek opsætning', 'tjekOpsaetning')
@@ -212,6 +213,16 @@ function tjekFormler_(ss) {
     var v = sh.getRange(c[1]).getDisplayValue();
     if (/^#/.test(v)) fejl.push(c[0] + '!' + c[1] + ': ' + v);
   });
+  // Også fejl i de enkelte rækker (fx kun ved dubletter)
+  var ind = ss.getSheetByName(FANE.INDKOEB);
+  if (ind && ind.getLastRow() >= START) {
+    var vis = ind.getRange(START, 1, ind.getLastRow() - START + 1, K.LAGERSTATUS).getDisplayValues();
+    vis.forEach(function (raekke, i) {
+      [K.SKU, K.NAVN, K.KOEBSPRIS, K.LAGERSTATUS].forEach(function (k) {
+        if (/^#/.test(raekke[k - 1]) && fejl.length < 15) fejl.push(FANE.INDKOEB + ' række ' + (START + i) + ', kolonne ' + String.fromCharCode(64 + k) + ': ' + raekke[k - 1]);
+      });
+    });
+  }
   return fejl;
 }
 
@@ -253,18 +264,7 @@ function nyFane_(ss, navn, titel, overskrifter, overskriftRaekke) {
 function byggIndkoebslog_(ss) {
   var sh = nyFane_(ss, FANE.LOG, 'INDKØBSLOG — Copenhagen Treasures and Services (TEST)',
     ['Indkøbsdato', 'Samlet køb (DKK)', 'Sæt i alt', 'Solgt', 'Klar (På lager)', 'Ikke klar', 'Noter'], 2);
-  sh.getRange('C2').setFormula(
-    '=LET(logdato,INDIRECT("A3:A"),inddato,INDIRECT("\'Indkøb\'!B3:B"),' +
-    '{"Sæt i alt";ARRAYFORMULA(IF(logdato="","",COUNTIF(inddato,logdato)))})');
-  sh.getRange('D2').setFormula(
-    '=LET(logdato,INDIRECT("A3:A"),inddato,INDIRECT("\'Indkøb\'!B3:B"),indstatus,INDIRECT("\'Indkøb\'!N3:N"),' +
-    '{"Solgt";ARRAYFORMULA(IF(logdato="","",COUNTIFS(inddato,logdato,indstatus,"Solgt")))})');
-  sh.getRange('E2').setFormula(
-    '=LET(logdato,INDIRECT("A3:A"),inddato,INDIRECT("\'Indkøb\'!B3:B"),indstatus,INDIRECT("\'Indkøb\'!N3:N"),' +
-    '{"Klar (På lager)";ARRAYFORMULA(IF(logdato="","",COUNTIFS(inddato,logdato,indstatus,"På lager")))})');
-  sh.getRange('F2').setFormula(
-    '=LET(logdato,INDIRECT("A3:A"),ialt,INDIRECT("C3:C"),solgte,INDIRECT("D3:D"),klare,INDIRECT("E3:E"),' +
-    '{"Ikke klar";ARRAYFORMULA(IF(logdato="","",ialt-solgte-klare))})');
+  formlerIndkoebslog_(sh);
   sh.getRange('A3:A').setNumberFormat('0');
   sh.getRange('B3:B').setNumberFormat('#,##0.00');
   sh.setColumnWidths(1, 6, 120); sh.setColumnWidth(7, 400);
@@ -277,9 +277,36 @@ function byggIndkoeb_(ss, dbA, dbB) {
       'Salgsplatform', 'Lagerstatus', 'Salgsdato', 'Salgspris', 'Noter',
       'Værdikilde', 'Vejledning', 'Komplet', 'MappeID'], 2);
 
+  formlerIndkoeb_(sh, dbA, dbB);
+
+  var max = sh.getMaxRows();
+  saetValidering_(sh, START, max - START + 1);
+  sh.getRange('B3:C').setNumberFormat('0');
+  sh.getRange('E3:E').setNumberFormat('[$€]#,##0.00');
+  sh.getRange('F3:G').setNumberFormat('#,##0.00');
+  sh.setColumnWidth(1, 140); sh.setColumnWidth(4, 260); sh.setColumnWidth(17, 300);
+  sh.hideColumns(K.MAPPEID);
+}
+
+function formlerIndkoebslog_(sh) {
+  sh.getRange('C2').setFormula(
+    '=LET(logdato,INDIRECT("A3:A"),inddato,INDIRECT("\'Indkøb\'!B3:B"),' +
+    '{"Sæt i alt";ARRAYFORMULA(IF(logdato="","",COUNTIF(inddato,logdato)))})');
+  sh.getRange('D2').setFormula(
+    '=LET(logdato,INDIRECT("A3:A"),inddato,INDIRECT("\'Indkøb\'!B3:B"),indstatus,INDIRECT("\'Indkøb\'!N3:N"),' +
+    '{"Solgt";ARRAYFORMULA(IF(logdato="","",COUNTIFS(inddato,logdato,indstatus,"Solgt")))})');
+  sh.getRange('E2').setFormula(
+    '=LET(logdato,INDIRECT("A3:A"),inddato,INDIRECT("\'Indkøb\'!B3:B"),indstatus,INDIRECT("\'Indkøb\'!N3:N"),' +
+    '{"Klar (På lager)";ARRAYFORMULA(IF(logdato="","",COUNTIFS(inddato,logdato,indstatus,"På lager")))})');
+  sh.getRange('F2').setFormula(
+    '=LET(logdato,INDIRECT("A3:A"),ialt,INDIRECT("C3:C"),solgte,INDIRECT("D3:D"),klare,INDIRECT("E3:E"),' +
+    '{"Ikke klar";ARRAYFORMULA(IF(logdato="","",ialt-solgte-klare))})');
+}
+
+function formlerIndkoeb_(sh, dbA, dbB) {
   // A: SKU = Købsdato-Setnr, + -a/-b/... ved dubletter (også første række)
   sh.getRange('A2').setFormula(
-    '=LET(datoer,INDIRECT("B3:B"),saetnr,INDIRECT("C3:C"),raekker,ROW(datoer),' +
+    '=LET(datoer,INDIRECT("B3:B"),saetnr,INDIRECT("C3:C"),raekker,ARRAYFORMULA(ROW(datoer)),' +
     '{"SKU";ARRAYFORMULA(IF(datoer="","",datoer&"-"&saetnr&IF(COUNTIFS(datoer,datoer,saetnr,saetnr)>1,' +
     '"-"&CHAR(96+COUNTIFS(datoer,datoer,saetnr,saetnr,raekker,"<="&raekker)),"")))})');
   // D: Navn fra DB (prøver også "<nr>-1")
@@ -296,14 +323,65 @@ function byggIndkoeb_(ss, dbA, dbB) {
   sh.getRange('N2').setFormula(
     '=LET(skuer,INDIRECT("A3:A"),klar,INDIRECT("K3:K"),solgteskuer,INDIRECT("\'Salg 2026\'!B4:B"),' +
     '{"Lagerstatus";ARRAYFORMULA(IF(skuer="","",IF(COUNTIF(solgteskuer,skuer)>0,"Solgt",IF(klar=TRUE,"På lager",""))))})');
+}
 
-  var max = sh.getMaxRows();
-  saetValidering_(sh, START, max - START + 1);
-  sh.getRange('B3:C').setNumberFormat('0');
-  sh.getRange('E3:E').setNumberFormat('[$€]#,##0.00');
-  sh.getRange('F3:G').setNumberFormat('#,##0.00');
-  sh.setColumnWidth(1, 140); sh.setColumnWidth(4, 260); sh.setColumnWidth(17, 300);
-  sh.hideColumns(K.MAPPEID);
+function formlerDbSalgspriser_(sh, dbA, dbC) {
+  // Samme beregning som Excel: alle salg med SKU og pris > 0, grupperet på sætnummer
+  sh.getRange('A3').setFormula(
+    '=IFERROR(LET(salgsku,INDIRECT("\'Salg 2026\'!B4:B"),salgpris,INDIRECT("\'Salg 2026\'!H4:H"),' +
+    'gyldig,ARRAYFORMULA((salgsku<>"")*ISNUMBER(salgpris)*(N(salgpris)>0)),' +
+    'skuliste,FILTER(salgsku,gyldig=1),prisliste,FILTER(salgpris,gyldig=1),' +
+    'nrliste,ARRAYFORMULA(IFERROR(REGEXEXTRACT(TO_TEXT(skuliste),"^[^-]*-([^-]+)"),TO_TEXT(skuliste))),' +
+    'unikke,UNIQUE(nrliste),' +
+    'temaer,ARRAYFORMULA(IFERROR(VLOOKUP(unikke,{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbC + '},2,FALSE),"")),' +
+    'antal,MAP(unikke,LAMBDA(saet,SUM(ARRAYFORMULA(--(nrliste=saet))))),' +
+    'snit,MAP(unikke,LAMBDA(saet,SUM(ARRAYFORMULA((nrliste=saet)*prisliste))/SUM(ARRAYFORMULA(--(nrliste=saet))))),' +
+    'hoejest,MAP(unikke,LAMBDA(saet,MAX(FILTER(prisliste,nrliste=saet)))),' +
+    'lavest,MAP(unikke,LAMBDA(saet,MIN(FILTER(prisliste,nrliste=saet)))),' +
+    'visnr,ARRAYFORMULA(IFERROR(VALUE(unikke),unikke)),' +
+    'SORT(HSTACK(visnr,temaer,snit,antal,hoejest,lavest),1,TRUE)),"")');
+}
+
+function formlerLager_(sh, dbA, dbC, dbD) {
+  // Viser sæt der er sorteret + fotograferet + klar til salg + på lager. Overskriv ikke cellerne.
+  sh.getRange('A3').setFormula(
+    '=IFERROR(LET(' +
+    'skuer,INDIRECT("\'Indkøb\'!A3:A"),saetnr,INDIRECT("\'Indkøb\'!C3:C"),navne,INDIRECT("\'Indkøb\'!D3:D"),' +
+    'sorteret,INDIRECT("\'Indkøb\'!I3:I"),fotos,INDIRECT("\'Indkøb\'!J3:J"),klar,INDIRECT("\'Indkøb\'!K3:K"),' +
+    'stand,INDIRECT("\'Indkøb\'!L3:L"),platform,INDIRECT("\'Indkøb\'!M3:M"),status,INDIRECT("\'Indkøb\'!N3:N"),' +
+    'noter,INDIRECT("\'Indkøb\'!Q3:Q"),' +
+    'temaer,ARRAYFORMULA(IFERROR(VLOOKUP(TO_TEXT(saetnr),{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbC + '},2,FALSE),"")),' +
+    'undertemaer,ARRAYFORMULA(IFERROR(VLOOKUP(TO_TEXT(saetnr),{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbD + '},2,FALSE),"")),' +
+    'vis,ARRAYFORMULA((sorteret=TRUE)*(fotos=TRUE)*(klar=TRUE)*(status="På lager")),' +
+    'SORT(FILTER({skuer,stand,platform,saetnr,navne,temaer,undertemaer,noter},vis=1),4,TRUE)),"")');
+}
+
+// Skriver formlerne igen uden at røre data (bruges når en formel er rettet i en ny version)
+function opdaterFormler() {
+  var ui = SpreadsheetApp.getUi(), ss = SpreadsheetApp.getActive();
+  var db = ss.getSheetByName(FANE.DB);
+  var dbStart = db ? findDbStart_(db) : 0;
+  if (!dbStart) { ui.alert('Kan ikke finde fanen DB med overskriften "Lego number".'); return; }
+  var dbA = "DB!$A$" + dbStart + ":$A", dbB = "DB!$B$" + dbStart + ":$B";
+  var dbC = "DB!$C$" + dbStart + ":$C", dbD = "DB!$D$" + dbStart + ":$D";
+  var ark = function (n) { var sh = ss.getSheetByName(n); if (!sh) throw new Error('Fanen ' + n + ' mangler. Kør Opsæt testark.'); return sh; };
+  var landestandard = ss.getSpreadsheetLocale();
+  try {
+    ss.setSpreadsheetLocale('en_US'); SpreadsheetApp.flush();
+    formlerIndkoebslog_(ark(FANE.LOG));
+    formlerIndkoeb_(ark(FANE.INDKOEB), dbA, dbB);
+    formlerDbSalgspriser_(ark(FANE.DBS), dbA, dbC);
+    formlerLager_(ark(FANE.LAGER), dbA, dbC, dbD);
+    SpreadsheetApp.flush();
+  } catch (e) {
+    ss.setSpreadsheetLocale(landestandard || 'da_DK');
+    ui.alert('Formlerne blev ikke opdateret', String(e.message || e), ui.ButtonSet.OK); return;
+  }
+  ss.setSpreadsheetLocale(landestandard || 'da_DK'); SpreadsheetApp.flush();
+  var fejl = tjekFormler_(ss);
+  ui.alert(fejl.length ? 'Formler opdateret – men med fejl' : 'Formler opdateret',
+    (fejl.length ? 'Send et skærmbillede til Claude:\n' + fejl.join('\n') : 'Alle formler virker. Data er ikke ændret.') + '\nVersion ' + VERSION,
+    ui.ButtonSet.OK);
 }
 
 // Afkrydsning, rullelister og formater på et område af rækker i Indkøb
@@ -331,20 +409,7 @@ function byggSalg_(ss) {
 function byggDbSalgspriser_(ss, dbA, dbC) {
   var sh = nyFane_(ss, FANE.DBS, 'DB SALGSPRISER — Copenhagen Treasures and Services (opslag, EUR)',
     ['Sæt nr.', 'Tema', 'Gns. salgspris (€)', 'Antal salg', 'Højeste salgspris (€)', 'Laveste pris (€)'], 2);
-  // Samme beregning som Excel: alle salg med SKU og pris > 0, grupperet på sætnummer
-  sh.getRange('A3').setFormula(
-    '=IFERROR(LET(salgsku,INDIRECT("\'Salg 2026\'!B4:B"),salgpris,INDIRECT("\'Salg 2026\'!H4:H"),' +
-    'gyldig,ARRAYFORMULA((salgsku<>"")*ISNUMBER(salgpris)*(N(salgpris)>0)),' +
-    'skuliste,FILTER(salgsku,gyldig=1),prisliste,FILTER(salgpris,gyldig=1),' +
-    'nrliste,ARRAYFORMULA(IFERROR(REGEXEXTRACT(TO_TEXT(skuliste),"^[^-]*-([^-]+)"),TO_TEXT(skuliste))),' +
-    'unikke,UNIQUE(nrliste),' +
-    'temaer,ARRAYFORMULA(IFERROR(VLOOKUP(unikke,{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbC + '},2,FALSE),"")),' +
-    'antal,MAP(unikke,LAMBDA(saet,SUM(ARRAYFORMULA(--(nrliste=saet))))),' +
-    'snit,MAP(unikke,LAMBDA(saet,SUM(ARRAYFORMULA((nrliste=saet)*prisliste))/SUM(ARRAYFORMULA(--(nrliste=saet))))),' +
-    'hoejest,MAP(unikke,LAMBDA(saet,MAX(FILTER(prisliste,nrliste=saet)))),' +
-    'lavest,MAP(unikke,LAMBDA(saet,MIN(FILTER(prisliste,nrliste=saet)))),' +
-    'visnr,ARRAYFORMULA(IFERROR(VALUE(unikke),unikke)),' +
-    'SORT(HSTACK(visnr,temaer,snit,antal,hoejest,lavest),1,TRUE)),"")');
+  formlerDbSalgspriser_(sh, dbA, dbC);
   sh.getRange('C3:C').setNumberFormat('[$€]#,##0.00');
   sh.getRange('E3:F').setNumberFormat('[$€]#,##0.00');
 }
@@ -352,17 +417,7 @@ function byggDbSalgspriser_(ss, dbA, dbC) {
 function byggLager_(ss, dbA, dbC, dbD) {
   var sh = nyFane_(ss, FANE.LAGER, 'LAGER — Copenhagen Treasures and Services (TEST)',
     ['SKU', 'Stand', 'Til salg på', 'Set nr.', 'Navn', 'Theme', 'Subtheme', 'Noter'], 2);
-  // Viser sæt der er sorteret + fotograferet + klar til salg + på lager. Overskriv ikke cellerne.
-  sh.getRange('A3').setFormula(
-    '=IFERROR(LET(' +
-    'skuer,INDIRECT("\'Indkøb\'!A3:A"),saetnr,INDIRECT("\'Indkøb\'!C3:C"),navne,INDIRECT("\'Indkøb\'!D3:D"),' +
-    'sorteret,INDIRECT("\'Indkøb\'!I3:I"),fotos,INDIRECT("\'Indkøb\'!J3:J"),klar,INDIRECT("\'Indkøb\'!K3:K"),' +
-    'stand,INDIRECT("\'Indkøb\'!L3:L"),platform,INDIRECT("\'Indkøb\'!M3:M"),status,INDIRECT("\'Indkøb\'!N3:N"),' +
-    'noter,INDIRECT("\'Indkøb\'!Q3:Q"),' +
-    'temaer,ARRAYFORMULA(IFERROR(VLOOKUP(TO_TEXT(saetnr),{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbC + '},2,FALSE),"")),' +
-    'undertemaer,ARRAYFORMULA(IFERROR(VLOOKUP(TO_TEXT(saetnr),{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbD + '},2,FALSE),"")),' +
-    'vis,ARRAYFORMULA((sorteret=TRUE)*(fotos=TRUE)*(klar=TRUE)*(status="På lager")),' +
-    'SORT(FILTER({skuer,stand,platform,saetnr,navne,temaer,undertemaer,noter},vis=1),4,TRUE)),"")');
+  formlerLager_(sh, dbA, dbC, dbD);
   sh.setColumnWidth(1, 140); sh.setColumnWidth(5, 260); sh.setColumnWidth(8, 300);
 }
 
