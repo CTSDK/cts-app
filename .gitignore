@@ -30,3 +30,4 @@ secrets*
 Thumbs.db
 node_modules/
 test-output/
+cts-import*.json

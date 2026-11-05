@@ -2,69 +2,75 @@
  * CTS-appen – maskinrum (Google Apps Script)
  * ------------------------------------------
  * Indsættes i Apps Script-projektet, der hører til Google Sheets-filen "cts-app"
- * (Udvidelser → Apps Script). Se docs/GUIDE.md.
+ * (Udvidelser → Apps Script). Se docs/GUIDE.md og docs/IMPORT.md.
  *
  * Indhold:
- *  - Menu "CTS" i regnearket: opsæt testark, vis API-nøgle.
+ *  - Menu "CTS": import fra Excel, kontrol mod Excel, sortering af gamle fotos, API-nøgle.
  *  - doPost: API som appen kalder. Alle kald kræver den hemmelige nøgle.
  *
- * Ingen data ligger i denne fil. Nøglen gemmes i scriptets egenskaber
- * (Script Properties) og aldrig i koden.
+ * Ingen data ligger i denne fil. Nøglen gemmes i scriptets egenskaber, ikke i koden.
+ * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.1.0';
+var VERSION = '1.2.0';
 
-// ---------- Faner og kolonner ----------
+// ---------- Faner ----------
 var FANE = {
-  LOG: 'Indkøbslog',
-  INDKOEB: 'Indkøb',
-  LAGER: 'Lager',
-  SALG: 'Salg 2026',
-  DBS: 'DB Salgspriser',
-  DB: 'DB'
+  LOG: 'Indkøbslog', INDKOEB: 'Indkøb', LAGER: 'Lager',
+  SALG25: 'Salg 2025', SALG26: 'Salg 2026',
+  UDG25: 'Udgifter 2025', UDG26: 'Udgifter 2026',
+  SKAT25: 'Skat 2025', SKAT26: 'Skat 2026',
+  DB: 'DB', DBS: 'DB Salgspriser', KONTO: 'Kontoplan', EBAY: 'eBay-afstemning',
+  KONTROL: 'Kontrol', FOTOIMPORT: 'Foto-import'
 };
+var ORDEN = ['LOG', 'INDKOEB', 'LAGER', 'SALG26', 'SALG25', 'UDG26', 'UDG25', 'SKAT26', 'SKAT25', 'DB', 'DBS', 'KONTO', 'EBAY'];
 
-// Indkøb: kolonnenumre (1 = A). Række 1 = titel, række 2 = overskrift, data fra række 3.
+// Indkøb: kolonner (1 = A). Række 1 titel, række 2 overskrift (med formler), data fra række 3.
 var K = {
   SKU: 1, DATO: 2, SETNR: 3, NAVN: 4, VAERDI: 5, KOEBSPRIS: 6, SALGFOR: 7, OVP: 8,
   SORTERET: 9, FOTOS: 10, KLAR: 11, STAND: 12, PLATFORM: 13, LAGERSTATUS: 14,
-  SALGSDATO: 15, SALGSPRIS: 16, NOTER: 17, KILDE: 18, VEJLEDNING: 19, KOMPLET: 20, MAPPEID: 21
+  SALGSDATO: 15, SALGSPRIS: 16, NOTER: 17, KILDE: 18, VEJLEDNING: 19, KOMPLET: 20,
+  FAST: 21, FOTOSKU: 22
 };
-var INDKOEB_KOLONNER = 21;
-var START = 3; // første datarække i Indkøb og Indkøbslog
+var INDKOEB_KOLONNER = 22;
+// Indkøbslog: A dato, B pris, C skattepligt, D noter, E..L formler, M mappe-id (skjult)
+var LK = { DATO: 1, PRIS: 2, SKAT: 3, NOTER: 4, MAPPEID: 13 };
+var START = 3; // første datarække i Indkøb, Indkøbslog, Udgifter og eBay-afstemning
+var SALG_START = 4; // første datarække i Salg
 
 var PLATFORME = ['eBay', 'Catawiki', 'BrickLink', 'DBA / Facebook', 'Andet', 'Platform ikke valgt'];
+var PLATFORME_SALG = ['eBay', 'Catawiki', 'BrickLink', 'DBA', 'Facebook', 'Andet'];
 var KILDER = ['Egne salg', 'BrickLink', 'eBay', 'Egen vurdering'];
+var IMPORTFIL = 'cts-import.json';
+var FOTO_KILDE = 'Import-fotos';
 
 // ======================================================================
-//  MENU I REGNEARKET
+//  MENU
 // ======================================================================
 
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('CTS')
-    .addItem('1. Opsæt testark', 'opsaetTestark')
-    .addItem('2. Vis API-nøgle', 'visNoegle')
-    .addItem('Opdatér formler (bevarer data)', 'opdaterFormler')
+    .addItem('Importér fra Excel (sletter alt)', 'importerFraExcel')
+    .addItem('Kør kontrol mod Excel', 'koerKontrol')
+    .addItem('Sortér gamle fotos', 'sorterFotos')
     .addSeparator()
-    .addItem('Lav ny API-nøgle', 'nyNoegle')
+    .addItem('Vis API-nøgle', 'visNoegle')
+    .addItem('Opdatér formler (bevarer data)', 'opdaterFormler')
     .addItem('Tjek opsætning', 'tjekOpsaetning')
+    .addItem('Lav ny API-nøgle', 'nyNoegle')
     .addToUi();
 }
 
 function visNoegle() {
-  var n = hentNoegle_();
   SpreadsheetApp.getUi().alert('API-nøgle',
-    'Kopiér nøglen herunder og indsæt den i appen under Indstillinger.\n\n' + n +
+    'Kopiér nøglen herunder og indsæt den i appen under Indstillinger.\n\n' + hentNoegle_() +
     '\n\nDel den ikke med andre.', SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 function nyNoegle() {
   var ui = SpreadsheetApp.getUi();
-  var svar = ui.alert('Lav ny API-nøgle',
-    'Den gamle nøgle holder op med at virke, og du skal indtaste den nye i appen. Fortsæt?',
-    ui.ButtonSet.YES_NO);
-  if (svar !== ui.Button.YES) return;
+  if (ui.alert('Lav ny API-nøgle', 'Den gamle nøgle holder op med at virke, og du skal indtaste den nye i appen. Fortsæt?', ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
   PropertiesService.getScriptProperties().setProperty('API_NOEGLE', lavNoegle_());
   visNoegle();
 }
@@ -75,124 +81,32 @@ function hentNoegle_() {
   if (!n) { n = lavNoegle_(); p.setProperty('API_NOEGLE', n); }
   return n;
 }
-
-function lavNoegle_() {
-  return (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, '');
-}
+function lavNoegle_() { return (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, ''); }
 
 function tjekOpsaetning() {
-  var ss = SpreadsheetApp.getActive();
-  var linjer = [];
-  [FANE.LOG, FANE.INDKOEB, FANE.LAGER, FANE.SALG, FANE.DBS, FANE.DB].forEach(function (f) {
-    linjer.push((ss.getSheetByName(f) ? '✓ ' : '✗ MANGLER: ') + f);
-  });
+  var ss = SpreadsheetApp.getActive(), linjer = [];
+  ORDEN.forEach(function (k) { linjer.push((ss.getSheetByName(FANE[k]) ? '✓ ' : '✗ MANGLER: ') + FANE[k]); });
   var p = PropertiesService.getScriptProperties();
-  var rod = p.getProperty('ROD_MAPPE_ID');
-  var rodNavn = '✗ ikke sat';
+  var rod = p.getProperty('ROD_MAPPE_ID'), rodNavn = '✗ ikke sat';
   try { if (rod) rodNavn = '✓ ' + stiTil_(DriveApp.getFolderById(rod)); } catch (e) { rodNavn = '✗ findes ikke'; }
   linjer.push('Fotomappe: ' + rodNavn);
   linjer.push('API-nøgle: ' + (p.getProperty('API_NOEGLE') ? '✓ sat' : '✗ ikke sat'));
+  linjer.push('Importeret: ' + (p.getProperty('IMPORTERET') || 'nej'));
   linjer.push('Version: ' + VERSION);
   SpreadsheetApp.getUi().alert('Tjek opsætning', linjer.join('\n'), SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 function stiTil_(mappe) {
-  var dele = [mappe.getName()];
-  var it = mappe.getParents();
-  var tael = 0;
-  while (it.hasNext() && tael < 5) { var m = it.next(); dele.unshift(m.getName()); it = m.getParents(); tael++; }
+  var dele = [mappe.getName()], it = mappe.getParents(), n = 0;
+  while (it.hasNext() && n < 5) { var m = it.next(); dele.unshift(m.getName()); it = m.getParents(); n++; }
   return dele.join('/');
 }
 
 // ======================================================================
-//  OPSÆTNING AF TESTARK
+//  HJÆLPERE
 // ======================================================================
 
-function opsaetTestark() {
-  var ui = SpreadsheetApp.getUi();
-  var ss = SpreadsheetApp.getActive();
-
-  var db = ss.getSheetByName(FANE.DB);
-  if (!db) { ui.alert('Fanen "DB" findes ikke. Opsætningen er stoppet, intet er ændret.'); return; }
-  var dbStart = findDbStart_(db);
-  if (!dbStart) {
-    ui.alert('Kan ikke finde overskriften "Lego number" i fanen DB (række 1–5). Opsætningen er stoppet, intet er ændret.');
-    return;
-  }
-
-  var svar = ui.alert('Opsæt testark',
-    'Dette SLETTER alle faner i "' + ss.getName() + '" undtagen DB og bygger ' +
-    'Indkøbslog, Indkøb, Lager, Salg 2026 og DB Salgspriser forfra (tomme, med formler).\n\n' +
-    'Kør det KUN i testkopien. Fortsæt?', ui.ButtonSet.YES_NO);
-  if (svar !== ui.Button.YES) return;
-
-  try {
-    // Slet alle andre faner og navngivne områder, der pegede på dem
-    ss.setActiveSheet(db);
-    ss.getSheets().forEach(function (sh) { if (sh.getName() !== FANE.DB) proev_(function () { ss.deleteSheet(sh); }, 'slette fanen ' + sh.getName()); });
-    ss.getNamedRanges().forEach(function (r) { try { r.remove(); } catch (e) { /* ignorer */ } });
-    SpreadsheetApp.flush();
-    Utilities.sleep(1500);
-
-    var dbA = "DB!$A$" + dbStart + ":$A";
-    var dbB = "DB!$B$" + dbStart + ":$B";
-    var dbC = "DB!$C$" + dbStart + ":$C";
-    var dbD = "DB!$D$" + dbStart + ":$D";
-    PropertiesService.getScriptProperties().setProperty('DB_START', String(dbStart));
-
-    // Formler skrives med engelsk syntaks (komma mellem argumenter). Arket sættes midlertidigt
-    // til engelsk landestandard, mens formlerne skrives, og derefter tilbage til dansk.
-    var landestandard = ss.getSpreadsheetLocale();
-    ss.setSpreadsheetLocale('en_US');
-    SpreadsheetApp.flush();
-    trin_('Indkøbslog', function () { byggIndkoebslog_(ss); });
-    trin_('Indkøb', function () { byggIndkoeb_(ss, dbA, dbB); });
-    trin_('Salg 2026', function () { byggSalg_(ss); });
-    trin_('DB Salgspriser', function () { byggDbSalgspriser_(ss, dbA, dbC); });
-    trin_('Lager', function () { byggLager_(ss, dbA, dbC, dbD); });
-    SpreadsheetApp.flush();
-    ss.setSpreadsheetLocale(landestandard || 'da_DK');
-    SpreadsheetApp.flush();
-  } catch (err) {
-    try { if (landestandard) ss.setSpreadsheetLocale(landestandard); } catch (e) { /* ignorer */ }
-    ui.alert('Opsætningen stoppede',
-      String(err.message || err) + '\n\nDet er ufarligt: kør CTS → 1. Opsæt testark igen. ' +
-      'Virker det stadig ikke, så send et skærmbillede af denne besked til Claude.', ui.ButtonSet.OK);
-    return;
-  }
-
-  // Rækkefølge på fanerne
-  var orden = [FANE.LOG, FANE.INDKOEB, FANE.LAGER, FANE.SALG, FANE.DBS, FANE.DB];
-  orden.forEach(function (navn, i) {
-    var sh = ss.getSheetByName(navn); ss.setActiveSheet(sh); ss.moveActiveSheet(i + 1);
-  });
-  ss.setActiveSheet(ss.getSheetByName(FANE.INDKOEB));
-
-  // Drive-mapper: CTS/Test og CTS/Lager ved siden af regnearket
-  var cts = mappeForRegneark_(ss);
-  var test = underMappe_(cts, 'Test');
-  underMappe_(cts, 'Lager');
-  var p = PropertiesService.getScriptProperties();
-  p.setProperty('ROD_MAPPE_ID', test.getId());
-  p.setProperty('TILSTAND', 'test');
-  hentNoegle_();
-
-  var fejl = tjekFormler_(ss);
-  ui.alert(fejl.length ? 'Bygget – men med formelfejl' : 'Færdig',
-    (fejl.length ? 'Disse celler viser fejl – send et skærmbillede til Claude:\n' + fejl.join('\n') + '\n\n' : 'Testarket er bygget, og formlerne virker.\n') +
-    'Fotos gemmes i: ' + stiTil_(test) +
-    '\n\nNæste trin: CTS → 2. Vis API-nøgle.', ui.ButtonSet.OK);
-}
-
-// Kør et byggetrin; ved fejl i Googles tjeneste ventes der og prøves igen (op til 3 gange).
-function trin_(navn, fn) {
-  proev_(function () {
-    var gl = SpreadsheetApp.getActive().getSheetByName(navn);
-    if (gl) SpreadsheetApp.getActive().deleteSheet(gl); // rest fra et tidligere forsøg
-    fn();
-  }, 'bygge fanen ' + navn);
-  SpreadsheetApp.flush();
-}
+function ind_(fane, kol, fra) { return 'INDIRECT("\'' + fane + '\'!' + kol + fra + ':' + kol + '")'; }
 
 function proev_(fn, hvad) {
   var sidste;
@@ -202,138 +116,348 @@ function proev_(fn, hvad) {
   throw new Error('Kunne ikke ' + hvad + ': ' + (sidste && sidste.message));
 }
 
-// Finder formelceller, der viser en fejlværdi
-function tjekFormler_(ss) {
-  var celler = [[FANE.LOG, 'C2'], [FANE.LOG, 'D2'], [FANE.LOG, 'E2'], [FANE.LOG, 'F2'],
-    [FANE.INDKOEB, 'A2'], [FANE.INDKOEB, 'D2'], [FANE.INDKOEB, 'F2'], [FANE.INDKOEB, 'N2'],
-    [FANE.DBS, 'A3'], [FANE.LAGER, 'A3']];
-  var fejl = [];
-  celler.forEach(function (c) {
-    var sh = ss.getSheetByName(c[0]); if (!sh) return;
-    var v = sh.getRange(c[1]).getDisplayValue();
-    if (/^#/.test(v)) fejl.push(c[0] + '!' + c[1] + ': ' + v);
-  });
-  // Også fejl i de enkelte rækker (fx kun ved dubletter)
-  var ind = ss.getSheetByName(FANE.INDKOEB);
-  if (ind && ind.getLastRow() >= START) {
-    var vis = ind.getRange(START, 1, ind.getLastRow() - START + 1, K.LAGERSTATUS).getDisplayValues();
-    vis.forEach(function (raekke, i) {
-      [K.SKU, K.NAVN, K.KOEBSPRIS, K.LAGERSTATUS].forEach(function (k) {
-        if (/^#/.test(raekke[k - 1]) && fejl.length < 15) fejl.push(FANE.INDKOEB + ' række ' + (START + i) + ', kolonne ' + String.fromCharCode(64 + k) + ': ' + raekke[k - 1]);
-      });
-    });
-  }
-  return fejl;
+// Kør fn med arket på engelsk landestandard (så formler med komma parses), og sæt tilbage bagefter
+function medEngelsk_(ss, fn) {
+  var gl = ss.getSpreadsheetLocale();
+  ss.setSpreadsheetLocale('en_US'); SpreadsheetApp.flush();
+  try { return fn(); } finally { SpreadsheetApp.flush(); ss.setSpreadsheetLocale(gl && gl !== 'en_US' ? gl : 'da_DK'); SpreadsheetApp.flush(); }
 }
 
 function findDbStart_(db) {
   var v = db.getRange(1, 1, 5, 1).getDisplayValues();
-  for (var i = 0; i < v.length; i++) {
-    if (String(v[i][0]).trim().toLowerCase() === 'lego number') return i + 2; // data starter rækken under
-  }
+  for (var i = 0; i < v.length; i++) if (String(v[i][0]).trim().toLowerCase() === 'lego number') return i + 2;
   return 0;
+}
+function dbRef_() {
+  var db = SpreadsheetApp.getActive().getSheetByName(FANE.DB);
+  var s = db ? findDbStart_(db) : 0;
+  if (!s) throw new Error('Fanen DB med overskriften "Lego number" findes ikke.');
+  PropertiesService.getScriptProperties().setProperty('DB_START', String(s));
+  return { A: 'DB!$A$' + s + ':$A', B: 'DB!$B$' + s + ':$B', C: 'DB!$C$' + s + ':$C', D: 'DB!$D$' + s + ':$D' };
 }
 
 function mappeForRegneark_(ss) {
   var it = DriveApp.getFileById(ss.getId()).getParents();
-  if (it.hasNext()) return it.next();
-  return DriveApp.getRootFolder();
+  return it.hasNext() ? it.next() : DriveApp.getRootFolder();
 }
-
 function underMappe_(foraeldre, navn) {
   var it = foraeldre.getFoldersByName(navn);
   return it.hasNext() ? it.next() : foraeldre.createFolder(navn);
 }
 
-function nyFane_(ss, navn, titel, overskrifter, overskriftRaekke) {
+var NAVY = '#1f3864';
+function nyFane_(ss, navn, titel, overskrifter, overskriftRaekke, titelBredde) {
   var sh = ss.insertSheet(ss.getSheets().length);
   sh.setName(navn);
-  var n = overskrifter.length;
-  sh.getRange(1, 1, 1, n).merge().setValue(titel)
-    .setBackground('#1f3864').setFontColor('#ffffff').setFontWeight('bold')
-    .setFontSize(13).setHorizontalAlignment('center');
-  sh.getRange(overskriftRaekke, 1, 1, n).setValues([overskrifter])
-    .setBackground('#1f3864').setFontColor('#ffffff').setFontWeight('bold')
-    .setHorizontalAlignment('center').setWrap(true);
+  var n = titelBredde || overskrifter.length;
+  sh.getRange(1, 1, 1, n).merge().setValue(titel).setBackground(NAVY).setFontColor('#ffffff')
+    .setFontWeight('bold').setFontSize(13).setHorizontalAlignment('center');
+  if (overskrifter.length) {
+    sh.getRange(overskriftRaekke, 1, 1, overskrifter.length).setValues([overskrifter]).setBackground(NAVY)
+      .setFontColor('#ffffff').setFontWeight('bold').setHorizontalAlignment('center').setWrap(true);
+  }
   sh.setFrozenRows(overskriftRaekke);
   return sh;
 }
 
-// Formler lægges i overskriftsrækken og bruger INDIRECT, så de ikke forskydes,
-// når appen indsætter nye rækker øverst.
-function byggIndkoebslog_(ss) {
-  var sh = nyFane_(ss, FANE.LOG, 'INDKØBSLOG — Copenhagen Treasures and Services (TEST)',
-    ['Indkøbsdato', 'Samlet køb (DKK)', 'Sæt i alt', 'Solgt', 'Klar (På lager)', 'Ikke klar', 'Noter'], 2);
-  formlerIndkoebslog_(sh);
-  sh.getRange('A3:A').setNumberFormat('0');
-  sh.getRange('B3:B').setNumberFormat('#,##0.00');
-  sh.setColumnWidths(1, 6, 120); sh.setColumnWidth(7, 400);
+function sikrRaekker_(sh, antal) {
+  var mangler = antal - sh.getMaxRows();
+  if (mangler > 0) sh.insertRowsAfter(sh.getMaxRows(), mangler);
 }
 
-function byggIndkoeb_(ss, dbA, dbB) {
-  var sh = nyFane_(ss, FANE.INDKOEB, 'INDKØB — Copenhagen Treasures and Services (TEST)',
+function ark_(navn) {
+  var sh = SpreadsheetApp.getActive().getSheetByName(navn);
+  if (!sh) throw new Error('Fanen "' + navn + '" findes ikke. Kør CTS → Importér fra Excel.');
+  return sh;
+}
+
+// ======================================================================
+//  BYG FANERNE (tomme, med formler)
+// ======================================================================
+
+function byggAlt_(ss, data) {
+  var db = ss.getSheetByName(FANE.DB);
+  ss.setActiveSheet(db);
+  ss.getSheets().forEach(function (sh) { if (sh.getName() !== FANE.DB) proev_(function () { ss.deleteSheet(sh); }, 'slette fanen ' + sh.getName()); });
+  ss.getNamedRanges().forEach(function (r) { try { r.remove(); } catch (e) { /* ignorer */ } });
+  SpreadsheetApp.flush(); Utilities.sleep(1000);
+
+  byggKontoplan_(ss, data);
+  byggIndkoebslog_(ss);
+  byggIndkoeb_(ss);
+  byggSalg_(ss, '2025', data.salg2025.kurs);
+  byggSalg_(ss, '2026', data.salg2026.kurs);
+  byggUdgifter_(ss, '2025');
+  byggUdgifter_(ss, '2026');
+  byggSkat_(ss, '2025', data.skat2025);
+  byggSkat_(ss, '2026', data.skat2026);
+  byggDbSalgspriser_(ss);
+  byggLager_(ss);
+  byggEbay_(ss, data.ebay.titel);
+  formlerAlle_(ss);
+
+  ORDEN.forEach(function (k, i) { var sh = ss.getSheetByName(FANE[k]); if (sh) { ss.setActiveSheet(sh); ss.moveActiveSheet(i + 1); } });
+}
+
+function byggKontoplan_(ss, data) {
+  var sh = nyFane_(ss, FANE.KONTO, 'KONTOPLAN OG LISTER', ['Konto', 'Kontonavn', '', 'Platforme (Indkøb)', 'Platforme (Salg)'], 2);
+  sh.getRange('A3:A').setNumberFormat('@');
+  var kp = (data && data.kontoplan) || [];
+  if (kp.length) sh.getRange(3, 1, kp.length, 2).setValues(kp.map(function (r) { return [String(r[0]), r[1]]; }));
+  sh.getRange(3, 4, PLATFORME.length, 1).setValues(PLATFORME.map(function (p) { return [p]; }));
+  sh.getRange(3, 5, PLATFORME_SALG.length, 1).setValues(PLATFORME_SALG.map(function (p) { return [p]; }));
+  sh.setColumnWidth(2, 280); sh.setColumnWidths(4, 2, 170);
+}
+
+function byggIndkoebslog_(ss) {
+  var sh = nyFane_(ss, FANE.LOG, 'INDKØBSLOG — Copenhagen Treasures and Services',
+    ['Indkøbsdato', 'Samlet køb (DKK)', 'Skattepligt', 'Noter', 'Sæt i alt', 'Solgt', 'Klar (På lager)', 'Ikke klar',
+      'Salg 2025 (DKK)', 'Salg 2026 (DKK)', 'Salg i alt (DKK)', 'ROI', 'MappeID'], 2);
+  sh.getRange('A3:A').setNumberFormat('0');
+  sh.getRange('B3:B').setNumberFormat('#,##0.00');
+  sh.getRange('I3:K').setNumberFormat('#,##0.00');
+  sh.getRange('L3:L').setNumberFormat('0.0%');
+  sh.getRange('C3:C').setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['Ja', 'Nej'], true).build());
+  sh.setColumnWidth(4, 360); sh.hideColumns(LK.MAPPEID);
+}
+
+function byggIndkoeb_(ss) {
+  var sh = nyFane_(ss, FANE.INDKOEB, 'INDKØB — Copenhagen Treasures and Services',
     ['SKU', 'Købsdato', 'Set nr.', 'Navn', 'BL or eBay Average (€)', 'Købspris (DKK)',
       'Sættes til salg for:', 'Original Box', 'Sorteret', 'Fotos', 'Klar til salg', 'Stand (1-10)',
       'Salgsplatform', 'Lagerstatus', 'Salgsdato', 'Salgspris', 'Noter',
-      'Værdikilde', 'Vejledning', 'Komplet', 'MappeID'], 2);
-
-  formlerIndkoeb_(sh, dbA, dbB);
-
-  var max = sh.getMaxRows();
-  saetValidering_(sh, START, max - START + 1);
+      'Værdikilde', 'Vejledning', 'Komplet', 'Fast købspris (DKK)', 'Foto-SKU'], 2);
   sh.getRange('B3:C').setNumberFormat('0');
   sh.getRange('E3:E').setNumberFormat('[$€]#,##0.00');
   sh.getRange('F3:G').setNumberFormat('#,##0.00');
+  sh.getRange('U3:U').setNumberFormat('#,##0.00');
   sh.setColumnWidth(1, 140); sh.setColumnWidth(4, 260); sh.setColumnWidth(17, 300);
-  sh.hideColumns(K.MAPPEID);
+  sh.hideColumns(K.FOTOSKU);
+}
+
+// Afkrydsning, rullelister og formater på et område af rækker i Indkøb
+function saetValidering_(sh, fra, antal) {
+  if (antal < 1) return;
+  var cb = SpreadsheetApp.newDataValidation().requireCheckbox().build();
+  [K.SORTERET, K.FOTOS, K.KLAR, K.VEJLEDNING, K.KOMPLET].forEach(function (k) { sh.getRange(fra, k, antal, 1).setDataValidation(cb); });
+  var liste = function (v) { return SpreadsheetApp.newDataValidation().requireValueInList(v, true).setAllowInvalid(true).build(); };
+  sh.getRange(fra, K.OVP, antal, 1).setDataValidation(liste(['Ja', 'Nej']));
+  sh.getRange(fra, K.STAND, antal, 1).setDataValidation(liste(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']));
+  sh.getRange(fra, K.PLATFORM, antal, 1).setDataValidation(liste(PLATFORME));
+  sh.getRange(fra, K.KILDE, antal, 1).setDataValidation(liste(KILDER));
+}
+
+function byggSalg_(ss, aar, kurs) {
+  var navn = FANE['SALG' + aar.slice(2)];
+  var sh = nyFane_(ss, navn, 'SALG ' + aar + ' — Copenhagen Treasures and Services',
+    ['Salgsdato', 'SKU', 'Køber', 'Platform', 'Indkøbspris (DKK)', 'Udgift Fragt', 'Portals gebyr',
+      'Ordre Sum', 'Fragt (modtaget)', 'Refunderet (EUR)', 'Ordre Sum + Fragt (DKK)',
+      'Fortjeneste sæt (DKK)', 'Fortjeneste Ordre (DKK)', 'Skattepligtigt', 'eBay-ordrenr.', 'Bilagsnr'], 3, 16);
+  sh.getRange('E2').setValue('Udgifter'); sh.getRange('H2').setValue('Indtægter'); sh.getRange('J2').setValue('I alt:');
+  sh.getRange('Q2').setValue('EUR/DKK kurs'); sh.getRange('R2').setValue(Number(kurs) || 7.46);
+  sh.getRange('A2:R2').setFontWeight('bold');
+  sh.getRange('A4:A').setNumberFormat('dd-mm-yyyy');
+  sh.getRange('E4:F').setNumberFormat('#,##0.00');
+  sh.getRange('G4:J').setNumberFormat('[$€]#,##0.00');
+  sh.getRange('K4:M').setNumberFormat('#,##0.00');
+  sh.getRange('K2:M2').setNumberFormat('#,##0.00');
+  sh.getRange('D4:D').setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(PLATFORME_SALG, true).setAllowInvalid(true).build());
+  sh.setColumnWidth(3, 200);
+}
+
+function byggUdgifter_(ss, aar) {
+  var navn = FANE['UDG' + aar.slice(2)];
+  var sh = nyFane_(ss, navn, 'UDGIFTER ' + aar + ' — Copenhagen Treasures and Services',
+    ['Bilagsnr', 'Dato', 'Konto', 'Kontonavn', 'Modpart', 'Beløb', 'Valuta', 'Beløb DKK', 'Moms DKK', 'Fradrag %', 'Fradrag DKK', 'Note'], 2, 12);
+  sh.getRange('B3:B').setNumberFormat('dd-mm-yyyy');
+  sh.getRange('C3:C').setNumberFormat('@');
+  sh.getRange('F3:F').setNumberFormat('#,##0.00');
+  sh.getRange('H3:I').setNumberFormat('#,##0.00');
+  sh.getRange('K3:K').setNumberFormat('#,##0.00');
+  sh.getRange('C3:C').setDataValidation(SpreadsheetApp.newDataValidation().requireValueInRange(ss.getSheetByName(FANE.KONTO).getRange('A3:A'), true).setAllowInvalid(true).build());
+  sh.getRange('G3:G').setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['DKK', 'EUR'], true).build());
+  // Opsummering pr. konto (N:Q)
+  sh.getRange('N2').setValue('OPSUMMERING PR. KONTO').setFontWeight('bold');
+  sh.getRange('N3').setValue('Driftsudgifter i alt (fradragsberettiget)').setFontWeight('bold');
+  sh.getRange('N4:Q4').setValues([['Konto', 'Kontonavn', 'Beløb DKK', 'Fradrag DKK']]).setFontWeight('bold').setBackground(NAVY).setFontColor('#ffffff');
+  sh.getRange('P3:Q').setNumberFormat('#,##0.00');
+  sh.setColumnWidth(5, 200); sh.setColumnWidth(12, 320); sh.setColumnWidth(15, 240);
+}
+
+function byggSkat_(ss, aar, tekster) {
+  var navn = FANE['SKAT' + aar.slice(2)];
+  var sh = nyFane_(ss, navn, 'SKAT ' + aar + ' — Copenhagen Treasures and Services', ['Post', 'Beløb (DKK)', 'Note'], 2);
+  (tekster || []).forEach(function (t) {
+    var r = t[0]; if (r < 3) return;
+    if (t[1] !== '') sh.getRange(r, 1).setValue(t[1]);
+    if (t[2] !== '') sh.getRange(r, 3).setValue(t[2]);
+  });
+  [6, 9, 16].forEach(function (r) { sh.getRange(r, 1).setFontWeight('bold'); });
+  sh.getRange(18, 1, 1, 2).setFontWeight('bold');
+  sh.getRange('B4:B18').setNumberFormat('#,##0.00');
+  sh.setColumnWidth(1, 420); sh.setColumnWidth(2, 140); sh.setColumnWidth(3, 300);
+}
+
+function byggDbSalgspriser_(ss) {
+  var sh = nyFane_(ss, FANE.DBS, 'DB SALGSPRISER — Copenhagen Treasures and Services (opslag, EUR)',
+    ['Sæt nr.', 'Tema', 'Gns. salgspris (€)', 'Antal salg', 'Højeste salgspris (€)', 'Laveste pris (€)'], 2);
+  sh.getRange('C3:C').setNumberFormat('[$€]#,##0.00');
+  sh.getRange('E3:F').setNumberFormat('[$€]#,##0.00');
+}
+
+function byggLager_(ss) {
+  var sh = nyFane_(ss, FANE.LAGER, 'LAGER — Copenhagen Treasures and Services',
+    ['SKU', 'Stand', 'Til salg på', 'Set nr.', 'Navn', 'Theme', 'Subtheme', 'Noter'], 2);
+  sh.setColumnWidth(1, 140); sh.setColumnWidth(5, 260); sh.setColumnWidth(8, 300);
+}
+
+function byggEbay_(ss, titel) {
+  var sh = nyFane_(ss, FANE.EBAY, titel || 'eBAY-AFSTEMNING',
+    ['SKU (eBay)', 'Titel (eBay)', 'Match i Indkøb', 'Lagerstatus', 'Navn i Indkøb', 'Vurdering', 'Dublet',
+      'Normaliseret SKU', 'Match (norm.)', 'Lagerstatus (norm.)', 'Vurdering (normaliseret)'], 2, 11);
+  sh.getRange('M2:N2').setValues([['OPSUMMERING', '']]).setFontWeight('bold');
+  sh.getRange('M3:M7').setValues([['Antal eBay-opslag'], ["Unikke SKU'er i listen"], ['Dubletter i listen'], ['OK'], ['Kræver handling']]);
+  sh.setColumnWidth(2, 380); sh.setColumnWidth(6, 260); sh.setColumnWidth(11, 280); sh.setColumnWidth(13, 200);
+}
+
+// ======================================================================
+//  FORMLER (lægges i overskriftsrækken og bruger INDIRECT, så de tåler
+//  at rækker indsættes øverst eller slettes)
+// ======================================================================
+
+function formlerAlle_(ss) {
+  var db = dbRef_();
+  formlerIndkoebslog_(ss.getSheetByName(FANE.LOG));
+  formlerIndkoeb_(ss.getSheetByName(FANE.INDKOEB), db);
+  formlerSalg_(ss.getSheetByName(FANE.SALG25), '2025');
+  formlerSalg_(ss.getSheetByName(FANE.SALG26), '2026');
+  formlerUdgifter_(ss.getSheetByName(FANE.UDG25), '2025');
+  formlerUdgifter_(ss.getSheetByName(FANE.UDG26), '2026');
+  formlerSkat_(ss.getSheetByName(FANE.SKAT25), '2025');
+  formlerSkat_(ss.getSheetByName(FANE.SKAT26), '2026');
+  formlerDbSalgspriser_(ss.getSheetByName(FANE.DBS), db);
+  formlerLager_(ss.getSheetByName(FANE.LAGER), db);
+  formlerEbay_(ss.getSheetByName(FANE.EBAY));
 }
 
 function formlerIndkoebslog_(sh) {
-  sh.getRange('C2').setFormula(
-    '=LET(logdato,INDIRECT("A3:A"),inddato,INDIRECT("\'Indkøb\'!B3:B"),' +
-    '{"Sæt i alt";ARRAYFORMULA(IF(logdato="","",COUNTIF(inddato,logdato)))})');
-  sh.getRange('D2').setFormula(
-    '=LET(logdato,INDIRECT("A3:A"),inddato,INDIRECT("\'Indkøb\'!B3:B"),indstatus,INDIRECT("\'Indkøb\'!N3:N"),' +
-    '{"Solgt";ARRAYFORMULA(IF(logdato="","",COUNTIFS(inddato,logdato,indstatus,"Solgt")))})');
-  sh.getRange('E2').setFormula(
-    '=LET(logdato,INDIRECT("A3:A"),inddato,INDIRECT("\'Indkøb\'!B3:B"),indstatus,INDIRECT("\'Indkøb\'!N3:N"),' +
-    '{"Klar (På lager)";ARRAYFORMULA(IF(logdato="","",COUNTIFS(inddato,logdato,indstatus,"På lager")))})');
-  sh.getRange('F2').setFormula(
-    '=LET(logdato,INDIRECT("A3:A"),ialt,INDIRECT("C3:C"),solgte,INDIRECT("D3:D"),klare,INDIRECT("E3:E"),' +
-    '{"Ikke klar";ARRAYFORMULA(IF(logdato="","",ialt-solgte-klare))})');
+  var I = FANE.INDKOEB, L = FANE.LOG;
+  var fd = 'logdato,' + ind_(L, 'A', 3) + ',inddato,' + ind_(I, 'B', 3) + ',indstatus,' + ind_(I, 'N', 3) + ',';
+  sh.getRange('E2').setFormula('=LET(' + fd + '{"Sæt i alt";ARRAYFORMULA(IF(logdato="","",COUNTIF(inddato,logdato)))})');
+  sh.getRange('F2').setFormula('=LET(' + fd + '{"Solgt";ARRAYFORMULA(IF(logdato="","",COUNTIFS(inddato,logdato,indstatus,"Solgt")))})');
+  sh.getRange('G2').setFormula('=LET(' + fd + '{"Klar (På lager)";ARRAYFORMULA(IF(logdato="","",COUNTIFS(inddato,logdato,indstatus,"På lager")))})');
+  sh.getRange('H2').setFormula('=LET(logdato,' + ind_(L, 'A', 3) + ',ialt,' + ind_(L, 'E', 3) + ',solgte,' + ind_(L, 'F', 3) + ',klare,' + ind_(L, 'G', 3) +
+    ',{"Ikke klar";ARRAYFORMULA(IF(logdato="","",ialt-solgte-klare))})');
+  ['2025', '2026'].forEach(function (aar, i) {
+    var S = FANE['SALG' + aar.slice(2)];
+    sh.getRange(2, 9 + i).setFormula('=LET(logdato,' + ind_(L, 'A', 3) + ',skuer,' + ind_(S, 'B', SALG_START) + ',ordre,' + ind_(S, 'H', SALG_START) + ',' +
+      'pre,ARRAYFORMULA(UPPER(IFERROR(LEFT(skuer,FIND("-",skuer)-1),""))),beloeb,ARRAYFORMULA(IF(ISNUMBER(ordre),ordre,0)),' +
+      '{"Salg ' + aar + ' (DKK)";MAP(logdato,LAMBDA(batchdato,IF(batchdato="","",SUMPRODUCT((pre=UPPER(TO_TEXT(batchdato)))*beloeb)*\'' + S + '\'!$R$2)))})');
+  });
+  sh.getRange('K2').setFormula('=LET(logdato,' + ind_(L, 'A', 3) + ',s25,' + ind_(L, 'I', 3) + ',s26,' + ind_(L, 'J', 3) +
+    ',{"Salg i alt (DKK)";ARRAYFORMULA(IF(logdato="","",s25+s26))})');
+  sh.getRange('L2').setFormula('=LET(logdato,' + ind_(L, 'A', 3) + ',pris,' + ind_(L, 'B', 3) + ',salg,' + ind_(L, 'K', 3) +
+    ',{"ROI";ARRAYFORMULA(IF(logdato="","",IFERROR(salg/pris-1,"")))})');
 }
 
-function formlerIndkoeb_(sh, dbA, dbB) {
-  // A: SKU = Købsdato-Setnr, + -a/-b/... ved dubletter (også første række)
-  sh.getRange('A2').setFormula(
-    '=LET(datoer,INDIRECT("B3:B"),saetnr,INDIRECT("C3:C"),raekker,ARRAYFORMULA(ROW(datoer)),' +
-    '{"SKU";ARRAYFORMULA(IF(datoer="","",datoer&"-"&saetnr&IF(COUNTIFS(datoer,datoer,saetnr,saetnr)>1,' +
-    '"-"&CHAR(96+COUNTIFS(datoer,datoer,saetnr,saetnr,raekker,"<="&raekker)),"")))})');
+function formlerIndkoeb_(sh, db) {
+  var I = FANE.INDKOEB, L = FANE.LOG;
+  // A: SKU = Købsdato-Setnr, + -a/-b ved dubletter (også første række)
+  sh.getRange('A2').setFormula('=LET(datoer,' + ind_(I, 'B', 3) + ',saetnr,' + ind_(I, 'C', 3) + ',raekker,ARRAYFORMULA(ROW(datoer)),' +
+    '{"SKU";ARRAYFORMULA(IF(datoer="","",datoer&"-"&saetnr&IF(saetnr="","",IF(COUNTIFS(datoer,datoer,saetnr,saetnr)>1,' +
+    '"-"&CHAR(96+COUNTIFS(datoer,datoer,saetnr,saetnr,raekker,"<="&raekker)),""))))})');
   // D: Navn fra DB (prøver også "<nr>-1")
-  sh.getRange('D2').setFormula(
-    '=LET(saetnr,INDIRECT("C3:C"),dbtabel,{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbB + '},' +
-    '{"Navn";ARRAYFORMULA(IF(saetnr="","",IFERROR(VLOOKUP(TO_TEXT(saetnr),dbtabel,2,FALSE),' +
+  sh.getRange('D2').setFormula('=LET(datoer,' + ind_(I, 'B', 3) + ',saetnr,' + ind_(I, 'C', 3) + ',dbtabel,{ARRAYFORMULA(TO_TEXT(' + db.A + ')),' + db.B + '},' +
+    '{"Navn";ARRAYFORMULA(IF(datoer="","",IFERROR(VLOOKUP(TO_TEXT(saetnr),dbtabel,2,FALSE),' +
     'IFERROR(VLOOKUP(TO_TEXT(saetnr)&"-1",dbtabel,2,FALSE),"Sæt findes ikke"))))})');
-  // F: Købspris = batchpris × (værdi / sum af batchens værdier)
-  sh.getRange('F2').setFormula(
-    '=LET(datoer,INDIRECT("B3:B"),vaerdier,INDIRECT("E3:E"),' +
-    'logtabel,{INDIRECT("\'Indkøbslog\'!A3:A"),INDIRECT("\'Indkøbslog\'!B3:B")},' +
-    '{"Købspris (DKK)";ARRAYFORMULA(IF(datoer="","",IFERROR(VLOOKUP(datoer,logtabel,2,FALSE)*vaerdier/SUMIF(datoer,datoer,vaerdier),0)))})');
-  // N: Lagerstatus = Solgt hvis SKU findes i Salg 2026, ellers På lager hvis Klar til salg
-  sh.getRange('N2').setFormula(
-    '=LET(skuer,INDIRECT("A3:A"),klar,INDIRECT("K3:K"),solgteskuer,INDIRECT("\'Salg 2026\'!B4:B"),' +
-    '{"Lagerstatus";ARRAYFORMULA(IF(skuer="","",IF(COUNTIF(solgteskuer,skuer)>0,"Solgt",IF(klar=TRUE,"På lager",""))))})');
+  // F: Købspris = fast pris hvis udfyldt, ellers (batchpris − faste priser) × værdi / sum af værdier uden fast pris
+  sh.getRange('F2').setFormula('=LET(datoer,' + ind_(I, 'B', 3) + ',vaerdier,' + ind_(I, 'E', 3) + ',fast,' + ind_(I, 'U', 3) + ',' +
+    'logtabel,{' + ind_(L, 'A', 3) + ',' + ind_(L, 'B', 3) + '},' +
+    '{"Købspris (DKK)";ARRAYFORMULA(IF(datoer="","",IF(fast<>"",fast,IFERROR((VLOOKUP(datoer,logtabel,2,FALSE)-SUMIF(datoer,datoer,fast))' +
+    '*vaerdier/SUMIFS(vaerdier,datoer,datoer,fast,""),0))))})');
+  // N: Lagerstatus = Solgt hvis SKU findes i Salg 2025/2026, ellers På lager hvis Klar til salg
+  sh.getRange('N2').setFormula('=LET(skuer,' + ind_(I, 'A', 3) + ',klar,' + ind_(I, 'K', 3) + ',s25,' + ind_(FANE.SALG25, 'B', SALG_START) + ',s26,' + ind_(FANE.SALG26, 'B', SALG_START) + ',' +
+    '{"Lagerstatus";ARRAYFORMULA(IF(skuer="","",IF(COUNTIF(s25,skuer)+COUNTIF(s26,skuer)>0,"Solgt",IF(klar=TRUE,"På lager",""))))})');
 }
 
-function formlerDbSalgspriser_(sh, dbA, dbC) {
-  // Samme beregning som Excel: alle salg med SKU og pris > 0, grupperet på sætnummer
+function formlerSalg_(sh, aar) {
+  var S = FANE['SALG' + aar.slice(2)], I = FANE.INDKOEB, L = FANE.LOG;
+  var v = function (k) { return ind_(S, k, SALG_START); };
+  var lad = 'dato,' + v('A') + ',sku,' + v('B') + ',kober,' + v('C') + ',fragtud,' + v('F') + ',gebyr,' + v('G') + ',ordre,' + v('H') +
+    ',fragtind,' + v('I') + ',refund,' + v('J') + ',raekker,ARRAYFORMULA(ROW(dato)),tom,ARRAYFORMULA((dato="")*(sku="")),';
+  var grp = function (x) { return 'SUMIFS(' + x + ',dato,dato,kober,kober)'; };
+  var forste = 'COUNTIFS(dato,dato,kober,kober,raekker,"<"&raekker)=0';
+  // E: indkøbspris fra Indkøb
+  sh.getRange('E3').setFormula('=LET(' + lad + 'opslag,{' + ind_(I, 'A', 3) + ',' + ind_(I, 'F', 3) + '},' +
+    '{"Indkøbspris (DKK)";ARRAYFORMULA(IF(sku="","",IFERROR(VLOOKUP(sku,opslag,2,FALSE),"")))})');
+  // K: Ordre Sum + Fragt (DKK). 2025: pr. række. 2026: samlet pr. ordre på ordrens første række.
+  if (aar === '2025') {
+    sh.getRange('K3').setFormula('=LET(' + lad + '{"Ordre Sum + Fragt (DKK)";ARRAYFORMULA(IF(tom,"",(IF(ISNUMBER(ordre),ordre,0)+IF(ISNUMBER(fragtind),fragtind,0)-IF(ISNUMBER(refund),refund,0))*$R$2))})');
+  } else {
+    sh.getRange('K3').setFormula('=LET(' + lad + '{"Ordre Sum + Fragt (DKK)";ARRAYFORMULA(IF(tom,"",IF(' + forste + ',(' + grp('ordre') + '+' + grp('fragtind') + '-' + grp('refund') + ')*$R$2,"")))})');
+  }
+  // L: Fortjeneste pr. sæt (fragt, gebyr og refusion fordelt efter ordresum inden for dato + køber)
+  sh.getRange('L3').setFormula('=LET(' + lad + 'indkoeb,' + v('E') + ',' +
+    '{"Fortjeneste sæt (DKK)";ARRAYFORMULA(IF(tom,"",IFERROR((ordre+ordre/' + grp('ordre') + '*(' + grp('fragtind') + '-' + grp('gebyr') + '-' + grp('refund') + '))*$R$2' +
+    '-(ordre/' + grp('ordre') + ')*' + grp('fragtud') + '-indkoeb,"")))})');
+  // M: Fortjeneste pr. ordre på ordrens første række
+  sh.getRange('M3').setFormula('=LET(' + lad + 'fsaet,' + v('L') + ',{"Fortjeneste Ordre (DKK)";ARRAYFORMULA(IF(tom,"",IF(' + forste + ',SUMIFS(fsaet,dato,dato,kober,kober),"")))})');
+  // N: Skattepligtigt (2026 slås op i Indkøbslog; 2025 er indtastet)
+  if (aar === '2026') {
+    sh.getRange('N3').setFormula('=LET(sku,' + v('B') + ',logtabel,{ARRAYFORMULA(UPPER(TO_TEXT(' + ind_(L, 'A', 3) + '))),' + ind_(L, 'C', 3) + '},' +
+      '{"Skattepligtigt";ARRAYFORMULA(IF(sku="","",IFERROR(VLOOKUP(UPPER(IFERROR(LEFT(sku,FIND("-",sku)-1),"")),logtabel,2,FALSE),"")))})');
+  }
+  // Totaler i række 2
+  sh.getRange('K2').setFormula('=SUM(' + v('K') + ')');
+  sh.getRange('L2').setFormula('=SUM(' + v('L') + ')');
+  sh.getRange('M2').setFormula('=SUM(' + v('M') + ')');
+}
+
+function formlerUdgifter_(sh, aar) {
+  var U = FANE['UDG' + aar.slice(2)], S = FANE['SALG' + aar.slice(2)];
+  var v = function (k) { return ind_(U, k, 3); };
+  var kp = '{ARRAYFORMULA(TO_TEXT(' + ind_(FANE.KONTO, 'A', 3) + ')),' + ind_(FANE.KONTO, 'B', 3) + '}';
+  sh.getRange('D2').setFormula('=LET(konto,' + v('C') + ',kontotabel,' + kp + ',{"Kontonavn";ARRAYFORMULA(IF(konto="","",IFERROR(VLOOKUP(TO_TEXT(konto),kontotabel,2,FALSE),"")))})');
+  sh.getRange('H2').setFormula('=LET(beloeb,' + v('F') + ',valuta,' + v('G') + ',{"Beløb DKK";ARRAYFORMULA(IF(beloeb="","",IF(valuta="EUR",beloeb*\'' + S + '\'!$R$2,beloeb)))})');
+  sh.getRange('K2').setFormula('=LET(beloeb,' + v('F') + ',beloebdkk,' + v('H') + ',procent,' + v('J') + ',{"Fradrag DKK";ARRAYFORMULA(IF(beloeb="","",beloebdkk*IF(ISNUMBER(procent),procent,0)/100))})');
+  sh.getRange('P3').setFormula('=SUM(' + v('H') + ')');
+  sh.getRange('Q3').setFormula('=SUM(' + v('K') + ')');
+  sh.getRange('N5').setFormula('=IFERROR(LET(konto,' + v('C') + ',beloebdkk,' + v('H') + ',fradrag,' + v('K') + ',kontotabel,' + kp + ',' +
+    'liste,SORT(UNIQUE(FILTER(ARRAYFORMULA(TO_TEXT(konto)),konto<>""))),' +
+    'HSTACK(liste,MAP(liste,LAMBDA(kontonr,IFERROR(VLOOKUP(kontonr,kontotabel,2,FALSE),""))),MAP(liste,LAMBDA(kontonr,SUMIF(konto,kontonr,beloebdkk))),MAP(liste,LAMBDA(kontonr,SUMIF(konto,kontonr,fradrag))))),"")');
+}
+
+function formlerSkat_(sh, aar) {
+  var S = FANE['SALG' + aar.slice(2)], U = FANE['UDG' + aar.slice(2)];
+  var v = function (k) { return ind_(S, k, SALG_START); };
+  var kurs = '\'' + S + '\'!$R$2';
+  var lad = 'LET(dato,' + v('A') + ',kober,' + v('C') + ',indkoeb,' + v('E') + ',fragtud,' + v('F') + ',gebyr,' + v('G') + ',ordre,' + v('H') +
+    ',fragtind,' + v('I') + ',refund,' + v('J') + ',skat,' + v('N') + ',erja,ARRAYFORMULA(skat="Ja"),' +
+    'andel,ARRAYFORMULA(IFERROR(ordre/SUMIFS(ordre,dato,dato,kober,kober),0)),';
+  var grp = function (x) { return 'SUMIFS(' + x + ',dato,dato,kober,kober)'; };
+  sh.getRange('B4').setFormula('=' + kurs);
+  sh.getRange('B7').setFormula('=SUM(' + v('K') + ')');
+  var b8 = 'SUMPRODUCT(erja*IF(ISNUMBER(ordre),ordre,0))*' + kurs + '+SUMPRODUCT(erja*andel*' + grp('fragtind') + ')*' + kurs;
+  if (aar === '2026') b8 += '-SUMPRODUCT(erja*andel*' + grp('refund') + ')*' + kurs;
+  sh.getRange('B8').setFormula('=' + lad + 'ARRAYFORMULA(' + b8 + '))');
+  sh.getRange('B10').setFormula('=SUMIF(' + v('N') + ',"Ja",' + v('E') + ')');
+  sh.getRange('B11').setFormula('=' + lad + 'ARRAYFORMULA(SUMPRODUCT(erja*andel*' + grp('gebyr') + ')*' + kurs + '))');
+  sh.getRange('B13').setFormula('=' + lad + 'ARRAYFORMULA(SUMPRODUCT(erja*andel*' + grp('fragtud') + ')))');
+  sh.getRange('B14').setFormula('=\'' + U + '\'!$Q$3');
+  sh.getRange('B17').setFormula('=' + lad + 'ARRAYFORMULA(SUMPRODUCT(IFERROR(erja/COUNTIFS(dato,dato,kober,kober,skat,"Ja"),0))))');
+  sh.getRange('B18').setFormula('=B8-B10-B11-B13-B14');
+}
+
+function formlerDbSalgspriser_(sh, db) {
+  var s25 = FANE.SALG25, s26 = FANE.SALG26;
   sh.getRange('A3').setFormula(
-    '=IFERROR(LET(salgsku,INDIRECT("\'Salg 2026\'!B4:B"),salgpris,INDIRECT("\'Salg 2026\'!H4:H"),' +
-    'gyldig,ARRAYFORMULA((salgsku<>"")*ISNUMBER(salgpris)*(N(salgpris)>0)),' +
+    '=IFERROR(LET(salgsku,VSTACK(' + ind_(s25, 'B', SALG_START) + ',' + ind_(s26, 'B', SALG_START) + '),' +
+    'salgpris,VSTACK(' + ind_(s25, 'H', SALG_START) + ',' + ind_(s26, 'H', SALG_START) + '),' +
+    'gyldig,ARRAYFORMULA((salgsku<>"")*ISNUMBER(salgpris)*(IF(ISNUMBER(salgpris),salgpris,0)>0)),' +
     'skuliste,FILTER(salgsku,gyldig=1),prisliste,FILTER(salgpris,gyldig=1),' +
     'nrliste,ARRAYFORMULA(IFERROR(REGEXEXTRACT(TO_TEXT(skuliste),"^[^-]*-([^-]+)"),TO_TEXT(skuliste))),' +
     'unikke,UNIQUE(nrliste),' +
-    'temaer,ARRAYFORMULA(IFERROR(VLOOKUP(unikke,{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbC + '},2,FALSE),"")),' +
+    'temaer,ARRAYFORMULA(IFERROR(VLOOKUP(unikke,{ARRAYFORMULA(TO_TEXT(' + db.A + ')),' + db.C + '},2,FALSE),"")),' +
     'antal,MAP(unikke,LAMBDA(saet,SUM(ARRAYFORMULA(--(nrliste=saet))))),' +
     'snit,MAP(unikke,LAMBDA(saet,SUM(ARRAYFORMULA((nrliste=saet)*prisliste))/SUM(ARRAYFORMULA(--(nrliste=saet))))),' +
     'hoejest,MAP(unikke,LAMBDA(saet,MAX(FILTER(prisliste,nrliste=saet)))),' +
@@ -342,93 +466,396 @@ function formlerDbSalgspriser_(sh, dbA, dbC) {
     'SORT(HSTACK(visnr,temaer,snit,antal,hoejest,lavest),1,TRUE)),"")');
 }
 
-function formlerLager_(sh, dbA, dbC, dbD) {
-  // Viser sæt der er sorteret + fotograferet + klar til salg + på lager. Overskriv ikke cellerne.
-  sh.getRange('A3').setFormula(
-    '=IFERROR(LET(' +
-    'skuer,INDIRECT("\'Indkøb\'!A3:A"),saetnr,INDIRECT("\'Indkøb\'!C3:C"),navne,INDIRECT("\'Indkøb\'!D3:D"),' +
-    'sorteret,INDIRECT("\'Indkøb\'!I3:I"),fotos,INDIRECT("\'Indkøb\'!J3:J"),klar,INDIRECT("\'Indkøb\'!K3:K"),' +
-    'stand,INDIRECT("\'Indkøb\'!L3:L"),platform,INDIRECT("\'Indkøb\'!M3:M"),status,INDIRECT("\'Indkøb\'!N3:N"),' +
-    'noter,INDIRECT("\'Indkøb\'!Q3:Q"),' +
-    'temaer,ARRAYFORMULA(IFERROR(VLOOKUP(TO_TEXT(saetnr),{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbC + '},2,FALSE),"")),' +
-    'undertemaer,ARRAYFORMULA(IFERROR(VLOOKUP(TO_TEXT(saetnr),{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbD + '},2,FALSE),"")),' +
+function formlerLager_(sh, db) {
+  var I = FANE.INDKOEB;
+  var v = function (k) { return ind_(I, k, 3); };
+  sh.getRange('A3').setFormula('=IFERROR(LET(' +
+    'skuer,' + v('A') + ',saetnr,' + v('C') + ',navne,' + v('D') + ',sorteret,' + v('I') + ',fotos,' + v('J') + ',klar,' + v('K') + ',' +
+    'stand,' + v('L') + ',platform,' + v('M') + ',status,' + v('N') + ',noter,' + v('Q') + ',' +
+    'temaer,ARRAYFORMULA(IFERROR(VLOOKUP(TO_TEXT(saetnr),{ARRAYFORMULA(TO_TEXT(' + db.A + ')),' + db.C + '},2,FALSE),"")),' +
+    'undertemaer,ARRAYFORMULA(IFERROR(VLOOKUP(TO_TEXT(saetnr),{ARRAYFORMULA(TO_TEXT(' + db.A + ')),' + db.D + '},2,FALSE),"")),' +
     'vis,ARRAYFORMULA((sorteret=TRUE)*(fotos=TRUE)*(klar=TRUE)*(status="På lager")),' +
     'SORT(FILTER({skuer,stand,platform,saetnr,navne,temaer,undertemaer,noter},vis=1),4,TRUE)),"")');
 }
 
-// Skriver formlerne igen uden at røre data (bruges når en formel er rettet i en ny version)
+function formlerEbay_(sh) {
+  var E = FANE.EBAY, I = FANE.INDKOEB;
+  var lad = 'LET(sku,' + ind_(E, 'A', 3) + ',indsku,' + ind_(I, 'A', 3) + ',indstatus,' + ind_(I, 'N', 3) + ',indnavn,' + ind_(I, 'D', 3) + ',';
+  sh.getRange('C2').setFormula('=' + lad + '{"Match i Indkøb";ARRAYFORMULA(IF(sku="","",COUNTIF(indsku,sku)))})');
+  sh.getRange('D2').setFormula('=' + lad + '{"Lagerstatus";ARRAYFORMULA(IF(sku="","",IFERROR(VLOOKUP(sku,{indsku,indstatus},2,FALSE),"—")))})');
+  sh.getRange('E2').setFormula('=' + lad + '{"Navn i Indkøb";ARRAYFORMULA(IF(sku="","",IFERROR(VLOOKUP(sku,{indsku,indnavn},2,FALSE),"—")))})');
+  sh.getRange('F2').setFormula('=LET(sku,' + ind_(E, 'A', 3) + ',antalmatch,' + ind_(E, 'C', 3) + ',status1,' + ind_(E, 'D', 3) + ',{"Vurdering";ARRAYFORMULA(IF(sku="","",' +
+    'IF(antalmatch=0,"SKU findes ikke i Indkøb",IF(status1="Solgt","ADVARSEL: solgt – opslag bør fjernes",IF(status1="På lager","OK","Ikke klar til salg")))))})');
+  sh.getRange('G2').setFormula('=LET(sku,' + ind_(E, 'A', 3) + ',{"Dublet";ARRAYFORMULA(IF(sku="","",IF(COUNTIF(sku,sku)>1,"Dublet i eBay-liste","")))})');
+  sh.getRange('H2').setFormula('=LET(sku,' + ind_(E, 'A', 3) + ',{"Normaliseret SKU";ARRAYFORMULA(IF(sku="","",SUBSTITUTE(UPPER(sku),"-","")))})');
+  var norm = 'normind,ARRAYFORMULA(SUBSTITUTE(UPPER(indsku),"-","")),normsku,' + ind_(E, 'H', 3) + ',';
+  sh.getRange('I2').setFormula('=' + lad + norm + '{"Match (norm.)";ARRAYFORMULA(IF(sku="","",COUNTIF(normind,normsku)))})');
+  sh.getRange('J2').setFormula('=' + lad + norm + '{"Lagerstatus (norm.)";ARRAYFORMULA(IF(sku="","",IFERROR(VLOOKUP(normsku,{normind,indstatus},2,FALSE),"—")))})');
+  sh.getRange('K2').setFormula('=LET(sku,' + ind_(E, 'A', 3) + ',antalmatch,' + ind_(E, 'C', 3) + ',normmatch,' + ind_(E, 'I', 3) + ',status2,' + ind_(E, 'J', 3) + ',{"Vurdering (normaliseret)";ARRAYFORMULA(IF(sku="","",' +
+    'IF(normmatch=0,"FEJL: SKU findes slet ikke",IF(antalmatch=0,IF(status2="Solgt","Skrivefejl + solgt","Skrivefejl i SKU (kun formatforskel)"),' +
+    'IF(status2="Solgt","ADVARSEL: solgt – opslag bør fjernes",IF(status2="På lager","OK","Ikke klar til salg"))))))})');
+  sh.getRange('N3').setFormula('=COUNTA(' + ind_(E, 'A', 3) + ')');
+  sh.getRange('N4').setFormula('=COUNTUNIQUE(' + ind_(E, 'A', 3) + ')');
+  sh.getRange('N5').setFormula('=COUNTIF(' + ind_(E, 'G', 3) + ',"Dublet*")');
+  sh.getRange('N6').setFormula('=COUNTIF(' + ind_(E, 'K', 3) + ',"OK")');
+  sh.getRange('N7').setFormula('=N3-N6');
+}
+
+// Skriver formlerne igen uden at røre data
 function opdaterFormler() {
   var ui = SpreadsheetApp.getUi(), ss = SpreadsheetApp.getActive();
-  var db = ss.getSheetByName(FANE.DB);
-  var dbStart = db ? findDbStart_(db) : 0;
-  if (!dbStart) { ui.alert('Kan ikke finde fanen DB med overskriften "Lego number".'); return; }
-  var dbA = "DB!$A$" + dbStart + ":$A", dbB = "DB!$B$" + dbStart + ":$B";
-  var dbC = "DB!$C$" + dbStart + ":$C", dbD = "DB!$D$" + dbStart + ":$D";
-  var ark = function (n) { var sh = ss.getSheetByName(n); if (!sh) throw new Error('Fanen ' + n + ' mangler. Kør Opsæt testark.'); return sh; };
-  var landestandard = ss.getSpreadsheetLocale();
+  try { medEngelsk_(ss, function () { formlerAlle_(ss); }); }
+  catch (e) { ui.alert('Formlerne blev ikke opdateret', String(e.message || e), ui.ButtonSet.OK); return; }
+  ui.alert('Formler opdateret', 'Data er ikke ændret. Kør "Kør kontrol mod Excel" for at sammenligne. Version ' + VERSION, ui.ButtonSet.OK);
+}
+
+// ======================================================================
+//  IMPORT FRA EXCEL (importfilen cts-import.json i CTS-mappen)
+// ======================================================================
+
+function laesImportfil_(ss) {
+  var cts = mappeForRegneark_(ss);
+  var it = cts.getFilesByName(IMPORTFIL);
+  if (!it.hasNext()) throw new Error('Filen ' + IMPORTFIL + ' ligger ikke i mappen ' + cts.getName() + ' i Drive.');
+  var data = JSON.parse(it.next().getBlob().getDataAsString('UTF-8'));
+  if (!data.indkoeb || !data.facit) throw new Error('Importfilen ser forkert ud.');
+  return data;
+}
+
+function importerFraExcel() {
+  var ui = SpreadsheetApp.getUi(), ss = SpreadsheetApp.getActive();
+  var data;
+  try { data = laesImportfil_(ss); } catch (e) { ui.alert('Import', e.message, ui.ButtonSet.OK); return; }
+  if (!ss.getSheetByName(FANE.DB)) { ui.alert('Fanen DB mangler. Importen er stoppet, intet er ændret.'); return; }
+  var svar = ui.prompt('Importér fra Excel',
+    'Dette SLETTER alle faner i "' + ss.getName() + '" undtagen DB og bygger hele projektmappen forfra med data fra Excel ' +
+    '(' + data.indkoeb.length + ' sæt, ' + data.indkoebslog.length + ' batches, ' + (data.salg2025.raekker.length + data.salg2026.raekker.length) + ' salg).\n\n' +
+    'Skriv SLET ALT for at fortsætte:', ui.ButtonSet.OK_CANCEL);
+  if (svar.getSelectedButton() !== ui.Button.OK || svar.getResponseText().trim().toUpperCase() !== 'SLET ALT') { ui.alert('Importen er annulleret. Intet er ændret.'); return; }
+
   try {
-    ss.setSpreadsheetLocale('en_US'); SpreadsheetApp.flush();
-    formlerIndkoebslog_(ark(FANE.LOG));
-    formlerIndkoeb_(ark(FANE.INDKOEB), dbA, dbB);
-    formlerDbSalgspriser_(ark(FANE.DBS), dbA, dbC);
-    formlerLager_(ark(FANE.LAGER), dbA, dbC, dbD);
-    SpreadsheetApp.flush();
+    medEngelsk_(ss, function () {
+      byggAlt_(ss, data);
+      skrivData_(ss, data);
+    });
   } catch (e) {
-    ss.setSpreadsheetLocale(landestandard || 'da_DK');
-    ui.alert('Formlerne blev ikke opdateret', String(e.message || e), ui.ButtonSet.OK); return;
+    ui.alert('Importen stoppede', String(e.message || e) + '\n\nKør importen igen. Virker det ikke, så send et skærmbillede til Claude.', ui.ButtonSet.OK);
+    return;
   }
-  ss.setSpreadsheetLocale(landestandard || 'da_DK'); SpreadsheetApp.flush();
-  var fejl = tjekFormler_(ss);
-  if (!fejl.length) { try { synkMapper_(null); } catch (e) { fejl.push('Mapper: ' + e.message); } }
-  ui.alert(fejl.length ? 'Formler opdateret – men med fejl' : 'Formler opdateret',
-    (fejl.length ? 'Send et skærmbillede til Claude:\n' + fejl.join('\n') : 'Alle formler virker, og fotomapperne har de rigtige navne. Data er ikke ændret.') + '\nVersion ' + VERSION,
+  // Fotomapper: CTS/Lager (én mappe pr. købsdato)
+  var cts = mappeForRegneark_(ss);
+  var lager = underMappe_(cts, 'Lager');
+  var p = PropertiesService.getScriptProperties();
+  p.setProperty('ROD_MAPPE_ID', lager.getId());
+  p.setProperty('TILSTAND', 'drift');
+  p.setProperty('IMPORTERET', Utilities.formatDate(new Date(), 'Europe/Copenhagen', 'dd-MM-yyyy HH:mm'));
+  hentNoegle_();
+  SpreadsheetApp.flush();
+  var res = kontrol_(ss, data);
+  ui.alert('Import færdig',
+    data.indkoeb.length + ' sæt og ' + (data.salg2025.raekker.length + data.salg2026.raekker.length) + ' salg er importeret.\n\n' +
+    'Kontrol mod Excel: ' + res.ok + ' af ' + res.ialt + ' tal stemmer' + (res.afvig ? ', ' + res.afvig + ' afviger (se fanen Kontrol).' : ' ✓') +
+    '\n\nFotos gemmes nu i: ' + stiTil_(lager), ui.ButtonSet.OK);
+}
+
+// Datoer skrives som tekst ÅÅÅÅ-MM-DD, så Sheets selv læser dem (ingen tidszone-forskydning)
+function dato_(s) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || ''));
+  return m ? m[1] + '-' + m[2] + '-' + m[3] : s;
+}
+function vaerdi_(v) { return v && typeof v === 'object' && v.formel ? v.formel : (v === undefined || v === null ? '' : v); }
+
+function skrivData_(ss, data) {
+  // Indkøbslog
+  var log = ss.getSheetByName(FANE.LOG);
+  var lr = data.indkoebslog.map(function (r) { return [r[0], r[1], r[2] || 'Ja', r[3] || '']; });
+  sikrRaekker_(log, START + lr.length + 50);
+  if (lr.length) log.getRange(START, 1, lr.length, 4).setValues(lr);
+
+  // Indkøb
+  var ind = ss.getSheetByName(FANE.INDKOEB);
+  var n = data.indkoeb.length;
+  sikrRaekker_(ind, START + n + 200);
+  var bc = [], e = [], gm = [], ov = [];
+  data.indkoeb.forEach(function (r) {
+    bc.push([r.dato, r.setnr === '' ? '' : r.setnr]);
+    e.push([r.vaerdi === '' ? '' : r.vaerdi]);
+    gm.push([r.salgFor, r.ovp, r.sorteret === true, r.fotos === true, r.klar === true, r.stand === '' ? '' : r.stand, r.platform]);
+    //       O   P   Q noter  R kilde  S vejl.  T kompl. U fast    V foto-SKU
+    ov.push(['', '', r.noter, r.kilde, false, false, r.fast === '' ? '' : r.fast, '']);
+  });
+  ind.getRange(START, K.DATO, n, 2).setValues(bc);
+  ind.getRange(START, K.VAERDI, n, 1).setValues(e);
+  ind.getRange(START, K.SALGFOR, n, 7).setValues(gm);
+  ind.getRange(START, K.SALGSDATO, n, 8).setValues(ov);
+  saetValidering_(ind, START, ind.getMaxRows() - START + 1);
+
+  // Salg
+  ['2025', '2026'].forEach(function (aar) {
+    var sh = ss.getSheetByName(FANE['SALG' + aar.slice(2)]);
+    var rk = data['salg' + aar].raekker;
+    sikrRaekker_(sh, SALG_START + rk.length + 300);
+    if (!rk.length) return;
+    var g = function (r, k) { return vaerdi_(r[k]); };
+    sh.getRange(SALG_START, 1, rk.length, 4).setValues(rk.map(function (r) { return [dato_(g(r, 'A')), g(r, 'B'), g(r, 'C'), g(r, 'D')]; }));
+    sh.getRange(SALG_START, 6, rk.length, 5).setValues(rk.map(function (r) { return [g(r, 'F'), g(r, 'G'), g(r, 'H'), g(r, 'I'), g(r, 'J')]; }));
+    if (aar === '2025') sh.getRange(SALG_START, 14, rk.length, 1).setValues(rk.map(function (r) { return [g(r, 'N')]; }));
+    sh.getRange(SALG_START, 15, rk.length, 2).setValues(rk.map(function (r) { return [g(r, 'O'), g(r, 'P')]; }));
+  });
+
+  // Udgifter
+  ['2025', '2026'].forEach(function (aar) {
+    var sh = ss.getSheetByName(FANE['UDG' + aar.slice(2)]);
+    var rk = data['udgifter' + aar];
+    if (!rk.length) return;
+    var g = function (r, k) { return vaerdi_(r[k]); };
+    sh.getRange(START, 1, rk.length, 3).setValues(rk.map(function (r) { return [g(r, 'A'), dato_(g(r, 'B')), String(g(r, 'C'))]; }));
+    sh.getRange(START, 5, rk.length, 3).setValues(rk.map(function (r) { return [g(r, 'E'), g(r, 'F'), g(r, 'G')]; }));
+    sh.getRange(START, 9, rk.length, 2).setValues(rk.map(function (r) { return [g(r, 'I'), g(r, 'J')]; }));
+    sh.getRange(START, 12, rk.length, 1).setValues(rk.map(function (r) { return [g(r, 'L')]; }));
+  });
+
+  // eBay-afstemning
+  var eb = ss.getSheetByName(FANE.EBAY);
+  var er = data.ebay.raekker;
+  sikrRaekker_(eb, START + er.length + 20);
+  if (er.length) eb.getRange(START, 1, er.length, 2).setValues(er);
+  SpreadsheetApp.flush();
+}
+
+// ======================================================================
+//  KONTROL MOD EXCEL
+// ======================================================================
+
+function koerKontrol() {
+  var ui = SpreadsheetApp.getUi(), ss = SpreadsheetApp.getActive();
+  var data;
+  try { data = laesImportfil_(ss); } catch (e) { ui.alert('Kontrol', e.message, ui.ButtonSet.OK); return; }
+  var res = kontrol_(ss, data);
+  ui.alert('Kontrol mod Excel', res.ok + ' af ' + res.ialt + ' tal stemmer' + (res.afvig ? '. ' + res.afvig + ' afviger – se fanen Kontrol.' : ' ✓'), ui.ButtonSet.OK);
+}
+
+function kontrol_(ss, data) {
+  var F = data.facit, linjer = [], detaljer = [];
+  var tal = function (x) { return x === '' || x === null || x === undefined ? '' : Number(x); };
+  var ens = function (a, b, tol) {
+    a = tal(a); b = tal(b);
+    if (a === '' || b === '' || isNaN(a) || isNaN(b)) return String(a) === String(b) || (a === '' && (b === 0)) || (b === '' && a === 0);
+    return Math.abs(a - b) <= (tol || 0.01);
+  };
+  var tjek = function (omraade, hvad, antal, fejl) {
+    linjer.push([omraade, hvad, antal, antal - fejl.length, fejl.length, fejl.length ? '✗' : '✓']);
+    fejl.slice(0, 40).forEach(function (f) { detaljer.push([omraade, hvad].concat(f)); });
+  };
+
+  // Indkøb (samme rækkefølge som Excel)
+  var ind = ss.getSheetByName(FANE.INDKOEB);
+  var n = F.indkoeb.length;
+  var iv = ind.getRange(START, 1, n, K.LAGERSTATUS).getValues();
+  var fSku = [], fPris = [], fStatus = [];
+  F.indkoeb.forEach(function (f, i) {
+    var r = iv[i];
+    if (String(r[K.SKU - 1]) !== f[0]) fSku.push([f[0], String(r[K.SKU - 1]), 'række ' + (START + i)]);
+    if (!ens(r[K.KOEBSPRIS - 1], f[1])) fPris.push([f[0], r[K.KOEBSPRIS - 1], f[1]]);
+    if (String(r[K.LAGERSTATUS - 1]) !== String(f[2])) fStatus.push([f[0], r[K.LAGERSTATUS - 1], f[2]]);
+  });
+  tjek('Indkøb', 'SKU', n, fSku);
+  tjek('Indkøb', 'Købspris', n, fPris);
+  tjek('Indkøb', 'Lagerstatus', n, fStatus);
+
+  // Indkøbslog
+  var log = ss.getSheetByName(FANE.LOG);
+  var lv = log.getRange(START, 1, F.indkoebslog.length, 8).getValues();
+  var fLog = [];
+  F.indkoebslog.forEach(function (f, i) {
+    var r = lv[i];
+    [[4, 1, 'Sæt i alt'], [5, 2, 'Solgt'], [6, 3, 'Klar']].forEach(function (k) { if (!ens(r[k[0]], f[k[1]], 0)) fLog.push([f[0] + ' ' + k[2], r[k[0]], f[k[1]]]); });
+  });
+  tjek('Indkøbslog', 'Antal pr. batch', F.indkoebslog.length * 3, fLog);
+
+  // Salg
+  ['2025', '2026'].forEach(function (aar) {
+    var sh = ss.getSheetByName(FANE['SALG' + aar.slice(2)]);
+    var fr = F['salg' + aar];
+    if (!fr.length) return;
+    var sv = sh.getRange(SALG_START, 1, fr.length, 14).getValues();
+    var navne = ['Indkøbspris', 'Ordre Sum + Fragt', 'Fortjeneste sæt', 'Fortjeneste ordre', 'Skattepligtigt'];
+    var kol = [5, 11, 12, 13, 14];
+    navne.forEach(function (nv, j) {
+      var fejl = [];
+      fr.forEach(function (f, i) {
+        var a = sv[i][kol[j] - 1], b = f[j + 1];
+        var ok = j === 4 ? String(a) === String(b) : ens(a, b);
+        if (!ok) fejl.push([String(sv[i][1]) + ' (række ' + (SALG_START + i) + ')', a, b]);
+      });
+      tjek('Salg ' + aar, nv, fr.length, fejl);
+    });
+  });
+
+  // Udgifter
+  ['2025', '2026'].forEach(function (aar) {
+    var sh = ss.getSheetByName(FANE['UDG' + aar.slice(2)]);
+    var fr = F['udgifter' + aar];
+    if (!fr.length) return;
+    var uv = sh.getRange(START, 1, fr.length, 11).getValues();
+    var fejl = [];
+    fr.forEach(function (f, i) {
+      if (!ens(uv[i][7], f[1])) fejl.push([uv[i][0] + ' Beløb DKK', uv[i][7], f[1]]);
+      if (!ens(uv[i][10], f[2])) fejl.push([uv[i][0] + ' Fradrag DKK', uv[i][10], f[2]]);
+    });
+    tjek('Udgifter ' + aar, 'Beløb og fradrag', fr.length * 2, fejl);
+  });
+
+  // Skat
+  ['2025', '2026'].forEach(function (aar) {
+    var sh = ss.getSheetByName(FANE['SKAT' + aar.slice(2)]);
+    var fs = F['skat' + aar], fejl = [];
+    Object.keys(fs).forEach(function (r) {
+      var a = sh.getRange(Number(r), 2).getValue();
+      if (!ens(a, fs[r])) fejl.push([sh.getRange(Number(r), 1).getValue() + ' (B' + r + ')', a, fs[r]]);
+    });
+    tjek('Skat ' + aar, 'Alle poster inkl. nettoavance', Object.keys(fs).length, fejl);
+  });
+
+  // DB Salgspriser
+  var dbs = ss.getSheetByName(FANE.DBS);
+  var dl = Math.max(1, dbs.getLastRow() - 2);
+  var dv = dbs.getRange(3, 1, dl, 6).getValues(), map = {};
+  dv.forEach(function (r) { if (r[0] !== '') map[String(r[0])] = r; });
+  var fejlD = [];
+  F.dbSalgspriser.forEach(function (f) {
+    var r = map[f[0]];
+    if (!r) { fejlD.push([f[0], 'mangler', '']); return; }
+    if (!ens(r[2], f[1]) || !ens(r[3], f[2], 0) || !ens(r[4], f[3]) || !ens(r[5], f[4])) fejlD.push([f[0], [r[2], r[3], r[4], r[5]].join(' / '), f.slice(1).join(' / ')]);
+  });
+  tjek('DB Salgspriser', 'Gns./antal/højeste/laveste', F.dbSalgspriser.length, fejlD);
+
+  // eBay-afstemning
+  var eb = ss.getSheetByName(FANE.EBAY);
+  var ev = eb.getRange(START, 1, F.ebay.length, 11).getValues(), fejlE = [];
+  F.ebay.forEach(function (f, i) { if (String(ev[i][10]) !== String(f[1])) fejlE.push([f[0], ev[i][10], f[1]]); });
+  tjek('eBay-afstemning', 'Vurdering', F.ebay.length, fejlE);
+
+  // Skriv fanen Kontrol
+  var gl = ss.getSheetByName(FANE.KONTROL); if (gl) ss.deleteSheet(gl);
+  var sh = nyFane_(ss, FANE.KONTROL, 'KONTROL MOD EXCEL — ' + Utilities.formatDate(new Date(), 'Europe/Copenhagen', 'dd-MM-yyyy HH:mm'),
+    ['Område', 'Tjek', 'Antal', 'Stemmer', 'Afviger', ''], 2);
+  sh.getRange(3, 1, linjer.length, 6).setValues(linjer);
+  var r0 = 3 + linjer.length + 2;
+  sh.getRange(r0, 1, 1, 5).setValues([['AFVIGELSER (højst 40 pr. tjek)', '', 'Hvad', 'Sheets', 'Excel']]).setFontWeight('bold');
+  if (detaljer.length) sh.getRange(r0 + 1, 1, detaljer.length, 5).setValues(detaljer);
+  else sh.getRange(r0 + 1, 1).setValue('Ingen afvigelser ✓');
+  sh.setColumnWidth(1, 150); sh.setColumnWidth(2, 220); sh.setColumnWidth(3, 260); sh.setColumnWidths(4, 2, 150);
+  var ok = 0, ialt = 0, afvig = 0;
+  linjer.forEach(function (l) { ialt += l[2]; ok += l[3]; afvig += l[4]; });
+  return { ok: ok, ialt: ialt, afvig: afvig };
+}
+
+// ======================================================================
+//  SORTÉR GAMLE FOTOS  (CTS/Import-fotos → CTS/Lager/<købsdato>/<SKU>.NN.jpg)
+// ======================================================================
+
+function sorterFotos() {
+  var ui = SpreadsheetApp.getUi();
+  var res;
+  try { res = sorterFotos_(); } catch (e) { ui.alert('Sortér gamle fotos', e.message, ui.ButtonSet.OK); return; }
+  ui.alert('Sortér gamle fotos',
+    res.flyttet + ' fotos flyttet, ' + res.ikke + ' kunne ikke matches (se fanen Foto-import og mappen "_Ikke matchet").' +
+    (res.mere ? '\n\nDer er flere fotos. Sorteringen fortsætter automatisk om lidt – du kan lukke regnearket.' : '\n\nAlle fotos er gennemgået ✓'),
     ui.ButtonSet.OK);
 }
 
-// Afkrydsning, rullelister og formater på et område af rækker i Indkøb
-function saetValidering_(sh, fra, antal) {
-  if (antal < 1) return;
-  var cb = SpreadsheetApp.newDataValidation().requireCheckbox().build();
-  [K.SORTERET, K.FOTOS, K.KLAR, K.VEJLEDNING, K.KOMPLET].forEach(function (k) {
-    sh.getRange(fra, k, antal, 1).setDataValidation(cb);
+function sorterFotosFortsaet() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'sorterFotosFortsaet') ScriptApp.deleteTrigger(t); });
+  sorterFotos_();
+}
+
+function sorterFotos_() {
+  var start = Date.now();
+  var ss = SpreadsheetApp.getActive();
+  var cts = mappeForRegneark_(ss);
+  var it = cts.getFoldersByName(FOTO_KILDE);
+  if (!it.hasNext()) throw new Error('Mappen ' + FOTO_KILDE + ' findes ikke i ' + cts.getName() + '. Upload fotoene dertil først (se guiden).');
+  var kilde = it.next();
+  var ikkeMappe = underMappe_(kilde, '_Ikke matchet');
+  var rod = rodMappe_();
+
+  // SKU-opslag fra Indkøb
+  var data = laesIndkoeb_();
+  var eksakt = {}, norm = {}, raekkeFor = {};
+  data.raekker.forEach(function (r) {
+    var sku = String(r.v[K.SKU - 1]); if (!sku || /^#/.test(sku)) return;
+    eksakt[sku.toUpperCase()] = sku;
+    var nk = sku.toUpperCase().replace(/-/g, '');
+    norm[nk] = norm[nk] === undefined ? sku : null; // null = tvetydig
+    raekkeFor[sku] = r;
   });
-  var liste = function (v) { return SpreadsheetApp.newDataValidation().requireValueInList(v, true).setAllowInvalid(false).build(); };
-  sh.getRange(fra, K.OVP, antal, 1).setDataValidation(liste(['Ja', 'Nej']));
-  sh.getRange(fra, K.STAND, antal, 1).setDataValidation(liste(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']));
-  sh.getRange(fra, K.PLATFORM, antal, 1).setDataValidation(liste(PLATFORME));
-  sh.getRange(fra, K.KILDE, antal, 1).setDataValidation(liste(KILDER));
+  var find = function (base) {
+    var b = base.toUpperCase();
+    var kand = [b];
+    if (/^00-/.test(b)) kand.push('250000-' + b.slice(3)); // gamle 00-sæt ligger i samlebatch 250000
+    for (var i = 0; i < kand.length; i++) {
+      if (eksakt[kand[i]]) return eksakt[kand[i]];
+      var nk = kand[i].replace(/-/g, '');
+      if (norm[nk]) return norm[nk];
+    }
+    return null;
+  };
+
+  var logFane = ss.getSheetByName(FANE.FOTOIMPORT) || nyFane_(ss, FANE.FOTOIMPORT, 'FOTO-IMPORT FRA ONEDRIVE', ['Tid', 'Original', 'Resultat', 'Ny placering'], 2);
+  var logLinjer = [], mapper = {}, taelling = {}, fotoSku = {};
+  var flyttet = 0, ikke = 0, mere = false;
+
+  var filer = [];
+  var saml = function (mappe) {
+    var f = mappe.getFiles(); while (f.hasNext()) filer.push(f.next());
+    var u = mappe.getFolders(); while (u.hasNext()) { var m = u.next(); if (m.getId() !== ikkeMappe.getId()) saml(m); }
+  };
+  saml(kilde);
+
+  for (var i = 0; i < filer.length; i++) {
+    if (Date.now() - start > 4.5 * 60 * 1000) { mere = true; break; }
+    var fil = filer[i], navn = fil.getName();
+    var m = /^(.+?)[-_ .](\d{1,3})\.(jpe?g|png|heic|heif|webp)$/i.exec(navn);
+    var sku = m ? find(m[1]) : null;
+    var tid = Utilities.formatDate(new Date(), 'Europe/Copenhagen', 'dd-MM HH:mm');
+    if (!sku) {
+      fil.moveTo(ikkeMappe); ikke++;
+      logLinjer.push([tid, navn, m ? 'Ingen SKU i Indkøb matcher "' + m[1] + '"' : 'Navnet følger ikke mønstret <SKU>-NN', '_Ikke matchet']);
+      continue;
+    }
+    var dato = String(raekkeFor[sku].v[K.DATO - 1]);
+    var mappe = mapper[dato] || (mapper[dato] = batchMappe_(dato, true));
+    var t = taelling[dato] || (taelling[dato] = fotoTaelling_(mappe));
+    var ext = m[3].toLowerCase() === 'jpeg' ? 'jpg' : m[3].toLowerCase();
+    var nr = Number(m[2]);
+    var nyt = sku + '.' + pad2_(nr) + '.' + ext;
+    if (t.navne[nyt.toUpperCase()]) { nr = (t.hoejeste[sku] || 0) + 1; nyt = sku + '.' + pad2_(nr) + '.' + ext; }
+    fil.moveTo(mappe); fil.setName(nyt);
+    t.navne[nyt.toUpperCase()] = true; t.antal[sku] = (t.antal[sku] || 0) + 1; t.hoejeste[sku] = Math.max(t.hoejeste[sku] || 0, nr);
+    fotoSku[sku] = true; flyttet++;
+    logLinjer.push([tid, navn, 'Flyttet', dato + '/' + nyt]);
+  }
+
+  // Notér Foto-SKU og Fotos = sand for de matchede sæt
+  Object.keys(fotoSku).forEach(function (sku) {
+    var r = raekkeFor[sku];
+    data.ark.getRange(r.raekke, K.FOTOSKU).setValue(sku);
+    data.ark.getRange(r.raekke, K.FOTOS).setValue(true);
+  });
+  if (logLinjer.length) logFane.getRange(logFane.getLastRow() + 1, 1, logLinjer.length, 4).setValues(logLinjer);
+
+  if (mere) ScriptApp.newTrigger('sorterFotosFortsaet').timeBased().after(60 * 1000).create();
+  return { flyttet: flyttet, ikke: ikke, mere: mere };
 }
 
-function byggSalg_(ss) {
-  var sh = nyFane_(ss, FANE.SALG, 'SALG 2026 — Copenhagen Treasures and Services (TEST)',
-    ['Salgsdato', 'SKU', 'Køber', 'Platform', 'Indkøbspris (DKK)', 'Udgift Fragt', 'Portals gebyr',
-      'Ordre Sum', 'Fragt (modtaget)', 'Refunderet (EUR)', 'Ordre Sum + Fragt (DKK)',
-      'Fortjeneste sæt (DKK)', 'Fortjeneste Ordre (DKK)', 'Skattepligtigt', 'eBay-ordrenr.', 'Bilagsnr'], 3);
-  sh.getRange('A3:A').setNumberFormat('dd-mm-yyyy');
-}
-
-function byggDbSalgspriser_(ss, dbA, dbC) {
-  var sh = nyFane_(ss, FANE.DBS, 'DB SALGSPRISER — Copenhagen Treasures and Services (opslag, EUR)',
-    ['Sæt nr.', 'Tema', 'Gns. salgspris (€)', 'Antal salg', 'Højeste salgspris (€)', 'Laveste pris (€)'], 2);
-  formlerDbSalgspriser_(sh, dbA, dbC);
-  sh.getRange('C3:C').setNumberFormat('[$€]#,##0.00');
-  sh.getRange('E3:F').setNumberFormat('[$€]#,##0.00');
-}
-
-function byggLager_(ss, dbA, dbC, dbD) {
-  var sh = nyFane_(ss, FANE.LAGER, 'LAGER — Copenhagen Treasures and Services (TEST)',
-    ['SKU', 'Stand', 'Til salg på', 'Set nr.', 'Navn', 'Theme', 'Subtheme', 'Noter'], 2);
-  formlerLager_(sh, dbA, dbC, dbD);
-  sh.setColumnWidth(1, 140); sh.setColumnWidth(5, 260); sh.setColumnWidth(8, 300);
-}
+function pad2_(n) { return n < 10 ? '0' + n : String(n); }
 
 // ======================================================================
 //  API (kaldes fra appen)
 // ======================================================================
 
-function doGet() {
-  return ContentService.createTextOutput('CTS maskinrum kører (version ' + VERSION + ').');
-}
+function doGet() { return ContentService.createTextOutput('CTS maskinrum kører (version ' + VERSION + ').'); }
 
 function doPost(e) {
   var svar;
@@ -461,6 +888,12 @@ var HANDLINGER = {
   hentAlt: function () { return hentAlt_(); }
 };
 
+function medLaas_(fn) {
+  var laas = LockService.getScriptLock();
+  if (!laas.tryLock(30000)) throw fejl_('Arket er optaget. Prøv igen om lidt.');
+  try { return fn(); } finally { laas.releaseLock(); }
+}
+
 // Alt hvad appen skal bruge for at kunne arbejde uden net
 function hentAlt_() {
   var db = ark_(FANE.DB);
@@ -480,19 +913,6 @@ function hentAlt_() {
   return { db: dbRaekker, salg: salg, lager: hentLager_(), log: logRaekker };
 }
 
-function medLaas_(fn) {
-  var laas = LockService.getScriptLock();
-  if (!laas.tryLock(30000)) throw fejl_('Arket er optaget. Prøv igen om lidt.');
-  try { return fn(); } finally { laas.releaseLock(); }
-}
-
-function ark_(navn) {
-  var sh = SpreadsheetApp.getActive().getSheetByName(navn);
-  if (!sh) throw fejl_('Fanen "' + navn + '" findes ikke. Kør CTS → Opsæt testark.');
-  return sh;
-}
-
-// ---------- Opslag ----------
 function slaaOp_(setnr) {
   if (!setnr) throw fejl_('Intet sætnummer.');
   var db = ark_(FANE.DB);
@@ -500,21 +920,16 @@ function slaaOp_(setnr) {
   var n = db.getLastRow() - start + 1;
   var res = { setnr: setnr, fundet: false, navn: 'Sæt findes ikke', tema: '', undertema: '', aar: '', salg: null };
   if (n > 0) {
-    var v = db.getRange(start, 1, n, 5).getDisplayValues();
-    var hit = null;
+    var v = db.getRange(start, 1, n, 5).getDisplayValues(), hit = null;
     for (var i = 0; i < v.length; i++) { if (v[i][0] === setnr) { hit = v[i]; break; } }
     if (!hit) for (var j = 0; j < v.length; j++) { if (v[j][0] === setnr + '-1') { hit = v[j]; break; } }
     if (hit) { res.fundet = true; res.navn = hit[1]; res.tema = hit[2]; res.undertema = hit[3]; res.aar = hit[4]; }
   }
-  var dbs = ark_(FANE.DBS);
-  var m = dbs.getLastRow() - 2;
+  var dbs = ark_(FANE.DBS), m = dbs.getLastRow() - 2;
   if (m > 0) {
     var s = dbs.getRange(3, 1, m, 6).getValues();
     for (var k = 0; k < s.length; k++) {
-      if (String(s[k][0]) === setnr && Number(s[k][3]) > 0) {
-        res.salg = { gns: Number(s[k][2]), antal: Number(s[k][3]), hoejeste: Number(s[k][4]), laveste: Number(s[k][5]) };
-        break;
-      }
+      if (String(s[k][0]) === setnr && Number(s[k][3]) > 0) { res.salg = { gns: Number(s[k][2]), antal: Number(s[k][3]), hoejeste: Number(s[k][4]), laveste: Number(s[k][5]) }; break; }
     }
   }
   return res;
@@ -533,61 +948,47 @@ function opretBatch_(d) {
     if (!(Number(s.vaerdi) > 0)) throw fejl_('Sæt ' + s.setnr + ' mangler værdi.');
     if (KILDER.indexOf(s.kilde) < 0) throw fejl_('Sæt ' + s.setnr + ' har ukendt kilde.');
   });
-
-  var log = ark_(FANE.LOG);
-  var ind = ark_(FANE.INDKOEB);
-  var datoNr = Number(dato);
-
-  // Findes batchen allerede?
+  var log = ark_(FANE.LOG), ind = ark_(FANE.INDKOEB), datoNr = Number(dato);
   if (log.getLastRow() >= START) {
     var eks = log.getRange(START, 1, log.getLastRow() - START + 1, 1).getValues();
     for (var i = 0; i < eks.length; i++) if (String(eks[i][0]) === dato) throw fejl_('Batch ' + dato + ' findes allerede i Indkøbslog.');
   }
-
   // Indkøbslog: ny række øverst
   log.insertRowsBefore(START, 1);
-  log.getRange(START, 1, 1, 2).setValues([[datoNr, pris]]);
-  log.getRange(START, 7).setValue(d.noter || '');
-  log.getRange(START, 1, 1, 7).setBackground(null).setFontColor(null).setFontWeight('normal').setHorizontalAlignment(null);
+  log.getRange(START, 1, 1, 13).setBackground(null).setFontColor(null).setFontWeight('normal').setHorizontalAlignment(null).setWrap(false);
+  log.getRange(START, 1, 1, 4).setValues([[datoNr, pris, 'Ja', d.noter || '']]);
   log.getRange(START, 1).setNumberFormat('0');
   log.getRange(START, 2).setNumberFormat('#,##0.00');
 
   // Indkøb: n nye rækker øverst, i den rækkefølge sættene blev tastet
   var n = saet.length;
   ind.insertRowsBefore(START, n);
-  ind.getRange(START, 1, n, INDKOEB_KOLONNER).setBackground(null).setFontColor(null).setFontWeight('normal').setHorizontalAlignment(null);
-  var bc = [], e = [], gm = [], ou = [];
+  ind.getRange(START, 1, n, INDKOEB_KOLONNER).setBackground(null).setFontColor(null).setFontWeight('normal').setHorizontalAlignment(null).setWrap(false);
+  var bc = [], e = [], gm = [], ov = [];
   saet.forEach(function (s) {
     var nr = String(s.setnr).trim();
     bc.push([datoNr, /^\d+$/.test(nr) ? Number(nr) : nr]);
     e.push([Number(s.vaerdi)]);
-    //       G (salg for), H OVP, I Sorteret, J Fotos, K Klar, L Stand, M Platform
     gm.push(['', s.ovp ? 'Ja' : 'Nej', false, false, false, '', '']);
-    //       O, P, Q Noter, R Kilde, S Vejledning, T Komplet, U MappeID
-    ou.push(['', '', '', s.kilde, false, false, '']);
+    ov.push(['', '', '', s.kilde, false, false, '', '']);
   });
   ind.getRange(START, K.DATO, n, 2).setValues(bc);
   ind.getRange(START, K.VAERDI, n, 1).setValues(e);
   ind.getRange(START, K.SALGFOR, n, 7).setValues(gm);
-  ind.getRange(START, K.SALGSDATO, n, 7).setValues(ou);
+  ind.getRange(START, K.SALGSDATO, n, 8).setValues(ov);
   saetValidering_(ind, START, n);
   ind.getRange(START, K.DATO, n, 2).setNumberFormat('0');
   ind.getRange(START, K.VAERDI, n, 1).setNumberFormat('[$€]#,##0.00');
   ind.getRange(START, K.KOEBSPRIS, n, 2).setNumberFormat('#,##0.00');
   SpreadsheetApp.flush();
-
-  // Mapper til fotos + omdøbning ved dubletter
-  synkMapper_(dato);
   return hentBatch_(dato);
 }
 
-// Læs alle rækker i Indkøb (værdier + viste værdier)
 function laesIndkoeb_() {
   var ind = ark_(FANE.INDKOEB);
   var n = ind.getLastRow() - START + 1;
   if (n < 1) return { ark: ind, raekker: [] };
-  var v = ind.getRange(START, 1, n, INDKOEB_KOLONNER).getValues();
-  var raekker = [];
+  var v = ind.getRange(START, 1, n, INDKOEB_KOLONNER).getValues(), raekker = [];
   for (var i = 0; i < v.length; i++) {
     if (v[i][K.DATO - 1] === '' || v[i][K.DATO - 1] === null) continue;
     raekker.push({ raekke: START + i, v: v[i] });
@@ -596,40 +997,26 @@ function laesIndkoeb_() {
 }
 
 function tilSaet_(r) {
-  var v = r.v;
-  var b = function (x) { return x === true; };
+  var v = r.v, b = function (x) { return x === true; };
   return {
-    sku: String(v[K.SKU - 1]),
-    dato: String(v[K.DATO - 1]),
-    setnr: String(v[K.SETNR - 1]),
-    navn: String(v[K.NAVN - 1]),
-    vaerdi: Number(v[K.VAERDI - 1]) || 0,
-    koebspris: Math.round((Number(v[K.KOEBSPRIS - 1]) || 0) * 100) / 100,
-    ovp: v[K.OVP - 1] === 'Ja',
-    sorteret: b(v[K.SORTERET - 1]),
-    fotos: b(v[K.FOTOS - 1]),
-    klar: b(v[K.KLAR - 1]),
-    stand: v[K.STAND - 1] === '' ? '' : String(v[K.STAND - 1]),
-    platform: String(v[K.PLATFORM - 1] || ''),
-    lagerstatus: String(v[K.LAGERSTATUS - 1] || ''),
-    noter: String(v[K.NOTER - 1] || ''),
-    kilde: String(v[K.KILDE - 1] || ''),
-    vejledning: b(v[K.VEJLEDNING - 1]),
-    komplet: b(v[K.KOMPLET - 1])
+    sku: String(v[K.SKU - 1]), dato: String(v[K.DATO - 1]), setnr: String(v[K.SETNR - 1]), navn: String(v[K.NAVN - 1]),
+    vaerdi: Number(v[K.VAERDI - 1]) || 0, koebspris: Math.round((Number(v[K.KOEBSPRIS - 1]) || 0) * 100) / 100,
+    ovp: v[K.OVP - 1] === 'Ja', sorteret: b(v[K.SORTERET - 1]), fotos: b(v[K.FOTOS - 1]), klar: b(v[K.KLAR - 1]),
+    stand: v[K.STAND - 1] === '' ? '' : String(v[K.STAND - 1]), platform: String(v[K.PLATFORM - 1] || ''),
+    lagerstatus: String(v[K.LAGERSTATUS - 1] || ''), noter: String(v[K.NOTER - 1] || ''), kilde: String(v[K.KILDE - 1] || ''),
+    vejledning: b(v[K.VEJLEDNING - 1]), komplet: b(v[K.KOMPLET - 1])
   };
 }
 
 function hentBatch_(dato) {
-  var data = laesIndkoeb_();
-  var saet = [];
+  var data = laesIndkoeb_(), saet = [];
+  var mappe = batchMappe_(dato, false);
+  var t = mappe ? fotoTaelling_(mappe) : { antal: {} };
   data.raekker.forEach(function (r) {
     if (String(r.v[K.DATO - 1]) !== dato) return;
-    var s = tilSaet_(r);
-    s.antalFotos = antalFotos_(r.v[K.MAPPEID - 1]);
-    saet.push(s);
+    var s = tilSaet_(r); s.antalFotos = t.antal[s.sku] || 0; saet.push(s);
   });
-  var pris = 0;
-  var log = ark_(FANE.LOG);
+  var pris = 0, log = ark_(FANE.LOG);
   if (log.getLastRow() >= START) {
     var lv = log.getRange(START, 1, log.getLastRow() - START + 1, 2).getValues();
     for (var i = 0; i < lv.length; i++) if (String(lv[i][0]) === dato) { pris = Number(lv[i][1]); break; }
@@ -637,92 +1024,90 @@ function hentBatch_(dato) {
   return { dato: dato, pris: pris, saet: saet };
 }
 
-function hentLager_() {
-  return laesIndkoeb_().raekker.map(tilSaet_);
-}
+function hentLager_() { return laesIndkoeb_().raekker.map(tilSaet_); }
 
 function findRaekke_(sku) {
   if (/^#/.test(sku)) throw fejl_('SKU-formlen viser en fejl i arket. Kør CTS → Opdatér formler.');
   var data = laesIndkoeb_();
-  for (var i = 0; i < data.raekker.length; i++) {
-    if (String(data.raekker[i].v[K.SKU - 1]) === sku) return { ark: data.ark, r: data.raekker[i] };
-  }
+  for (var i = 0; i < data.raekker.length; i++) if (String(data.raekker[i].v[K.SKU - 1]) === sku) return { ark: data.ark, r: data.raekker[i] };
   throw fejl_('SKU ' + sku + ' findes ikke i Indkøb.');
 }
 
 // ---------- Klargøring ----------
 function gemKlargoering_(d) {
   var f = findRaekke_(String(d.sku || ''));
-  var ark = f.ark, rk = f.r.raekke;
+  var ark = f.ark, rk = f.r.raekke, sku = String(d.sku);
   var stand = d.stand === '' || d.stand === null || d.stand === undefined ? '' : Number(d.stand);
   if (stand !== '' && !(stand >= 1 && stand <= 10)) throw fejl_('Stand skal være 1–10.');
   if (d.platform && PLATFORME.indexOf(d.platform) < 0) throw fejl_('Ukendt salgsplatform.');
-  var fotos = f.r.v[K.FOTOS - 1] === true || antalFotos_(f.r.v[K.MAPPEID - 1]) > 0;
+  var mappe = batchMappe_(String(f.r.v[K.DATO - 1]), false);
+  var antal = mappe ? (fotoTaelling_(mappe).antal[sku] || 0) : 0;
+  var fotos = f.r.v[K.FOTOS - 1] === true || antal > 0;
   var klar = d.klar === true;
-  if (klar && !(d.sorteret === true && stand !== '' && fotos)) {
-    throw fejl_('Klar til salg kræver: sorteret, stand og mindst ét foto.');
-  }
-  ark.getRange(rk, K.SORTERET).setValue(d.sorteret === true);
-  ark.getRange(rk, K.FOTOS).setValue(fotos);
-  ark.getRange(rk, K.KLAR).setValue(klar);
-  ark.getRange(rk, K.STAND).setValue(stand);
-  ark.getRange(rk, K.PLATFORM).setValue(d.platform || '');
+  if (klar && !(d.sorteret === true && stand !== '' && fotos)) throw fejl_('Klar til salg kræver: sorteret, stand og mindst ét foto.');
+  ark.getRange(rk, K.SORTERET, 1, 5).setValues([[d.sorteret === true, fotos, klar, stand, d.platform || '']]);
   ark.getRange(rk, K.NOTER).setValue(d.noter || '');
-  ark.getRange(rk, K.VEJLEDNING).setValue(d.vejledning === true);
-  ark.getRange(rk, K.KOMPLET).setValue(d.komplet === true);
+  ark.getRange(rk, K.VEJLEDNING, 1, 2).setValues([[d.vejledning === true, d.komplet === true]]);
   SpreadsheetApp.flush();
-  var r = findRaekke_(String(d.sku)).r;
-  var s = tilSaet_(r);
-  s.antalFotos = antalFotos_(r.v[K.MAPPEID - 1]);
+  var s = tilSaet_(findRaekke_(sku).r);
+  s.antalFotos = antal;
   return s;
 }
 
-// ---------- Fotos og mapper ----------
+// ---------- Fotos: én mappe pr. købsdato, fotos navngivet <SKU>.NN.jpg ----------
 function rodMappe_() {
   var id = PropertiesService.getScriptProperties().getProperty('ROD_MAPPE_ID');
-  if (!id) throw fejl_('Fotomappe er ikke sat. Kør CTS → Opsæt testark.');
+  if (!id) throw fejl_('Fotomappe er ikke sat. Kør CTS → Importér fra Excel.');
   return DriveApp.getFolderById(id);
 }
 
-function antalFotos_(mappeId) {
-  if (!mappeId) return 0;
-  try {
-    var it = DriveApp.getFolderById(mappeId).getFiles(), n = 0;
-    while (it.hasNext()) { if (/\.\d{2,}\.jpg$/i.test(it.next().getName())) n++; }
-    return n;
-  } catch (e) { return 0; }
+// Købsmappen for en dato: id gemmes i Indkøbslog (skjult kolonne M)
+function batchMappe_(dato, opret) {
+  var log = ark_(FANE.LOG), n = log.getLastRow() - START + 1, rk = 0;
+  if (n > 0) {
+    var v = log.getRange(START, 1, n, LK.MAPPEID).getValues();
+    for (var i = 0; i < v.length; i++) {
+      if (String(v[i][0]) === String(dato)) {
+        rk = START + i;
+        var id = v[i][LK.MAPPEID - 1];
+        if (id) { try { return DriveApp.getFolderById(id); } catch (e) { /* slettet – find/opret igen */ } }
+        break;
+      }
+    }
+  }
+  var rod = rodMappe_(), it = rod.getFoldersByName(String(dato));
+  var mappe = it.hasNext() ? it.next() : (opret ? rod.createFolder(String(dato)) : null);
+  if (mappe && rk) log.getRange(rk, LK.MAPPEID).setValue(mappe.getId());
+  return mappe;
 }
 
-// Opretter manglende mapper og omdøber mapper/fotos, hvis et SKU har skiftet navn (fx -a/-b).
-function synkMapper_(dato) {
-  var data = laesIndkoeb_();
-  var rod = rodMappe_();
-  var brugt = {}; // mappe-id → allerede tildelt en række (hver række skal have sin egen mappe)
+// Tæller fotos pr. SKU i en købsmappe
+function fotoTaelling_(mappe) {
+  var res = { antal: {}, hoejeste: {}, navne: {}, filer: [] };
+  var it = mappe.getFiles();
+  while (it.hasNext()) {
+    var f = it.next(), navn = f.getName();
+    res.navne[navn.toUpperCase()] = true; res.filer.push(f);
+    var m = /^(.+)\.(\d{2,})\.(jpe?g|png|heic|heif|webp)$/i.exec(navn);
+    if (!m) continue;
+    res.antal[m[1]] = (res.antal[m[1]] || 0) + 1;
+    res.hoejeste[m[1]] = Math.max(res.hoejeste[m[1]] || 0, Number(m[2]));
+  }
+  return res;
+}
+
+// Hvis et SKU har skiftet navn (fx -a/-b), omdøbes fotoene i købsmappen
+function synkFotonavne_(dato) {
+  var data = laesIndkoeb_(), mappe = batchMappe_(dato, false);
+  if (!mappe) return;
+  var t = null;
   data.raekker.forEach(function (r) {
-    if (dato && String(r.v[K.DATO - 1]) !== dato) return;
-    var sku = String(r.v[K.SKU - 1]);
-    if (!sku || /^#/.test(sku)) return; // SKU-formlen fejler – vent med mappen
-    var id = r.v[K.MAPPEID - 1];
-    var mappe = null;
-    if (id && !brugt[id]) { try { mappe = DriveApp.getFolderById(id); } catch (e) { mappe = null; } }
-    if (!mappe) {
-      var it = rod.getFoldersByName(sku), fundet = null;
-      while (it.hasNext()) { var m = it.next(); if (!brugt[m.getId()]) { fundet = m; break; } }
-      mappe = fundet || rod.createFolder(sku);
-      brugt[mappe.getId()] = true;
-      data.ark.getRange(r.raekke, K.MAPPEID).setValue(mappe.getId());
-      return;
-    }
-    brugt[mappe.getId()] = true;
-    var gammel = mappe.getName();
-    if (gammel === sku) return;
-    mappe.setName(sku);
-    var filer = mappe.getFiles();
-    while (filer.hasNext()) {
-      var fil = filer.next();
-      var navn = fil.getName();
-      if (navn.indexOf(gammel + '.') === 0) fil.setName(sku + navn.substring(gammel.length));
-    }
+    if (String(r.v[K.DATO - 1]) !== String(dato)) return;
+    var sku = String(r.v[K.SKU - 1]), gl = String(r.v[K.FOTOSKU - 1] || '');
+    if (!gl || gl === sku || /^#/.test(sku)) return;
+    t = t || fotoTaelling_(mappe);
+    t.filer.forEach(function (f) { var n = f.getName(); if (n.indexOf(gl + '.') === 0) f.setName(sku + n.substring(gl.length)); });
+    data.ark.getRange(r.raekke, K.FOTOSKU).setValue(sku);
   });
 }
 
@@ -730,28 +1115,20 @@ function uploadFoto_(d) {
   var sku = String(d.sku || '');
   if (!d.billede) throw fejl_('Intet billede.');
   var f = findRaekke_(sku);
-  var id = f.r.v[K.MAPPEID - 1];
-  var mappe = null;
-  if (id) { try { mappe = DriveApp.getFolderById(id); } catch (e) { mappe = null; } }
-  if (!mappe) {
-    mappe = rodMappe_().createFolder(sku);
-    f.ark.getRange(f.r.raekke, K.MAPPEID).setValue(mappe.getId());
-  }
+  var dato = String(f.r.v[K.DATO - 1]);
+  var mappe = batchMappe_(dato, true);
+  var t = fotoTaelling_(mappe), uploadId = String(d.uploadId || '');
   // Samme upload sendt igen (genforsøg)? Så returneres den eksisterende fil.
-  var hoejeste = 0, filer = mappe.getFiles(), uploadId = String(d.uploadId || '');
-  while (filer.hasNext()) {
-    var fil = filer.next();
-    if (uploadId && fil.getDescription() === uploadId) {
-      return { navn: fil.getName(), antalFotos: antalFotos_(mappe.getId()), gentaget: true };
+  if (uploadId) {
+    for (var i = 0; i < t.filer.length; i++) {
+      if (t.filer[i].getDescription() === uploadId) return { navn: t.filer[i].getName(), antalFotos: t.antal[sku] || 0, gentaget: true };
     }
-    var m = /\.(\d{2,})\.jpg$/i.exec(fil.getName());
-    if (m) hoejeste = Math.max(hoejeste, Number(m[1]));
   }
-  var nr = hoejeste + 1;
-  var navn = sku + '.' + (nr < 10 ? '0' + nr : String(nr)) + '.jpg';
-  var blob = Utilities.newBlob(Utilities.base64Decode(String(d.billede)), 'image/jpeg', navn);
-  var ny = mappe.createFile(blob);
+  var nr = (t.hoejeste[sku] || 0) + 1;
+  var navn = sku + '.' + pad2_(nr) + '.jpg';
+  var ny = mappe.createFile(Utilities.newBlob(Utilities.base64Decode(String(d.billede)), 'image/jpeg', navn));
   if (uploadId) ny.setDescription(uploadId);
   f.ark.getRange(f.r.raekke, K.FOTOS).setValue(true);
-  return { navn: navn, antalFotos: antalFotos_(mappe.getId()), gentaget: false };
+  if (!f.r.v[K.FOTOSKU - 1]) f.ark.getRange(f.r.raekke, K.FOTOSKU).setValue(sku);
+  return { navn: navn, antalFotos: (t.antal[sku] || 0) + 1, gentaget: false };
 }
