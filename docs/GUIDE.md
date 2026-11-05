@@ -111,3 +111,15 @@ Claude giver dig besked, når der er en ny version af `Code.gs`. Så gør du så
 2. Vælg **Implementer → Administrer implementeringer** → klik på **blyanten** → under **Version** vælger du **Ny version** → **Implementer**.
 
 Adressen forbliver den samme, så du skal ikke ændre noget i appen.
+
+---
+
+## Uden net (offline)
+
+Appen virker også uden net, fx i en kælder eller hos en sælger:
+
+- Appen gemmer en **kopi** af sæt-databasen, egne salgspriser og lagerlisten på telefonen, hver gang der er net.
+- **Alt du laver** (nyt køb, klargøring, fotos) gemmes først på telefonen og sendes til Sheets og Drive **i rækkefølge**, så snart der er net igen. Det overlever, at appen lukkes.
+- En **mørk bjælke øverst** viser fx *"Offline · 12 venter på net"*. Tryk på den for at se, hvad der venter.
+- Hvis noget **fejler** hos Google (fx batchen findes allerede), står det i rødt under *Venter på at blive sendt* med knapperne **Prøv igen** og **Slet**.
+- Åbn appen **med net mindst én gang**, før du tager den med et sted uden net – så har den en frisk kopi.

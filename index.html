@@ -13,10 +13,11 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/app.css?v=5">
+<link rel="stylesheet" href="css/app.css?v=6">
 </head>
 <body>
 <div id="testbanner" class="banner" hidden></div>
+<button id="netbar" class="netbar" type="button" hidden></button>
 
 <!-- ============ FORSIDE ============ -->
 <section id="v-forside" class="visning">
@@ -47,7 +48,21 @@
       <span class="kort-tekst"><b>Databaser</b><small>Kommer i fase 3</small></span>
     </button>
   </nav>
-  <button class="link" data-gaa="indstillinger">Indstillinger</button>
+  <div class="forside-links">
+    <button class="link" data-gaa="udbakke">Venter på at blive sendt</button>
+    <button class="link" data-gaa="indstillinger">Indstillinger</button>
+  </div>
+</section>
+
+<!-- ============ UDBAKKE ============ -->
+<section id="v-udbakke" class="visning" hidden>
+  <header class="top"><button class="tilbage" data-gaa="forside" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Venter på at blive sendt</h2></header>
+  <div class="indhold">
+    <p class="hjaelp">Alt du laver gemmes først på telefonen og sendes til Sheets og Drive i rækkefølge. Uden net venter det her og sendes automatisk, når der er net igen.</p>
+    <div id="u-antal" class="lille"></div>
+    <div id="u-liste" class="liste"></div>
+    <button id="u-send" class="knap">Send nu</button>
+  </div>
 </section>
 
 <!-- ============ INDSTILLINGER ============ -->
@@ -171,10 +186,12 @@
 
 <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="js/beregn.js?v=5"></script>
-<script src="js/api.js?v=5"></script>
-<script src="js/foto.js?v=5"></script>
-<script src="js/beskaer.js?v=5"></script>
-<script src="js/app.js?v=5"></script>
+<script src="js/beregn.js?v=6"></script>
+<script src="js/api.js?v=6"></script>
+<script src="js/lokal.js?v=6"></script>
+<script src="js/data.js?v=6"></script>
+<script src="js/foto.js?v=6"></script>
+<script src="js/beskaer.js?v=6"></script>
+<script src="js/app.js?v=6"></script>
 </body>
 </html>

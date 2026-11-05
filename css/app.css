@@ -175,3 +175,10 @@ body.laast { overflow: hidden; }
 .b-ramme i[data-h="s"] { left: 50%; top: 100%; } .b-ramme i[data-h="sw"] { left: 0; top: 100%; } .b-ramme i[data-h="w"] { left: 0; top: 50%; }
 .beskaer-knapper { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 8px; padding: 10px 16px 16px; }
 .beskaer-knapper .knap { color: var(--tekst); font-size: 15px; padding: 0 8px; }
+
+/* Netstatus */
+.netbar { display: block; width: 100%; border: 0; padding: 8px 16px; font-size: 13px; font-weight: 600; text-align: center; cursor: pointer; position: sticky; top: 0; z-index: 8; }
+.netbar.offline { background: #3a3833; color: #fff; }
+.netbar.sender { background: var(--navy-lys); color: var(--navy); }
+.netbar.fejl { background: var(--roed-bg); color: var(--roed); }
+.forside-links { display: flex; flex-wrap: wrap; justify-content: space-between; padding: 0 4px; }

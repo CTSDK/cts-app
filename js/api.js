@@ -36,6 +36,7 @@
   // Kald med genforsøg ved netværksfejl (ikke ved fejl, serveren selv melder).
   async function kald(handling, data, forsoeg) {
     forsoeg = forsoeg || 1;
+    if (navigator.onLine === false) throw new Error('Ingen forbindelse.');
     var fn = erMock() ? Mock.kald : kaldRigtig;
     var sidste;
     for (var i = 0; i < forsoeg; i++) {
@@ -57,7 +58,7 @@
       '41714': ['Andrea’s Theater School', 'Friends', '', '2022'],
       '6086': ["Black Knight's Castle", 'Castle', 'Black Knights', '1992']
     };
-    var SALG = {}; // setnr → {gns, antal, hoejeste, laveste}; tom i testarket
+    var SALG = { '6086': { gns: 275, antal: 2, hoejeste: 300, laveste: 250 } }; // som testsalgene i testarket
     var NOEGLE = 'cts.mock';
     function laes() { try { return JSON.parse(localStorage.getItem(NOEGLE)) || { log: [], ind: [], fotos: {} }; } catch (e) { return { log: [], ind: [], fotos: {} }; } }
     function skriv(s) { localStorage.setItem(NOEGLE, JSON.stringify(s)); }
@@ -121,11 +122,21 @@
         var r = s.ind.find(function (x) { return x.sku === d.sku; }); if (r) r.fotos = true;
         skriv(s); return { navn: navn, antalFotos: liste.length, gentaget: false };
       },
-      hentLager: function () { var s = laes(); genberegn(s); return s.ind; }
+      hentLager: function () { var s = laes(); genberegn(s); return s.ind; },
+      hentAlt: function () {
+        var s = laes(); genberegn(s);
+        return {
+          db: Object.keys(DB).map(function (k) { return [k].concat(DB[k]); }),
+          salg: Object.keys(SALG).map(function (k) { var x = SALG[k]; return [k, x.gns, x.antal, x.hoejeste, x.laveste]; }),
+          lager: s.ind.map(function (r) { var c = Object.assign({}, r); delete c.antalFotos; return c; }),
+          log: s.log.map(function (l) { return [l.dato, l.pris]; })
+        };
+      }
     };
     function srv(t) { var e = new Error(t); e.fraServer = true; return e; }
     async function kald(handling, data) {
       await vent(150);
+      if (navigator.onLine === false) throw new Error('Ingen forbindelse (simuleret).');
       if (!H[handling]) throw srv('Ukendt handling: ' + handling);
       return JSON.parse(JSON.stringify(H[handling](data || {})));
     }

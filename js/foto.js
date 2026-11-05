@@ -79,54 +79,15 @@
     return tilJpg(c, c.width, c.height);
   }
 
-  // ---------- Upload-kø (ét foto ad gangen) ----------
-  function Koe(sendFn, paaAendring) {
-    this.poster = [];
-    this.koerer = false;
-    this.send = sendFn;
-    this.paaAendring = paaAendring || function () {};
+  // Lille miniature til visning i appen (gemmes sammen med fotoet i udbakken)
+  function miniature(dataUrl) {
+    return new Promise(function (ok) {
+      var img = new Image();
+      img.onload = function () { ok(tilLaerred(img, img.naturalWidth, img.naturalHeight, 240).toDataURL('image/jpeg', 0.7)); };
+      img.onerror = function () { ok(''); };
+      img.src = dataUrl;
+    });
   }
-  Koe.prototype.tilfoej = function (sku, jpg) {
-    var post = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
-      sku: sku, jpg: jpg, status: 'venter', forsoeg: 0, navn: '', fejl: ''
-    };
-    this.poster.push(post);
-    this.paaAendring(post);
-    this.koer();
-    return post;
-  };
-  Koe.prototype.proevIgen = function (id) {
-    var p = this.poster.find(function (x) { return x.id === id; });
-    if (p && p.status === 'fejl') { p.status = 'venter'; p.forsoeg = 0; p.fejl = ''; this.paaAendring(p); this.koer(); }
-  };
-  Koe.prototype.ventende = function () {
-    return this.poster.filter(function (p) { return p.status !== 'ok' && p.status !== 'fejl'; }).length;
-  };
-  Koe.prototype.koer = async function () {
-    if (this.koerer) return;
-    this.koerer = true;
-    try {
-      for (;;) {
-        var p = this.poster.find(function (x) { return x.status === 'venter'; });
-        if (!p) break;
-        p.status = 'sender'; this.paaAendring(p);
-        try {
-          var svar = await this.send(p);
-          p.status = 'ok'; p.navn = svar.navn; p.svar = svar; p.jpg.base64 = null; // frigør hukommelse
-        } catch (e) {
-          p.forsoeg++;
-          if (e.fraServer || p.forsoeg >= 4) { p.status = 'fejl'; p.fejl = e.message; }
-          else {
-            p.status = 'venter'; p.fejl = 'Dårlig forbindelse – prøver igen …';
-            this.paaAendring(p);
-            await new Promise(function (r) { setTimeout(r, 2000 * Math.pow(2, p.forsoeg - 1)); });
-          }
-        }
-        this.paaAendring(p);
-      }
-    } finally { this.koerer = false; }
-  };
 
-  rod.Foto = { startKamera: startKamera, stopKamera: stopKamera, kameraKoerer: kameraKoerer, tagRaa: tagRaa, filTilRaa: filTilRaa, beskaerTilJpg: beskaerTilJpg, Koe: Koe };
+  rod.Foto = { startKamera: startKamera, stopKamera: stopKamera, kameraKoerer: kameraKoerer, tagRaa: tagRaa, filTilRaa: filTilRaa, beskaerTilJpg: beskaerTilJpg, miniature: miniature };
 })(this);

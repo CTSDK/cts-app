@@ -94,8 +94,9 @@ fs.mkdirSync(UD, { recursive: true });
   assert.deepStrictEqual(navne, ['.01.jpg', '.02.jpg', '.03.jpg']);
   const maal = await page.$$eval('#k3-fotos .foto img', e => e.map(x => [x.naturalWidth, x.naturalHeight]));
   console.log('fotomål (px):', JSON.stringify(maal));
-  assert.ok(maal[0][0] < maal[1][0] && maal[0][1] < maal[1][1], 'foto 1 er beskåret');
-  assert.ok(Math.max(...maal[2]) <= 1600, 'fil nedskaleret til maks 1600');
+  // miniaturer: foto 1 er beskåret (andet format end hele billedet i foto 2)
+  assert.ok(Math.abs(maal[0][0] / maal[0][1] - maal[1][0] / maal[1][1]) > 0.05, 'foto 1 er beskåret');
+  assert.ok(maal.every(m => Math.max(...m) <= 240), 'miniaturer er små');
   const stoerrelse = await page.evaluate(() => JSON.parse(localStorage.getItem('cts.mock')).fotos['261028-10271'].map(f => f.kb));
   console.log('fotostørrelser (KB):', stoerrelse.join(', '));
   await page.click('#k3-plus');
@@ -135,10 +136,65 @@ fs.mkdirSync(UD, { recursive: true });
   const f = page.locator('#k1-linjer .linje input').first(); await f.click(); await f.pressSequentially('6086');
   await page.waitForSelector('#k1-linjer .navn.fundet');
   await page.click('#k1-faerdig');
-  await page.locator('#k2-liste input').first().fill('10');
-  await page.locator('#k2-liste select').first().selectOption('Egen vurdering');
+  assert.ok((await page.textContent('#k2-liste')).includes('Egne salg'), 'egne salg fra lokal kopi');
   await page.click('#k2-gem');
   await page.waitForFunction(() => document.getElementById('k2-fejl').textContent.includes('findes allerede'));
+  await page.evaluate(() => localStorage.removeItem('cts.kladde'));
+
+  // ================= OFFLINE =================
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.goto(URL + '?mock=1');
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+  await ctx.setOffline(true);
+  await page.reload();                                   // appen skal starte uden net (service worker)
+  await page.waitForSelector('#v-forside:not([hidden])');
+  await page.waitForFunction(() => document.getElementById('netbar').textContent.includes('Offline'));
+  await skud('7-offline-forside');
+  // Lager fra kopien
+  await page.click('[data-gaa="lager"]');
+  await page.waitForFunction(() => document.getElementById('l-antal').textContent.includes('af 4'));
+  await page.fill('#l-soeg', '41711');
+  await page.locator('.lager-post').first().click();
+  await page.waitForSelector('#v-koeb3:not([hidden])');
+  assert.strictEqual(await page.textContent('#k3-sku'), '261028-41711');
+  // Foto offline (telefonens kamera-knap) → beskær → venter
+  await page.setInputFiles('#k3-fil', fil);
+  await page.waitForSelector('.beskaer:not([hidden])');
+  await page.click('[data-b="ok"]');
+  await page.waitForFunction(() => [...document.querySelectorAll('#k3-fotos .foto span')].some(e => e.textContent === 'venter'));
+  await page.click('#k3-plus');
+  await page.check('#k3-sorteret', { force: true });
+  assert.ok(!(await page.isDisabled('#k3-klar')), 'Klar kan vælges med foto der venter');
+  await page.click('#k3-klar');
+  await page.waitForFunction(() => document.getElementById('k3-status').textContent.includes('sendes, når der er net'));
+  await skud('8-offline-klargoer');
+  // Nyt køb offline med lokal sæt-database
+  await page.click('#k3-tilbage');
+  await page.click('.top .tilbage >> visible=true');
+  await page.click('[data-gaa="koeb1"]');
+  await page.fill('#k1-dato', '2026-11-06'); await page.fill('#k1-pris', '500');
+  const g = page.locator('#k1-linjer .linje input').first(); await g.click(); await g.pressSequentially('6086');
+  await page.waitForSelector('#k1-linjer .navn.fundet');
+  await page.click('#k1-faerdig');
+  assert.strictEqual(await page.textContent('[data-kp]'), '500,00 kr');
+  await page.click('#k2-gem');
+  await page.waitForSelector('#v-koeb3:not([hidden])');
+  assert.strictEqual(await page.textContent('#k3-sku'), '261106-6086');
+  // Udbakken overlever genstart uden net
+  await page.reload();
+  await page.waitForFunction(() => /3 venter/.test(document.getElementById('netbar').textContent));
+  await page.click('#netbar');
+  await page.waitForSelector('#v-udbakke:not([hidden])');
+  assert.strictEqual(await page.locator('#u-liste .post').count(), 3);
+  await skud('9-udbakke');
+  // Net tilbage → alt sendes i rækkefølge
+  await ctx.setOffline(false);
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await page.waitForFunction(() => document.getElementById('u-antal').textContent.includes('Alt er sendt'), null, { timeout: 30000 });
+  const lagret = await page.evaluate(() => JSON.parse(localStorage.getItem('cts.mock')));
+  assert.strictEqual(lagret.fotos['261028-41711'].length, 1, 'offline-foto sendt');
+  assert.ok(lagret.ind.find(r => r.sku === '261028-41711').klar, 'klar sendt');
+  assert.ok(lagret.log.some(l => l.dato === '261106'), 'offline-batch sendt');
 
   // Ingen vandret scroll
   const bred = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);

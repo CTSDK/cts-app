@@ -3,7 +3,7 @@
   'use strict';
 
   var $ = function (id) { return document.getElementById(id); };
-  var B = window.Beregn, Api = window.Api, Foto = window.Foto, Beskaer = window.Beskaer;
+  var B = window.Beregn, Api = window.Api, Foto = window.Foto, Beskaer = window.Beskaer, Data = window.Data;
   var KILDER_MANUEL = ['BrickLink', 'eBay', 'Egen vurdering'];
   var KLADDE = 'cts.kladde';
 
@@ -14,10 +14,7 @@
   // ================= Navigation =================
   var aktiv = 'forside';
   function gaa(navn) {
-    if (aktiv === 'koeb3' && navn !== 'koeb3') {
-      if (koe.ventende() > 0 && !confirm('Der er fotos, der ikke er sendt endnu. Vil du forlade siden alligevel?')) return;
-      Foto.stopKamera($('k3-video')); kameraUi();
-    }
+    if (aktiv === 'koeb3' && navn !== 'koeb3') { Foto.stopKamera($('k3-video')); kameraUi(); }
     document.querySelectorAll('.visning').forEach(function (v) { v.hidden = v.id !== 'v-' + navn; });
     aktiv = navn;
     window.scrollTo(0, 0);
@@ -25,7 +22,8 @@
     if (navn === 'indstillinger') visIndstillinger();
     if (navn === 'koeb1') visKoeb1();
     if (navn === 'koeb2') visKoeb2();
-    if (navn === 'lager') hentLager();
+    if (navn === 'lager') visLager();
+    if (navn === 'udbakke') tegnUdbakke();
   }
   document.addEventListener('click', function (e) {
     var g = e.target.closest('[data-gaa]');
@@ -33,17 +31,31 @@
   });
 
   // ================= Forside / forbindelse =================
-  async function tjekForbindelse() {
+  function tjekForbindelse() {
     var el = $('forbindelse');
     var ind = Api.indstillinger();
     if (!Api.erMock() && (!ind.url || !ind.noegle)) { el.textContent = 'Ikke forbundet – gå til Indstillinger'; el.className = 'status fejl'; return; }
-    el.textContent = 'Tjekker forbindelse …'; el.className = 'status';
-    try {
-      var p = await Api.kald('ping', {}, 2);
-      el.textContent = '✓ Forbundet til ' + p.ark + (p.tilstand === 'test' ? ' (testtilstand)' : '');
-      el.className = 'status ok';
-    } catch (e) { el.textContent = 'Ingen forbindelse: ' + e.message; el.className = 'status fejl'; }
+    Data.hentAlt();
+    visStatus();
   }
+
+  // Statuslinje på forsiden + bjælke øverst på alle sider
+  function visStatus() {
+    var st = Data.status(), v = Data.venter().length, f = Data.fejlede().length;
+    var t, kl;
+    if (f) { t = '⚠ ' + f + ' fejlede · ' + v + ' venter – tryk for at se'; kl = 'fejl'; }
+    else if (!st.online) { t = 'Offline' + (v ? ' · ' + v + ' venter på net' : ' · alt er sendt'); kl = 'offline'; }
+    else if (v || st.sender) { t = 'Sender … ' + v + ' tilbage'; kl = 'sender'; }
+    else { t = ''; kl = ''; }
+    var bar = $('netbar'); bar.textContent = t; bar.className = 'netbar ' + kl; bar.hidden = !t;
+    var el = $('forbindelse');
+    if (el && el.className.indexOf('fejl') >= 0 && /Indstillinger/.test(el.textContent)) return;
+    var hentet = Data.hentetTid();
+    if (st.henter && !hentet) { el.textContent = 'Henter data fra Sheets …'; el.className = 'status'; }
+    else if (st.online) { el.textContent = '✓ Forbundet' + (v ? ' · ' + v + ' venter' : ' · alt er sendt'); el.className = 'status ok'; }
+    else { el.textContent = 'Offline – arbejder på kopien fra ' + (hentet ? new Date(hentet).toLocaleString('da-DK', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '(ingen kopi endnu)'); el.className = 'status fejl'; }
+  }
+  $('netbar').addEventListener('click', function () { gaa('udbakke'); });
 
   function visIndstillinger() {
     var ind = Api.indstillinger();
@@ -138,11 +150,14 @@
   }
   async function slaaOp(ln) {
     var nr = ln.setnr; if (!nr) return;
-    try {
-      var r = await Api.kald('slaaOp', { setnr: nr }, 3);
-      if (ln.setnr !== nr) return;
-      ln.opslag = r;
-    } catch (e) { if (ln.setnr === nr) ln.opslag = { fejl: e.message }; }
+    if (Data.harDb()) ln.opslag = Data.slaaOp(nr);
+    else {
+      try {
+        var r = await Api.kald('slaaOp', { setnr: nr }, 3);
+        if (ln.setnr !== nr) return;
+        ln.opslag = r;
+      } catch (e) { if (ln.setnr === nr) ln.opslag = { fejl: 'Sæt-databasen er ikke hentet til telefonen endnu. Åbn appen med net én gang.' }; }
+    }
     gemKladde();
     var el = navnEl.get(ln);
     if (el && el.isConnected) visNavn(el, ln);
@@ -213,47 +228,40 @@
     var f = $('k2-fejl'); f.textContent = '';
     var mangler = koeb.linjer.filter(function (l) { return !(Number(l.vaerdi) > 0) || !l.kilde; });
     if (mangler.length) { f.textContent = 'Udfyld værdi og kilde for: ' + mangler.map(function (l) { return l.setnr; }).join(', '); return; }
-    var knap = this; knap.disabled = true; knap.textContent = 'Gemmer …';
     var dato = B.batchId(koeb.iso), pris = B.tal(koeb.pris);
+    if (Data.batchFindes(dato)) { f.textContent = 'Batch ' + dato + ' findes allerede i Indkøbslog.'; return; }
+    var knap = this; knap.disabled = true;
     try {
-      var res = await Api.kald('opretBatch', {
+      await Data.tilfoej('opretBatch', {
         dato: dato, pris: pris,
         saet: koeb.linjer.map(function (l) { return { setnr: l.setnr, ovp: l.ovp, vaerdi: Number(l.vaerdi), kilde: l.kilde }; })
-      }, 1);
-      // Kontrol: regnearkets købspriser mod appens
-      var lokal = B.koebspriser(pris, koeb.linjer.map(function (l) { return Number(l.vaerdi); }));
-      var afvig = res.saet.filter(function (s, i) { return Math.abs(s.koebspris - lokal[i]) > 0.01; });
+      }, { navne: koeb.linjer.map(function (l) { return l.opslag && l.opslag.navn; }) });
       sletKladde();
-      aabnKlargoering(res, res.saet[0] && res.saet[0].sku, 'forside');
-      toast(afvig.length ? 'Gemt – men Sheets regnede anderledes for ' + afvig.length + ' sæt. Tjek arket.' : 'Gemt i Sheets ✓ ' + res.saet.length + ' sæt');
+      var rk = Data.batch(dato);
+      aabnKlargoering(dato, rk[0] && rk[0].sku, 'forside');
+      toast(Data.status().online ? 'Gemmer i Sheets …' : 'Gemt på telefonen – sendes til Sheets, når der er net');
     } catch (e) {
       f.textContent = 'Ikke gemt: ' + e.message;
-    } finally { knap.disabled = false; knap.textContent = 'Gem i Sheets'; }
+    } finally { knap.disabled = false; }
   });
 
   // ================= Side 3: klargør =================
-  var k3 = { batch: null, sku: null, fra: 'forside', stand: '' };
-  var koe = new Foto.Koe(function (p) {
-    return Api.kald('uploadFoto', { sku: p.sku, billede: p.jpg.base64, uploadId: p.id }, 1);
-  }, function (p) {
-    if (p.status === 'ok' && p.svar) {
-      var s = findSaet(p.sku); if (s) { s.antalFotos = p.svar.antalFotos; s.fotos = true; }
-    }
-    tegnFotos(); visKrav();
-  });
+  var k3 = { dato: null, sku: null, fra: 'forside', stand: '' };
+  function k3Saet() { return Data.batch(k3.dato); }
+  function findSaet(sku) { return k3Saet().find(function (s) { return s.sku === sku; }); }
 
-  function findSaet(sku) { return k3.batch && k3.batch.saet.find(function (s) { return s.sku === sku; }); }
-
-  function aabnKlargoering(batch, sku, fra) {
-    k3.batch = batch; k3.fra = fra || 'forside';
+  function aabnKlargoering(dato, sku, fra) {
+    k3.dato = String(dato); k3.fra = fra || 'forside';
     gaa('koeb3');
-    vaelgSaet(sku || (batch.saet[0] && batch.saet[0].sku));
+    var alle = k3Saet();
+    vaelgSaet(sku || (alle[0] && alle[0].sku));
+    Data.opdaterFotos(k3.dato);
   }
   $('k3-tilbage').addEventListener('click', function () { gaa(k3.fra); });
 
   function tegnVaelger() {
     var c = $('k3-vaelg'); c.innerHTML = '';
-    k3.batch.saet.forEach(function (s) {
+    k3Saet().forEach(function (s) {
       var b = document.createElement('button');
       b.type = 'button'; b.setAttribute('role', 'tab');
       b.className = (s.sku === k3.sku ? 'til ' : '') + (s.klar ? 'klar' : '');
@@ -310,25 +318,23 @@
 
   function visKrav() {
     var s = findSaet(k3.sku); if (!s) return;
-    var fotos = (s.antalFotos || 0) > 0;
-    var ok = { sorteret: $('k3-sorteret').checked, stand: k3.stand !== '', fotos: fotos };
-    var venter = koe.poster.filter(function (p) { return p.sku === s.sku && p.status !== 'ok' && p.status !== 'fejl'; }).length;
+    var iDrive = s.antalFotos || 0, venter = s.ventendeFotos || 0;
+    var ok = { sorteret: $('k3-sorteret').checked, stand: k3.stand !== '', fotos: iDrive > 0 || venter > 0 || s.fotos };
     $('k3-krav').innerHTML = 'Klar til salg kræver: ' +
       [['sorteret', 'Sorteret'], ['stand', 'Stand'], ['fotos', 'Mindst ét foto']].map(function (k) { return (ok[k[0]] ? '✓ ' : '○ ') + k[1]; }).join(' · ') +
-      ' — ' + (s.antalFotos || 0) + ' foto(s) i Drive' + (venter ? ', ' + venter + ' sendes' : '');
+      ' — ' + iDrive + ' foto(s) i Drive' + (venter ? ', ' + venter + ' venter på at blive sendt' : '');
     var klarKnap = $('k3-klar');
     if (s.klar) { klarKnap.textContent = 'Markér som ikke klar'; klarKnap.disabled = false; }
-    else { klarKnap.textContent = 'Klar til salg'; klarKnap.disabled = !(ok.sorteret && ok.stand && ok.fotos) || venter > 0; }
+    else { klarKnap.textContent = 'Klar til salg'; klarKnap.disabled = !(ok.sorteret && ok.stand && ok.fotos); }
   }
 
   async function gem(klar, stille) {
-    var s = findSaet(k3.sku); if (!s) return;
+    var s = findSaet(k3.sku); if (!s) return false;
     var d = formular(); d.klar = klar === null ? !!s.klar : klar;
-    var st = $('k3-status'); st.className = 'besked'; if (!stille) st.textContent = 'Gemmer …';
+    var st = $('k3-status'); st.className = 'besked';
     try {
-      var ny = await Api.kald('gemKlargoering', d, 3);
-      Object.assign(s, ny);
-      if (!stille) st.textContent = d.klar ? '✓ Klar til salg – vises nu i Lager.' : '✓ Gemt.';
+      await Data.tilfoej('gemKlargoering', d, { sku: d.sku });
+      if (!stille) st.textContent = (d.klar ? '✓ Klar til salg' : '✓ Gemt') + (Data.status().online ? '' : ' på telefonen – sendes, når der er net');
       tegnVaelger(); visKrav();
       return true;
     } catch (e) { st.className = 'besked fejl'; st.textContent = 'Ikke gemt: ' + e.message; return false; }
@@ -337,8 +343,8 @@
   $('k3-klar').addEventListener('click', async function () {
     var s = findSaet(k3.sku); if (!s) return;
     var ok = await gem(!s.klar, false);
-    if (ok && s.klar) {
-      var naeste = k3.batch.saet.find(function (x) { return !x.klar; });
+    if (ok && !s.klar) {
+      var naeste = k3Saet().find(function (x) { return !x.klar; });
       toast(naeste ? 'Klar ✓ – næste: ' + naeste.setnr : 'Alle sæt i batchen er klar ✓');
     }
   });
@@ -367,8 +373,12 @@
   var beskaerer = false;
   async function beskaerOgSend(raa, sku) {
     var r = await Beskaer.aabn(raa);
-    if (r) koe.tilfoej(sku, Foto.beskaerTilJpg(raa, r));
-    return !!r;
+    if (!r) return false;
+    var jpg = Foto.beskaerTilJpg(raa, r);
+    var thumb = await Foto.miniature(jpg.dataUrl);
+    var uploadId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    await Data.tilfoej('uploadFoto', { sku: sku, billede: jpg.base64, uploadId: uploadId }, { sku: sku, thumb: thumb });
+    return true;
   }
   $('k3-tag').addEventListener('click', async function () {
     if (beskaerer) return;
@@ -397,27 +407,42 @@
 
   function tegnFotos() {
     var c = $('k3-fotos'); c.innerHTML = '';
-    koe.poster.filter(function (p) { return p.sku === k3.sku; }).forEach(function (p) {
-      var d = document.createElement('div'); d.className = 'foto ' + p.status;
-      var tekst = p.status === 'ok' ? p.navn.replace(p.sku, '') : p.status === 'sender' ? 'sender …' : p.status === 'fejl' ? 'fejlede' : (p.fejl ? 'venter' : 'i kø');
-      d.innerHTML = '<img alt="" src="' + p.jpg.dataUrl + '"><span>' + esc(tekst) + '</span>';
-      if (p.status === 'fejl') {
-        var b = document.createElement('button'); b.type = 'button'; b.textContent = 'Prøv igen';
-        b.title = p.fejl; b.addEventListener('click', function () { koe.proevIgen(p.id); });
+    var sku = k3.sku;
+    var vis = Data.sendteFotos(sku).map(function (f) { return { thumb: f.thumb, tekst: f.navn.replace(sku, ''), kl: 'ok' }; });
+    Data.poster().filter(function (p) { return p.type === 'uploadFoto' && p.data.sku === sku; }).forEach(function (p) {
+      vis.push({ thumb: p.meta.thumb, kl: p.status, tekst: p.status === 'sender' ? 'sender …' : p.status === 'fejl' ? 'fejlede' : 'venter', post: p });
+    });
+    vis.forEach(function (f) {
+      var d = document.createElement('div'); d.className = 'foto ' + f.kl;
+      d.innerHTML = '<img alt="" src="' + f.thumb + '"><span>' + esc(f.tekst) + '</span>';
+      if (f.post && f.post.status === 'fejl') {
+        var b = document.createElement('button'); b.type = 'button'; b.textContent = 'Prøv igen'; b.title = f.post.fejl;
+        b.addEventListener('click', function () { Data.proevIgen(f.post.seq); });
         d.appendChild(b);
       }
       c.appendChild(d);
     });
   }
 
-  // ================= Lager =================
-  var lager = [], filter = 'alle';
-  async function hentLager() {
-    $('l-antal').textContent = 'Henter …';
-    try { lager = await Api.kald('hentLager', {}, 3); tegnLager(); }
-    catch (e) { $('l-antal').textContent = 'Kunne ikke hente lager: ' + e.message; }
+  function opdaterK3() {
+    if (!findSaet(k3.sku)) return;
+    tegnVaelger(); tegnFotos(); visKrav();
+    var s = findSaet(k3.sku);
+    $('k3-info').textContent = (s.ovp ? 'Med æske (OVP)' : 'Uden æske') + ' · købspris ' + B.kr(s.koebspris) + ' kr' + (s.lagerstatus ? ' · ' + s.lagerstatus : '') + (s.ventende ? ' · venter på at blive sendt' : '');
   }
-  $('l-opdater').addEventListener('click', hentLager);
+
+  // ================= Lager =================
+  var filter = 'alle';
+  function visLager() {
+    tegnLager();
+    if (Date.now() - Data.hentetTid() > 60000) Data.hentAlt();
+  }
+  $('l-opdater').addEventListener('click', async function () {
+    $('l-antal').textContent = 'Henter …';
+    var ok = await Data.hentAlt();
+    if (!ok) toast('Ingen forbindelse – viser kopien på telefonen');
+    tegnLager();
+  });
   $('l-soeg').addEventListener('input', tegnLager);
   document.querySelectorAll('[data-filter]').forEach(function (b) {
     b.addEventListener('click', function () {
@@ -429,6 +454,7 @@
   function erKlar(s) { return s.klar && s.lagerstatus === 'På lager'; }
   function tegnLager() {
     var q = $('l-soeg').value.trim().toLowerCase();
+    var lager = Data.lager();
     var vis = lager.filter(function (s) {
       if (filter === 'klar' && !erKlar(s)) return false;
       if (filter === 'ikke' && (s.klar || s.lagerstatus === 'Solgt')) return false;
@@ -436,26 +462,62 @@
       if (!q) return true;
       return (s.sku + ' ' + s.setnr + ' ' + s.navn).toLowerCase().indexOf(q) >= 0;
     });
-    $('l-antal').textContent = vis.length + ' af ' + lager.length + ' sæt';
+    var hentet = Data.hentetTid();
+    $('l-antal').textContent = vis.length + ' af ' + lager.length + ' sæt' + (hentet ? ' · kopi fra ' + new Date(hentet).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' }) : ' · ingen kopi hentet endnu');
     var c = $('l-liste'); c.innerHTML = '';
     vis.slice(0, 300).forEach(function (s) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'lager-post';
       var maerke = s.lagerstatus === 'Solgt' ? ['solgt', 'Solgt'] : erKlar(s) ? ['klar', 'Klar'] : ['', 'Ikke klar'];
       b.innerHTML = '<span class="mono">' + esc(s.sku) + '</span><span class="maerke ' + maerke[0] + '">' + maerke[1] + '</span>' +
         '<span class="navn">' + esc(s.navn) + '</span>' +
-        '<span class="lille">' + [s.stand ? 'Stand ' + s.stand : '', s.platform, s.ovp ? 'OVP' : ''].filter(Boolean).join(' · ') + '</span>';
-      b.addEventListener('click', async function () {
+        '<span class="lille">' + [s.stand ? 'Stand ' + s.stand : '', s.platform, s.ovp ? 'OVP' : '', s.ventende || s.ventendeFotos ? 'venter på at blive sendt' : ''].filter(Boolean).join(' · ') + '</span>';
+      b.addEventListener('click', function () {
         if (s.lagerstatus === 'Solgt') { toast('Sættet er solgt.'); return; }
-        try { var batch = await Api.kald('hentBatch', { dato: s.dato }, 3); aabnKlargoering(batch, s.sku, 'lager'); }
-        catch (e) { toast('Kunne ikke åbne: ' + e.message); }
+        aabnKlargoering(s.dato, s.sku, 'lager');
       });
       c.appendChild(b);
     });
     if (vis.length > 300) { var m = document.createElement('div'); m.className = 'lille'; m.textContent = 'Viser de første 300. Søg for at indsnævre.'; c.appendChild(m); }
   }
 
+  // ================= Udbakke =================
+  var TYPENAVN = { opretBatch: 'Nyt køb', gemKlargoering: 'Klargøring', uploadFoto: 'Foto' };
+  function tegnUdbakke() {
+    var c = $('u-liste'); c.innerHTML = '';
+    var p = Data.poster();
+    $('u-antal').textContent = p.length ? p.length + ' venter' + (Data.status().online ? '' : ' · offline') : 'Alt er sendt ✓';
+    p.forEach(function (x) {
+      var d = document.createElement('div'); d.className = 'post';
+      var hvad = x.type === 'opretBatch' ? 'Batch ' + x.data.dato + ' · ' + x.data.saet.length + ' sæt · ' + B.kr(x.data.pris) + ' kr' : x.data.sku;
+      d.innerHTML = '<div class="post-top"><span class="navn">' + TYPENAVN[x.type] + '</span><span class="mono">' + esc(hvad) + '</span></div>' +
+        '<div class="lille">' + (x.status === 'fejl' ? '<span class="ikke-off">Fejlede:</span> ' + esc(x.fejl) : x.status === 'sender' ? 'Sender …' : 'Venter på net') + '</div>';
+      if (x.status === 'fejl') {
+        var k = document.createElement('div'); k.className = 'knapper';
+        var b1 = document.createElement('button'); b1.className = 'knap'; b1.textContent = 'Prøv igen'; b1.addEventListener('click', function () { Data.proevIgen(x.seq); });
+        var b2 = document.createElement('button'); b2.className = 'knap'; b2.textContent = 'Slet';
+        b2.addEventListener('click', function () { if (confirm('Slette denne post? Den bliver ikke sendt til Sheets.')) Data.slet(x.seq); });
+        k.appendChild(b1); k.appendChild(b2); d.appendChild(k);
+      }
+      c.appendChild(d);
+    });
+  }
+  $('u-send').addEventListener('click', function () { Data.koer(); toast('Prøver at sende …'); });
+
   // ================= Start =================
   if (Api.erMock()) { var bn = $('testbanner'); bn.hidden = false; bn.textContent = 'TESTTILSTAND – simuleret forbindelse, intet gemmes i Sheets'; }
+  Data.paa(function () {
+    visStatus();
+    if (aktiv === 'lager') tegnLager();
+    if (aktiv === 'koeb3') opdaterK3();
+    if (aktiv === 'udbakke') tegnUdbakke();
+  });
+  Data.paaHaendelse(function (type, info) {
+    if (type === 'batchGemt') toast(info.afvig ? 'Batch ' + info.dato + ' gemt – men Sheets regnede anderledes for ' + info.afvig + ' sæt. Tjek arket.' : 'Batch ' + info.dato + ' gemt i Sheets ✓');
+    if (type === 'altSendt') toast('Alt er sendt til Sheets ✓');
+    if (type === 'fejl') toast('Kunne ikke sendes: ' + info.fejl);
+  });
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () { /* ignorer */ });
+  Data.start();
   gaa('forside');
   window.CTS = { gaa: gaa }; // til test
 })();

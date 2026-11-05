@@ -12,7 +12,7 @@
  * (Script Properties) og aldrig i koden.
  */
 
-var VERSION = '1.0.4';
+var VERSION = '1.1.0';
 
 // ---------- Faner og kolonner ----------
 var FANE = {
@@ -457,8 +457,28 @@ var HANDLINGER = {
   hentBatch: function (d) { return hentBatch_(String(d.dato)); },
   gemKlargoering: function (d) { return medLaas_(function () { return gemKlargoering_(d); }); },
   uploadFoto: function (d) { return medLaas_(function () { return uploadFoto_(d); }); },
-  hentLager: function () { return hentLager_(); }
+  hentLager: function () { return hentLager_(); },
+  hentAlt: function () { return hentAlt_(); }
 };
+
+// Alt hvad appen skal bruge for at kunne arbejde uden net
+function hentAlt_() {
+  var db = ark_(FANE.DB);
+  var start = Number(PropertiesService.getScriptProperties().getProperty('DB_START')) || findDbStart_(db) || 3;
+  var n = db.getLastRow() - start + 1;
+  var dbRaekker = n > 0 ? db.getRange(start, 1, n, 5).getDisplayValues().filter(function (r) { return r[0] !== ''; }) : [];
+  var dbs = ark_(FANE.DBS);
+  var m = dbs.getLastRow() - 2;
+  var salg = m > 0 ? dbs.getRange(3, 1, m, 6).getValues()
+    .filter(function (r) { return r[0] !== '' && Number(r[3]) > 0; })
+    .map(function (r) { return [String(r[0]), Number(r[2]), Number(r[3]), Number(r[4]), Number(r[5])]; }) : [];
+  var log = ark_(FANE.LOG);
+  var l = log.getLastRow() - START + 1;
+  var logRaekker = l > 0 ? log.getRange(START, 1, l, 2).getValues()
+    .filter(function (r) { return r[0] !== ''; })
+    .map(function (r) { return [String(r[0]), Number(r[1])]; }) : [];
+  return { db: dbRaekker, salg: salg, lager: hentLager_(), log: logRaekker };
+}
 
 function medLaas_(fn) {
   var laas = LockService.getScriptLock();
