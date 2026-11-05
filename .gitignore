@@ -1,0 +1,32 @@
+# Data og regneark må ALDRIG ligge i repository'et
+*.xlsx
+*.xlsm
+*.xls
+*.csv
+*.tsv
+*.ods
+*.numbers
+*.json.bak
+data/
+eksport/
+
+# Nøgler og hemmeligheder
+.env
+*.env
+*.key
+*.pem
+nogle.txt
+secrets*
+
+# Fotos
+*.jpg
+*.jpeg
+*.heic
+*.HEIC
+!icons/*
+
+# System
+.DS_Store
+Thumbs.db
+node_modules/
+test-output/
