@@ -12,7 +12,7 @@
  * (Script Properties) og aldrig i koden.
  */
 
-var VERSION = '1.0.0';
+var VERSION = '1.0.1';
 
 // ---------- Faner og kolonner ----------
 var FANE = {
@@ -125,21 +125,31 @@ function opsaetTestark() {
     'Kør det KUN i testkopien. Fortsæt?', ui.ButtonSet.YES_NO);
   if (svar !== ui.Button.YES) return;
 
-  // Slet alle andre faner
-  ss.setActiveSheet(db);
-  ss.getSheets().forEach(function (sh) { if (sh.getName() !== FANE.DB) ss.deleteSheet(sh); });
+  try {
+    // Slet alle andre faner og navngivne områder, der pegede på dem
+    ss.setActiveSheet(db);
+    ss.getSheets().forEach(function (sh) { if (sh.getName() !== FANE.DB) proev_(function () { ss.deleteSheet(sh); }, 'slette fanen ' + sh.getName()); });
+    ss.getNamedRanges().forEach(function (r) { try { r.remove(); } catch (e) { /* ignorer */ } });
+    SpreadsheetApp.flush();
+    Utilities.sleep(1500);
 
-  var dbA = "DB!$A$" + dbStart + ":$A";
-  var dbB = "DB!$B$" + dbStart + ":$B";
-  var dbC = "DB!$C$" + dbStart + ":$C";
-  var dbD = "DB!$D$" + dbStart + ":$D";
-  PropertiesService.getScriptProperties().setProperty('DB_START', String(dbStart));
+    var dbA = "DB!$A$" + dbStart + ":$A";
+    var dbB = "DB!$B$" + dbStart + ":$B";
+    var dbC = "DB!$C$" + dbStart + ":$C";
+    var dbD = "DB!$D$" + dbStart + ":$D";
+    PropertiesService.getScriptProperties().setProperty('DB_START', String(dbStart));
 
-  byggIndkoebslog_(ss);
-  byggIndkoeb_(ss, dbA, dbB);
-  byggSalg_(ss);
-  byggDbSalgspriser_(ss, dbA, dbC);
-  byggLager_(ss, dbA, dbC, dbD);
+    trin_('Indkøbslog', function () { byggIndkoebslog_(ss); });
+    trin_('Indkøb', function () { byggIndkoeb_(ss, dbA, dbB); });
+    trin_('Salg 2026', function () { byggSalg_(ss); });
+    trin_('DB Salgspriser', function () { byggDbSalgspriser_(ss, dbA, dbC); });
+    trin_('Lager', function () { byggLager_(ss, dbA, dbC, dbD); });
+  } catch (err) {
+    ui.alert('Opsætningen stoppede',
+      String(err.message || err) + '\n\nDet er ufarligt: kør CTS → 1. Opsæt testark igen. ' +
+      'Virker det stadig ikke, så send et skærmbillede af denne besked til Claude.', ui.ButtonSet.OK);
+    return;
+  }
 
   // Rækkefølge på fanerne
   var orden = [FANE.LOG, FANE.INDKOEB, FANE.LAGER, FANE.SALG, FANE.DBS, FANE.DB];
@@ -162,6 +172,24 @@ function opsaetTestark() {
     '\n\nNæste trin: CTS → 2. Vis API-nøgle.', ui.ButtonSet.OK);
 }
 
+// Kør et byggetrin; ved fejl i Googles tjeneste ventes der og prøves igen (op til 3 gange).
+function trin_(navn, fn) {
+  proev_(function () {
+    var gl = SpreadsheetApp.getActive().getSheetByName(navn);
+    if (gl) SpreadsheetApp.getActive().deleteSheet(gl); // rest fra et tidligere forsøg
+    fn();
+  }, 'bygge fanen ' + navn);
+  SpreadsheetApp.flush();
+}
+
+function proev_(fn, hvad) {
+  var sidste;
+  for (var i = 0; i < 3; i++) {
+    try { return fn(); } catch (e) { sidste = e; SpreadsheetApp.flush(); Utilities.sleep(2000 * (i + 1)); }
+  }
+  throw new Error('Kunne ikke ' + hvad + ': ' + (sidste && sidste.message));
+}
+
 function findDbStart_(db) {
   var v = db.getRange(1, 1, 5, 1).getDisplayValues();
   for (var i = 0; i < v.length; i++) {
@@ -182,7 +210,8 @@ function underMappe_(foraeldre, navn) {
 }
 
 function nyFane_(ss, navn, titel, overskrifter, overskriftRaekke) {
-  var sh = ss.insertSheet(navn);
+  var sh = ss.insertSheet(ss.getSheets().length);
+  sh.setName(navn);
   var n = overskrifter.length;
   sh.getRange(1, 1, 1, n).merge().setValue(titel)
     .setBackground('#1f3864').setFontColor('#ffffff').setFontWeight('bold')
