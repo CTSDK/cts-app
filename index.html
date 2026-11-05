@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="CTS">
+<meta name="theme-color" content="#F6F4EF">
+<meta name="robots" content="noindex, nofollow">
+<title>CTS</title>
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="css/app.css?v=1">
+</head>
+<body>
+<div id="testbanner" class="banner" hidden></div>
+
+<!-- ============ FORSIDE ============ -->
+<section id="v-forside" class="visning">
+  <header class="forside-top">
+    <div class="streg"></div>
+    <h1>Copenhagen Treasures &amp; Services</h1>
+    <div id="forbindelse" class="status">Tjekker forbindelse …</div>
+  </header>
+  <nav class="menu">
+    <button class="kort kort-primaer" data-gaa="koeb1">
+      <span class="ikon ikon-gul"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
+      <span class="kort-tekst"><b>Registrér nyt køb</b><small>Dato, pris og sæt</small></span>
+    </button>
+    <button class="kort" data-gaa="lager">
+      <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7"/></svg></span>
+      <span class="kort-tekst"><b>Lager</b><small>Klar, ikke klar, på eBay</small></span>
+    </button>
+    <button class="kort" disabled>
+      <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v12H4zM8 7V5h8v2"/></svg></span>
+      <span class="kort-tekst"><b>Registrér salg</b><small>Kommer i fase 3</small></span>
+    </button>
+    <button class="kort" disabled>
+      <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V10M10 19V5M16 19v-6M22 19H2"/></svg></span>
+      <span class="kort-tekst"><b>Økonomi</b><small>Kommer i fase 3</small></span>
+    </button>
+    <button class="kort" disabled>
+      <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span>
+      <span class="kort-tekst"><b>Databaser</b><small>Kommer i fase 3</small></span>
+    </button>
+  </nav>
+  <button class="link" data-gaa="indstillinger">Indstillinger</button>
+</section>
+
+<!-- ============ INDSTILLINGER ============ -->
+<section id="v-indstillinger" class="visning" hidden>
+  <header class="top"><button class="tilbage" data-gaa="forside" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Indstillinger</h2></header>
+  <div class="indhold">
+    <p class="hjaelp">Indtastes én gang. Gemmes kun på denne telefon.</p>
+    <label for="ind-url">Adresse til maskinrummet (slutter på /exec)</label>
+    <input id="ind-url" type="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec">
+    <label for="ind-noegle">API-nøgle</label>
+    <input id="ind-noegle" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button id="ind-gem" class="knap knap-primaer">Gem og test forbindelse</button>
+    <div id="ind-status" class="besked" role="status"></div>
+  </div>
+</section>
+
+<!-- ============ NYT KØB – SIDE 1 ============ -->
+<section id="v-koeb1" class="visning" hidden>
+  <header class="top"><button class="tilbage" data-gaa="forside" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Nyt køb</h2><span class="side">Side 1 af 3</span></header>
+  <div class="trin"><i class="til"></i><i></i><i></i></div>
+  <div class="indhold">
+    <div class="raekke2">
+      <div><label for="k1-dato">Købsdato</label><input id="k1-dato" type="date"></div>
+      <div><label for="k1-pris">Samlet pris (DKK)</label><input id="k1-pris" inputmode="decimal" autocomplete="off" placeholder="0,00"></div>
+    </div>
+    <div class="batchid">Batch-ID: <b id="k1-batch">–</b></div>
+    <h3>Sæt</h3>
+    <div id="k1-linjer" class="linjer"></div>
+    <div id="k1-fejl" class="besked fejl" role="alert"></div>
+  </div>
+  <footer class="bund"><button id="k1-faerdig" class="knap knap-gul">Færdig – til værdier</button></footer>
+</section>
+
+<!-- ============ NYT KØB – SIDE 2 ============ -->
+<section id="v-koeb2" class="visning" hidden>
+  <header class="top"><button class="tilbage" data-gaa="koeb1" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Værdi og købspris</h2><span class="side">Side 2 af 3</span></header>
+  <div class="trin"><i class="til"></i><i class="til"></i><i></i></div>
+  <div class="indhold">
+    <div class="opsummering"><span>Batch <b id="k2-batch"></b></span><span>Pris <b id="k2-pris"></b> kr</span></div>
+    <div id="k2-liste" class="liste"></div>
+    <div class="sum"><span>Sum købspriser</span><b id="k2-sum">0,00 kr</b></div>
+    <div id="k2-fejl" class="besked fejl" role="alert"></div>
+  </div>
+  <footer class="bund"><button id="k2-gem" class="knap knap-gul">Gem i Sheets</button></footer>
+</section>
+
+<!-- ============ NYT KØB – SIDE 3: KLARGØR ============ -->
+<section id="v-koeb3" class="visning" hidden>
+  <header class="top"><button class="tilbage" id="k3-tilbage" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Klargør</h2><span class="side">Side 3 af 3</span></header>
+  <div class="trin"><i class="til"></i><i class="til"></i><i class="til"></i></div>
+  <div class="indhold">
+    <div id="k3-vaelg" class="vaelg" role="tablist" aria-label="Vælg sæt"></div>
+    <div class="saetkort">
+      <div class="mono" id="k3-sku"></div>
+      <div class="navn" id="k3-navn"></div>
+      <div class="lille" id="k3-info"></div>
+    </div>
+
+    <div class="kamera">
+      <video id="k3-video" playsinline muted autoplay></video>
+      <div class="kamera-tom" id="k3-kamera-tom">Kameraet er slukket</div>
+    </div>
+    <div class="knapper">
+      <button id="k3-start" class="knap">Start kamera</button>
+      <button id="k3-tag" class="knap knap-primaer" disabled>Tag foto</button>
+    </div>
+    <label class="knap knap-sekundaer fil-knap">Tag foto med telefonens kamera
+      <input id="k3-fil" type="file" accept="image/*" capture="environment" hidden>
+    </label>
+    <div id="k3-kamerafejl" class="besked fejl" role="alert"></div>
+    <div id="k3-fotos" class="fotos" aria-live="polite"></div>
+
+    <div class="felter">
+      <div class="felt">
+        <span>Stand</span>
+        <div class="stepper">
+          <button id="k3-minus" aria-label="Mindre">−</button>
+          <output id="k3-stand" class="mono">–</output>
+          <button id="k3-plus" aria-label="Mere">+</button>
+        </div>
+      </div>
+      <div class="felt"><label for="k3-platform">Salgsportal</label>
+        <select id="k3-platform">
+          <option>eBay</option><option>Catawiki</option><option>BrickLink</option>
+          <option>DBA / Facebook</option><option>Andet</option><option>Platform ikke valgt</option>
+        </select>
+      </div>
+    </div>
+    <div class="chips">
+      <label class="chip"><input type="checkbox" id="k3-vejledning"><span>Vejledning</span></label>
+      <label class="chip"><input type="checkbox" id="k3-komplet"><span>Komplet</span></label>
+      <label class="chip"><input type="checkbox" id="k3-sorteret"><span>Sorteret</span></label>
+    </div>
+    <label for="k3-noter">Noter</label>
+    <textarea id="k3-noter" rows="3"></textarea>
+    <div id="k3-krav" class="lille"></div>
+    <div id="k3-status" class="besked" role="status"></div>
+  </div>
+  <footer class="bund bund2">
+    <button id="k3-gem" class="knap">Gem</button>
+    <button id="k3-klar" class="knap knap-gul">Klar til salg</button>
+  </footer>
+</section>
+
+<!-- ============ LAGER ============ -->
+<section id="v-lager" class="visning" hidden>
+  <header class="top"><button class="tilbage" data-gaa="forside" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Lager</h2><button class="link" id="l-opdater">Opdater</button></header>
+  <div class="indhold">
+    <label for="l-soeg" class="skjult">Søg</label>
+    <input id="l-soeg" type="search" placeholder="Søg SKU, setnr eller navn" autocomplete="off">
+    <div class="filtre" role="group" aria-label="Filter">
+      <button data-filter="alle" class="til">Alle</button>
+      <button data-filter="klar">Klar</button>
+      <button data-filter="ikke">Ikke klar</button>
+      <button data-filter="ebay">På eBay</button>
+    </div>
+    <div id="l-antal" class="lille"></div>
+    <div id="l-liste" class="liste"></div>
+  </div>
+</section>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script src="js/beregn.js?v=1"></script>
+<script src="js/api.js?v=1"></script>
+<script src="js/foto.js?v=1"></script>
+<script src="js/app.js?v=1"></script>
+</body>
+</html>
