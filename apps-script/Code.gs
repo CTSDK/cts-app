@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.2.3';
+var VERSION = '1.2.4';
 
 // ---------- Faner ----------
 var FANE = {
@@ -54,6 +54,8 @@ function onOpen() {
     .addItem('Importér fra Excel (sletter alt)', 'importerFraExcel')
     .addItem('Kør kontrol mod Excel', 'koerKontrol')
     .addItem('Sortér gamle fotos', 'sorterFotos')
+    .addItem('Lav valgliste for ikke-matchede fotos', 'lavValgliste')
+    .addItem('Flyt valgte fotos', 'flytValgte')
     .addItem('Fjern fotos af solgte sæt', 'fjernSolgteFotos')
     .addSeparator()
     .addItem('Vis API-nøgle', 'visNoegle')
@@ -892,6 +894,118 @@ function sorterFotos_() {
 }
 
 function pad2_(n) { return n < 10 ? '0' + n : String(n); }
+
+// ---------- Valgliste for fotos der ikke kunne matches ----------
+var FANE_VALG = 'Ikke matchet';
+
+function delNavn_(navn) {
+  var m = /^(.+?)[-_ .](\d{1,3})\.(jpe?g|png|heic|heif|webp)$/i.exec(navn);
+  if (m) return { base: m[1], nr: Number(m[2]), ext: m[3].toLowerCase() === 'jpeg' ? 'jpg' : m[3].toLowerCase() };
+  var x = /^(.+)\.(\w+)$/.exec(navn);
+  return { base: x ? x[1] : navn, nr: 0, ext: x ? x[2].toLowerCase() : 'jpg' };
+}
+
+function ikkeMappe_() {
+  var cts = mappeForRegneark_(SpreadsheetApp.getActive());
+  var it = cts.getFoldersByName(FOTO_KILDE);
+  if (!it.hasNext()) throw new Error('Mappen ' + FOTO_KILDE + ' findes ikke.');
+  return underMappe_(it.next(), '_Ikke matchet');
+}
+
+function lavValgliste() {
+  var ui = SpreadsheetApp.getUi(), ss = SpreadsheetApp.getActive();
+  var mappe = ikkeMappe_(), it = mappe.getFiles(), grupper = {};
+  while (it.hasNext()) {
+    var f = it.next(), d = delNavn_(f.getName());
+    var g = grupper[d.base] || (grupper[d.base] = { antal: 0, eks: [] });
+    g.antal++; if (g.eks.length < 3) g.eks.push(f.getName());
+  }
+  var data = laesIndkoeb_(), paaNr = {};
+  var kerne = function (nr) { return String(nr).toUpperCase().replace(/-\d+$/, '').replace(/-?[A-Z]$/, ''); };
+  data.raekker.forEach(function (r) {
+    var sku = String(r.v[K.SKU - 1]), nr = String(r.v[K.SETNR - 1] || '');
+    if (!nr || /^#/.test(sku)) return;
+    (paaNr[kerne(nr)] = paaNr[kerne(nr)] || []).push({ sku: sku, status: String(r.v[K.LAGERSTATUS - 1] || 'ikke klar') });
+  });
+  var baser = Object.keys(grupper).sort();
+  var gl = ss.getSheetByName(FANE_VALG); if (gl) ss.deleteSheet(gl);
+  var sh = nyFane_(ss, FANE_VALG, 'FOTOS DER IKKE KUNNE MATCHES – vælg SKU i kolonne D og kør CTS → Flyt valgte fotos',
+    ['Filnavn starter med', 'Antal fotos', 'Mulige SKU\'er i Indkøb (status)', 'Dit valg', 'Resultat', 'Eksempler'], 2);
+  if (!baser.length) { ui.alert('Der ligger ingen fotos i _Ikke matchet ✓'); return; }
+  var rows = [], valg = [];
+  baser.forEach(function (b) {
+    var rest = b.indexOf('-') >= 0 ? b.slice(b.indexOf('-') + 1) : b;
+    var kand = (paaNr[kerne(rest)] || []).filter(function (k) { return k.sku !== b; });
+    rows.push([b, grupper[b].antal, kand.map(function (k) { return k.sku + ' (' + k.status + ')'; }).join(', ') || '– intet sæt med det nummer –', '', '', grupper[b].eks.join(', ')]);
+    valg.push(kand.map(function (k) { return k.sku; }).concat(['Slet', 'Spring over']));
+  });
+  sh.getRange(3, 1, rows.length, 6).setValues(rows);
+  valg.forEach(function (v, i) {
+    sh.getRange(3 + i, 4).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(v.slice(0, 500), true).setAllowInvalid(true).build());
+  });
+  sh.setColumnWidth(1, 170); sh.setColumnWidth(3, 420); sh.setColumnWidth(4, 170); sh.setColumnWidth(5, 220); sh.setColumnWidth(6, 360);
+  sh.getRange('D3:D').setBackground('#fff8dc');
+  ss.setActiveSheet(sh);
+  ui.alert('Valgliste', baser.length + ' sæt (' + rows.reduce(function (a, r) { return a + r[1]; }, 0) + ' fotos) mangler et valg.\n\n' +
+    'Vælg i kolonne D: det rigtige SKU, "Slet" (lægges i papirkurven) eller "Spring over". Du kan også skrive et SKU selv.\n' +
+    'Kør derefter CTS → Flyt valgte fotos. Du kan gøre det i flere omgange.', ui.ButtonSet.OK);
+}
+
+function flytValgte() {
+  var ui = SpreadsheetApp.getUi(), ss = SpreadsheetApp.getActive(), start = Date.now();
+  var sh = ss.getSheetByName(FANE_VALG);
+  if (!sh) { ui.alert('Kør først CTS → Lav valgliste for ikke-matchede fotos.'); return; }
+  var n = sh.getLastRow() - 2; if (n < 1) return;
+  var v = sh.getRange(3, 1, n, 5).getValues();
+  var data = laesIndkoeb_(), raekkeFor = {};
+  data.raekker.forEach(function (r) { raekkeFor[String(r.v[K.SKU - 1])] = r; });
+  // Filer i _Ikke matchet grupperet efter navnets start
+  var filer = {}, it = ikkeMappe_().getFiles();
+  while (it.hasNext()) { var f = it.next(), d = delNavn_(f.getName()); (filer[d.base] = filer[d.base] || []).push({ fil: f, d: d }); }
+  var mapper = {}, taelling = {}, flyttet = 0, slettet = 0, fejl = 0, mere = false, log = [];
+  var tid = Utilities.formatDate(new Date(), 'Europe/Copenhagen', 'dd-MM HH:mm');
+  for (var i = 0; i < v.length; i++) {
+    if (Date.now() - start > 4 * 60 * 1000) { mere = true; break; }
+    var base = String(v[i][0]), valg = String(v[i][3]).trim(), res = String(v[i][4]);
+    if (!valg || valg === 'Spring over' || /^Færdig/.test(res)) continue;
+    var liste = filer[base] || [];
+    if (valg === 'Slet') {
+      liste.forEach(function (x) { x.fil.setTrashed(true); log.push([tid, x.fil.getName(), 'Valgt: slet – lagt i papirkurven', '']); });
+      slettet += liste.length;
+      sh.getRange(3 + i, 5).setValue('Færdig: ' + liste.length + ' lagt i papirkurven');
+      continue;
+    }
+    var r = raekkeFor[valg];
+    if (!r) { sh.getRange(3 + i, 5).setValue('FEJL: SKU ' + valg + ' findes ikke i Indkøb'); fejl++; continue; }
+    if (String(r.v[K.LAGERSTATUS - 1]) === 'Solgt') {
+      liste.forEach(function (x) { x.fil.setTrashed(true); log.push([tid, x.fil.getName(), 'Valgt ' + valg + ' (solgt) – lagt i papirkurven', '']); });
+      slettet += liste.length;
+      sh.getRange(3 + i, 5).setValue('Færdig: ' + valg + ' er solgt – ' + liste.length + ' lagt i papirkurven');
+      continue;
+    }
+    var dato = String(r.v[K.DATO - 1]);
+    var mappe = mapper[dato] || (mapper[dato] = batchMappe_(dato, true));
+    var t = taelling[dato] || (taelling[dato] = fotoTaelling_(mappe));
+    liste.sort(function (a, b) { return a.d.nr - b.d.nr; }).forEach(function (x) {
+      var nr = x.d.nr || ((t.hoejeste[valg] || 0) + 1);
+      var nyt = valg + '.' + pad2_(nr) + '.' + x.d.ext;
+      if (t.navne[nyt.toUpperCase()]) { nr = (t.hoejeste[valg] || 0) + 1; nyt = valg + '.' + pad2_(nr) + '.' + x.d.ext; }
+      x.fil.moveTo(mappe); x.fil.setName(nyt);
+      t.navne[nyt.toUpperCase()] = true; t.hoejeste[valg] = Math.max(t.hoejeste[valg] || 0, nr);
+      log.push([tid, x.fil.getName(), 'Valgt ' + valg + ' – flyttet', dato + '/' + nyt]);
+    });
+    flyttet += liste.length;
+    data.ark.getRange(r.raekke, K.FOTOSKU).setValue(valg);
+    data.ark.getRange(r.raekke, K.FOTOS).setValue(true);
+    sh.getRange(3 + i, 5).setValue('Færdig: ' + liste.length + ' flyttet til ' + dato);
+  }
+  if (log.length) {
+    var lf = ss.getSheetByName(FANE.FOTOIMPORT) || nyFane_(ss, FANE.FOTOIMPORT, 'FOTO-IMPORT FRA ONEDRIVE', ['Tid', 'Original', 'Resultat', 'Ny placering'], 2);
+    lf.getRange(lf.getLastRow() + 1, 1, log.length, 4).setValues(log);
+  }
+  ui.alert('Flyt valgte fotos', flyttet + ' flyttet, ' + slettet + ' lagt i papirkurven' + (fejl ? ', ' + fejl + ' rækker med fejl (se kolonne E)' : '') +
+    (mere ? '.\n\nIkke alle nåede med – kør CTS → Flyt valgte fotos igen.' : '.'), ui.ButtonSet.OK);
+}
 
 // Lægger fotos af solgte sæt i papirkurven (kan fortrydes i 30 dage)
 function fjernSolgteFotos() {
