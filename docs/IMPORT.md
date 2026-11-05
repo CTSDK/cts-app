@@ -40,6 +40,10 @@ Filen indeholder dine data. Del den ikke, og læg den ikke andre steder hen.
 5. Fotoene flyttes til **CTS/Lager/<købsdato>/** og omdøbes fra `250000-215-01.jpg` til `250000-215.01.jpg`.
    - Er der mange, fortsætter sorteringen automatisk hvert minut. Du kan lukke regnearket imens.
    - Fotos, der ikke kan matches med et SKU, flyttes til **Import-fotos/_Ikke matchet** og står i fanen **Foto-import**.
+   - Fotos af sæt, der er **solgt**, lægges i **papirkurven** (kan fortrydes i 30 dage).
+   - Alle fotos får præcis samme SKU som i Indkøb, fx `250000-607B-01.jpg` → `250000-607-b.01.jpg` og `00-1472-03.jpg` → `250000-1472.03.jpg`.
+
+Senere kan **CTS → Fjern fotos af solgte sæt** rydde fotos af solgte sæt i alle købsmapper.
 
 ## Trin 5 – Appen
 

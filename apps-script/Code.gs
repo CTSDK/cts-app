@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.2.1';
+var VERSION = '1.2.2';
 
 // ---------- Faner ----------
 var FANE = {
@@ -54,6 +54,7 @@ function onOpen() {
     .addItem('Importér fra Excel (sletter alt)', 'importerFraExcel')
     .addItem('Kør kontrol mod Excel', 'koerKontrol')
     .addItem('Sortér gamle fotos', 'sorterFotos')
+    .addItem('Fjern fotos af solgte sæt', 'fjernSolgteFotos')
     .addSeparator()
     .addItem('Vis API-nøgle', 'visNoegle')
     .addItem('Opdatér formler (bevarer data)', 'opdaterFormler')
@@ -774,7 +775,8 @@ function sorterFotos() {
   var res;
   try { res = sorterFotos_(); } catch (e) { ui.alert('Sortér gamle fotos', e.message, ui.ButtonSet.OK); return; }
   ui.alert('Sortér gamle fotos',
-    res.flyttet + ' fotos flyttet, ' + res.ikke + ' kunne ikke matches (se fanen Foto-import og mappen "_Ikke matchet").' +
+    res.flyttet + ' fotos flyttet til købsmapperne, ' + res.solgte + ' fotos af solgte sæt lagt i papirkurven, ' +
+    res.ikke + ' kunne ikke matches (se fanen Foto-import og mappen "_Ikke matchet").' +
     (res.mere ? '\n\nDer er flere fotos. Sorteringen fortsætter automatisk om lidt – du kan lukke regnearket.' : '\n\nAlle fotos er gennemgået ✓'),
     ui.ButtonSet.OK);
 }
@@ -818,7 +820,7 @@ function sorterFotos_() {
 
   var logFane = ss.getSheetByName(FANE.FOTOIMPORT) || nyFane_(ss, FANE.FOTOIMPORT, 'FOTO-IMPORT FRA ONEDRIVE', ['Tid', 'Original', 'Resultat', 'Ny placering'], 2);
   var logLinjer = [], mapper = {}, taelling = {}, fotoSku = {};
-  var flyttet = 0, ikke = 0, mere = false;
+  var flyttet = 0, ikke = 0, solgte = 0, mere = false;
 
   var filer = [];
   var saml = function (mappe) {
@@ -836,6 +838,11 @@ function sorterFotos_() {
     if (!sku) {
       fil.moveTo(ikkeMappe); ikke++;
       logLinjer.push([tid, navn, m ? 'Ingen SKU i Indkøb matcher "' + m[1] + '"' : 'Navnet følger ikke mønstret <SKU>-NN', '_Ikke matchet']);
+      continue;
+    }
+    if (String(raekkeFor[sku].v[K.LAGERSTATUS - 1]) === 'Solgt') {
+      fil.setTrashed(true); solgte++;
+      logLinjer.push([tid, navn, 'Solgt – lagt i papirkurven', sku]);
       continue;
     }
     var dato = String(raekkeFor[sku].v[K.DATO - 1]);
@@ -860,10 +867,35 @@ function sorterFotos_() {
   if (logLinjer.length) logFane.getRange(logFane.getLastRow() + 1, 1, logLinjer.length, 4).setValues(logLinjer);
 
   if (mere) ScriptApp.newTrigger('sorterFotosFortsaet').timeBased().after(60 * 1000).create();
-  return { flyttet: flyttet, ikke: ikke, mere: mere };
+  return { flyttet: flyttet, ikke: ikke, solgte: solgte, mere: mere };
 }
 
 function pad2_(n) { return n < 10 ? '0' + n : String(n); }
+
+// Lægger fotos af solgte sæt i papirkurven (kan fortrydes i 30 dage)
+function fjernSolgteFotos() {
+  var ui = SpreadsheetApp.getUi();
+  var svar = ui.alert('Fjern fotos af solgte sæt',
+    'Alle fotos i CTS/Lager af sæt med Lagerstatus = Solgt lægges i papirkurven i Drive (kan fortrydes i 30 dage). Fortsæt?', ui.ButtonSet.YES_NO);
+  if (svar !== ui.Button.YES) return;
+  var data = laesIndkoeb_(), solgt = {};
+  data.raekker.forEach(function (r) { if (String(r.v[K.LAGERSTATUS - 1]) === 'Solgt') solgt[String(r.v[K.SKU - 1])] = true; });
+  var rod = rodMappe_(), mapper = rod.getFolders(), antal = 0, linjer = [];
+  var tid = Utilities.formatDate(new Date(), 'Europe/Copenhagen', 'dd-MM HH:mm');
+  while (mapper.hasNext()) {
+    var filer = mapper.next().getFiles();
+    while (filer.hasNext()) {
+      var f = filer.next(), m = /^(.+)\.(\d{2,})\.(jpe?g|png|heic|heif|webp)$/i.exec(f.getName());
+      if (m && solgt[m[1]]) { linjer.push([tid, f.getName(), 'Solgt – lagt i papirkurven', m[1]]); f.setTrashed(true); antal++; }
+    }
+  }
+  if (linjer.length) {
+    var ss = SpreadsheetApp.getActive();
+    var lf = ss.getSheetByName(FANE.FOTOIMPORT) || nyFane_(ss, FANE.FOTOIMPORT, 'FOTO-IMPORT FRA ONEDRIVE', ['Tid', 'Original', 'Resultat', 'Ny placering'], 2);
+    lf.getRange(lf.getLastRow() + 1, 1, linjer.length, 4).setValues(linjer);
+  }
+  ui.alert('Fjern fotos af solgte sæt', antal + ' fotos af solgte sæt er lagt i papirkurven.', ui.ButtonSet.OK);
+}
 
 // ======================================================================
 //  API (kaldes fra appen)
