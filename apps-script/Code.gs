@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.2.5';
+var VERSION = '1.2.6';
 
 // ---------- Faner ----------
 var FANE = {
@@ -934,6 +934,9 @@ function lavValgliste() {
   var kendte = { '250919-6023': '250831-6023' };
   var foreslaa = function (base, kand) {
     if (kendte[base] && kand.some(function (k) { return k.sku === kendte[base]; })) return [kendte[base], 'Forslag: din note siger, at ' + base + ' fik ny label ' + kendte[base]];
+    // Foto uden bogstav, men sættet har fået -a/-b: fotoet er fra før dubletten → første eksemplar = -a
+    var medA = kand.filter(function (k) { return k.sku.toUpperCase() === base.toUpperCase() + '-A'; });
+    if (medA.length === 1) return [medA[0].sku, 'Forslag: fotoet er fra før dubletten – første eksemplar blev til -a' + (medA[0].status === 'Solgt' ? ' (solgt → papirkurv)' : '')];
     var prefix = base.split('-')[0];
     var samme = kand.filter(function (k) { return k.sku.split('-')[0] === prefix; });
     var pulje = samme.length ? samme : kand;
