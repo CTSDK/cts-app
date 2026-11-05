@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.2.7';
+var VERSION = '1.2.8';
 
 // ---------- Faner ----------
 var FANE = {
@@ -851,7 +851,7 @@ function sorterFotos_() {
   for (var i = 0; i < filer.length; i++) {
     if (Date.now() - start > 4 * 60 * 1000) { mere = true; break; }
     var fil = filer[i], navn = fil.getName();
-    var m = /^(.+?)[-_ .](\d{1,3})\.(jpe?g|png|heic|heif|webp)$/i.exec(navn);
+    var m = /^(.+?)[-_ .](\d{1,3})\.(jpe?g|png|heic|heif|webp)$/i.exec(rensNavn_(navn));
     var sku = m ? find(m[1]) : null, note = '';
     if (m && !sku) { sku = findPaaNr(m[1]); if (sku) note = ' (matchet på sætnummer – filnavnet sagde ' + m[1] + ')'; }
     var tid = Utilities.formatDate(new Date(), 'Europe/Copenhagen', 'dd-MM HH:mm');
@@ -898,7 +898,11 @@ function pad2_(n) { return n < 10 ? '0' + n : String(n); }
 // ---------- Valgliste for fotos der ikke kunne matches ----------
 var FANE_VALG = 'Ikke matchet';
 
+// "251001 - 6044 - 01.jpeg" → "251001-6044-01.jpeg"
+function rensNavn_(navn) { return String(navn).replace(/\s*-\s*/g, '-').replace(/\s+(?=\.)/g, '').trim(); }
+
 function delNavn_(navn) {
+  navn = rensNavn_(navn);
   var m = /^(.+?)[-_ .](\d{1,3})\.(jpe?g|png|heic|heif|webp)$/i.exec(navn);
   if (m) return { base: m[1], nr: Number(m[2]), ext: m[3].toLowerCase() === 'jpeg' ? 'jpg' : m[3].toLowerCase() };
   var x = /^(.+)\.(\w+)$/.exec(navn);
@@ -932,16 +936,29 @@ function lavValgliste() {
   var fotosPr = {}, rodIt = rodMappe_().getFolders();
   while (rodIt.hasNext()) { var t = fotoTaelling_(rodIt.next()); Object.keys(t.antal).forEach(function (k) { fotosPr[k] = (fotosPr[k] || 0) + t.antal[k]; }); }
   // Kendte omlabeleringer fra noterne
-  var kendte = { '250919-6023': '250831-6023' };
-  var foreslaa = function (base, kand) {
-    if (kendte[base] && kand.some(function (k) { return k.sku === kendte[base]; })) return [kendte[base], 'Forslag: din note siger, at ' + base + ' fik ny label ' + kendte[base]];
+  var kendte = { '250919-6023': '250831-6023', '250919-6039': '250831-6039' };
+  var kendtGrund = { '250919-6023': 'din note siger, at 250919-6023 fik ny label 250831-6023', '250919-6039': 'formodet samme omlabelering som 6023 – TJEK' };
+  var logDatoer = {};
+  (function () { var lg = ark_(FANE.LOG), n = lg.getLastRow() - START + 1; if (n > 0) lg.getRange(START, 1, n, 1).getValues().forEach(function (r) { logDatoer[String(r[0])] = true; }); })();
+  var foreslaa = function (base, kand) { var res = foreslaa0(base, kand); return res; };
+  var foreslaa0 = function (base, kand) {
+    if (kendte[base] && kand.some(function (k) { return k.sku === kendte[base]; })) return [kendte[base], 'Forslag: ' + kendtGrund[base]];
+    // Gammel sorteringsdato (fx 250526, 250113B), som ikke er et køb → samlebatch 250000
+    var pre0 = base.split('-')[0].toUpperCase(), gammel = '';
+    if (/^25\d{4}[A-Z]?$/.test(pre0) && !logDatoer[pre0]) {
+      var i250 = kand.filter(function (k) { return k.sku.indexOf('250000-') === 0; });
+      if (i250.length) { kand = i250; gammel = ' (gammel sorteringsdato ' + pre0 + ' → samlebatch 250000)'; }
+    }
+    var effBase = gammel ? '250000-' + base.slice(base.indexOf('-') + 1) : base;
     // Foto uden bogstav, men sættet har fået -a/-b: fotoet er fra før dubletten → første eksemplar = -a
-    var medA = kand.filter(function (k) { return k.sku.toUpperCase() === base.toUpperCase() + '-A'; });
-    if (medA.length === 1) return [medA[0].sku, 'Forslag: fotoet er fra før dubletten – første eksemplar blev til -a' + (medA[0].status === 'Solgt' ? ' (solgt → papirkurv)' : '')];
+    var medA = kand.filter(function (k) { return k.sku.toUpperCase() === effBase.toUpperCase() + '-A'; });
+    var praecis = kand.filter(function (k) { return k.sku.toUpperCase() === effBase.toUpperCase(); });
+    if (praecis.length === 1) return [praecis[0].sku, 'Forslag: samme sæt' + gammel + (praecis[0].status === 'Solgt' ? ' (solgt → papirkurv)' : '')];
+    if (medA.length === 1) return [medA[0].sku, 'Forslag: fotoet er fra før dubletten – første eksemplar blev til -a' + gammel + (medA[0].status === 'Solgt' ? ' (solgt → papirkurv)' : '')];
     var prefix = base.split('-')[0];
     // Filnavnet starter med en gammel sorteringskode (fx 00 eller 250113B), som står i sættets note
     var medSort = kand.filter(function (k) { return k.sort && k.sort === prefix.toUpperCase(); });
-    if (medSort.length === 1) return [medSort[0].sku, 'Forslag: noten siger Sort: ' + medSort[0].sort + (medSort[0].status === 'Solgt' ? ' (solgt → papirkurv)' : '')];
+    if (medSort.length === 1) return [medSort[0].sku, 'Forslag: noten siger Sort: ' + medSort[0].sort + gammel + (medSort[0].status === 'Solgt' ? ' (solgt → papirkurv)' : '')];
     if (medSort.length > 1) {
       var sortUden = medSort.filter(function (k) { return !fotosPr[k.sku] && k.status !== 'Solgt'; });
       if (sortUden.length === 1) return [sortUden[0].sku, 'Forslag: Sort: ' + prefix + ' og eneste uden fotos'];
@@ -950,7 +967,7 @@ function lavValgliste() {
     }
     var samme = kand.filter(function (k) { return k.sku.split('-')[0] === prefix; });
     var pulje = samme.length ? samme : kand;
-    var hvor = samme.length ? 'i batch ' + prefix : 'blandt alle';
+    var hvor = (samme.length ? 'i batch ' + prefix : 'blandt alle') + gammel;
     if (pulje.length === 1) return [pulje[0].sku, 'Forslag: eneste ' + hvor + (pulje[0].status === 'Solgt' ? ' (solgt → papirkurv)' : '')];
     var udenFoto = pulje.filter(function (k) { return !fotosPr[k.sku] && k.status !== 'Solgt'; });
     if (udenFoto.length === 1) return [udenFoto[0].sku, 'Forslag: eneste ' + hvor + ' uden fotos og ikke solgt'];
