@@ -379,8 +379,9 @@ function opdaterFormler() {
   }
   ss.setSpreadsheetLocale(landestandard || 'da_DK'); SpreadsheetApp.flush();
   var fejl = tjekFormler_(ss);
+  if (!fejl.length) { try { synkMapper_(null); } catch (e) { fejl.push('Mapper: ' + e.message); } }
   ui.alert(fejl.length ? 'Formler opdateret – men med fejl' : 'Formler opdateret',
-    (fejl.length ? 'Send et skærmbillede til Claude:\n' + fejl.join('\n') : 'Alle formler virker. Data er ikke ændret.') + '\nVersion ' + VERSION,
+    (fejl.length ? 'Send et skærmbillede til Claude:\n' + fejl.join('\n') : 'Alle formler virker, og fotomapperne har de rigtige navne. Data er ikke ændret.') + '\nVersion ' + VERSION,
     ui.ButtonSet.OK);
 }
 
@@ -621,6 +622,7 @@ function hentLager_() {
 }
 
 function findRaekke_(sku) {
+  if (/^#/.test(sku)) throw fejl_('SKU-formlen viser en fejl i arket. Kør CTS → Opdatér formler.');
   var data = laesIndkoeb_();
   for (var i = 0; i < data.raekker.length; i++) {
     if (String(data.raekker[i].v[K.SKU - 1]) === sku) return { ark: data.ark, r: data.raekker[i] };
@@ -675,19 +677,23 @@ function antalFotos_(mappeId) {
 function synkMapper_(dato) {
   var data = laesIndkoeb_();
   var rod = rodMappe_();
+  var brugt = {}; // mappe-id → allerede tildelt en række (hver række skal have sin egen mappe)
   data.raekker.forEach(function (r) {
     if (dato && String(r.v[K.DATO - 1]) !== dato) return;
     var sku = String(r.v[K.SKU - 1]);
-    if (!sku) return;
+    if (!sku || /^#/.test(sku)) return; // SKU-formlen fejler – vent med mappen
     var id = r.v[K.MAPPEID - 1];
     var mappe = null;
-    if (id) { try { mappe = DriveApp.getFolderById(id); } catch (e) { mappe = null; } }
+    if (id && !brugt[id]) { try { mappe = DriveApp.getFolderById(id); } catch (e) { mappe = null; } }
     if (!mappe) {
-      var it = rod.getFoldersByName(sku);
-      mappe = it.hasNext() ? it.next() : rod.createFolder(sku);
+      var it = rod.getFoldersByName(sku), fundet = null;
+      while (it.hasNext()) { var m = it.next(); if (!brugt[m.getId()]) { fundet = m; break; } }
+      mappe = fundet || rod.createFolder(sku);
+      brugt[mappe.getId()] = true;
       data.ark.getRange(r.raekke, K.MAPPEID).setValue(mappe.getId());
       return;
     }
+    brugt[mappe.getId()] = true;
     var gammel = mappe.getName();
     if (gammel === sku) return;
     mappe.setName(sku);
