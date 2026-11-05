@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.2.6';
+var VERSION = '1.2.7';
 
 // ---------- Faner ----------
 var FANE = {
@@ -925,7 +925,8 @@ function lavValgliste() {
   data.raekker.forEach(function (r) {
     var sku = String(r.v[K.SKU - 1]), nr = String(r.v[K.SETNR - 1] || '');
     if (!nr || /^#/.test(sku)) return;
-    (paaNr[kerne(nr)] = paaNr[kerne(nr)] || []).push({ sku: sku, status: String(r.v[K.LAGERSTATUS - 1] || 'ikke klar') });
+    var sort = /Sort:\s*(\w+)/i.exec(String(r.v[K.NOTER - 1] || ''));
+    (paaNr[kerne(nr)] = paaNr[kerne(nr)] || []).push({ sku: sku, status: String(r.v[K.LAGERSTATUS - 1] || 'ikke klar'), sort: sort ? sort[1].toUpperCase() : '' });
   });
   // Fotos pr. SKU i alle købsmapper (til forslag: eksemplar uden fotos foretrækkes)
   var fotosPr = {}, rodIt = rodMappe_().getFolders();
@@ -938,6 +939,15 @@ function lavValgliste() {
     var medA = kand.filter(function (k) { return k.sku.toUpperCase() === base.toUpperCase() + '-A'; });
     if (medA.length === 1) return [medA[0].sku, 'Forslag: fotoet er fra før dubletten – første eksemplar blev til -a' + (medA[0].status === 'Solgt' ? ' (solgt → papirkurv)' : '')];
     var prefix = base.split('-')[0];
+    // Filnavnet starter med en gammel sorteringskode (fx 00 eller 250113B), som står i sættets note
+    var medSort = kand.filter(function (k) { return k.sort && k.sort === prefix.toUpperCase(); });
+    if (medSort.length === 1) return [medSort[0].sku, 'Forslag: noten siger Sort: ' + medSort[0].sort + (medSort[0].status === 'Solgt' ? ' (solgt → papirkurv)' : '')];
+    if (medSort.length > 1) {
+      var sortUden = medSort.filter(function (k) { return !fotosPr[k.sku] && k.status !== 'Solgt'; });
+      if (sortUden.length === 1) return [sortUden[0].sku, 'Forslag: Sort: ' + prefix + ' og eneste uden fotos'];
+      if (medSort.every(function (k) { return k.status === 'Solgt'; })) return ['Slet', 'Forslag: alle med Sort: ' + prefix + ' er solgt'];
+      kand = medSort;
+    }
     var samme = kand.filter(function (k) { return k.sku.split('-')[0] === prefix; });
     var pulje = samme.length ? samme : kand;
     var hvor = samme.length ? 'i batch ' + prefix : 'blandt alle';
