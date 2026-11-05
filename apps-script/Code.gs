@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.2.4';
+var VERSION = '1.2.5';
 
 // ---------- Faner ----------
 var FANE = {
@@ -927,6 +927,23 @@ function lavValgliste() {
     if (!nr || /^#/.test(sku)) return;
     (paaNr[kerne(nr)] = paaNr[kerne(nr)] || []).push({ sku: sku, status: String(r.v[K.LAGERSTATUS - 1] || 'ikke klar') });
   });
+  // Fotos pr. SKU i alle købsmapper (til forslag: eksemplar uden fotos foretrækkes)
+  var fotosPr = {}, rodIt = rodMappe_().getFolders();
+  while (rodIt.hasNext()) { var t = fotoTaelling_(rodIt.next()); Object.keys(t.antal).forEach(function (k) { fotosPr[k] = (fotosPr[k] || 0) + t.antal[k]; }); }
+  // Kendte omlabeleringer fra noterne
+  var kendte = { '250919-6023': '250831-6023' };
+  var foreslaa = function (base, kand) {
+    if (kendte[base] && kand.some(function (k) { return k.sku === kendte[base]; })) return [kendte[base], 'Forslag: din note siger, at ' + base + ' fik ny label ' + kendte[base]];
+    var prefix = base.split('-')[0];
+    var samme = kand.filter(function (k) { return k.sku.split('-')[0] === prefix; });
+    var pulje = samme.length ? samme : kand;
+    var hvor = samme.length ? 'i batch ' + prefix : 'blandt alle';
+    if (pulje.length === 1) return [pulje[0].sku, 'Forslag: eneste ' + hvor + (pulje[0].status === 'Solgt' ? ' (solgt → papirkurv)' : '')];
+    var udenFoto = pulje.filter(function (k) { return !fotosPr[k.sku] && k.status !== 'Solgt'; });
+    if (udenFoto.length === 1) return [udenFoto[0].sku, 'Forslag: eneste ' + hvor + ' uden fotos og ikke solgt'];
+    if (pulje.length && pulje.every(function (k) { return k.status === 'Solgt'; })) return ['Slet', 'Forslag: alle mulige sæt ' + hvor + ' er solgt'];
+    return ['', 'Vælg selv (' + pulje.length + ' muligheder ' + hvor + ')'];
+  };
   var baser = Object.keys(grupper).sort();
   var gl = ss.getSheetByName(FANE_VALG); if (gl) ss.deleteSheet(gl);
   var sh = nyFane_(ss, FANE_VALG, 'FOTOS DER IKKE KUNNE MATCHES – vælg SKU i kolonne D og kør CTS → Flyt valgte fotos',
@@ -936,7 +953,8 @@ function lavValgliste() {
   baser.forEach(function (b) {
     var rest = b.indexOf('-') >= 0 ? b.slice(b.indexOf('-') + 1) : b;
     var kand = (paaNr[kerne(rest)] || []).filter(function (k) { return k.sku !== b; });
-    rows.push([b, grupper[b].antal, kand.map(function (k) { return k.sku + ' (' + k.status + ')'; }).join(', ') || '– intet sæt med det nummer –', '', '', grupper[b].eks.join(', ')]);
+    var forslag = kand.length ? foreslaa(b, kand) : ['', 'Intet sæt med det nummer – vælg Slet eller skriv SKU'];
+    rows.push([b, grupper[b].antal, kand.map(function (k) { return k.sku + ' (' + k.status + (fotosPr[k.sku] ? ', ' + fotosPr[k.sku] + ' fotos' : ', ingen fotos') + ')'; }).join(', ') || '– intet sæt med det nummer –', forslag[0], forslag[1], grupper[b].eks.join(', ')]);
     valg.push(kand.map(function (k) { return k.sku; }).concat(['Slet', 'Spring over']));
   });
   sh.getRange(3, 1, rows.length, 6).setValues(rows);
@@ -946,9 +964,11 @@ function lavValgliste() {
   sh.setColumnWidth(1, 170); sh.setColumnWidth(3, 420); sh.setColumnWidth(4, 170); sh.setColumnWidth(5, 220); sh.setColumnWidth(6, 360);
   sh.getRange('D3:D').setBackground('#fff8dc');
   ss.setActiveSheet(sh);
-  ui.alert('Valgliste', baser.length + ' sæt (' + rows.reduce(function (a, r) { return a + r[1]; }, 0) + ' fotos) mangler et valg.\n\n' +
-    'Vælg i kolonne D: det rigtige SKU, "Slet" (lægges i papirkurven) eller "Spring over". Du kan også skrive et SKU selv.\n' +
-    'Kør derefter CTS → Flyt valgte fotos. Du kan gøre det i flere omgange.', ui.ButtonSet.OK);
+  var medForslag = rows.filter(function (r) { return r[3]; }).length;
+  ui.alert('Valgliste', baser.length + ' sæt (' + rows.reduce(function (a, r) { return a + r[1]; }, 0) + ' fotos).\n' +
+    medForslag + ' har fået et forslag i kolonne D, ' + (baser.length - medForslag) + ' skal du vælge selv.\n\n' +
+    'Gennemse kolonne D og ret det, der er forkert: et SKU, "Slet" eller "Spring over".\n' +
+    'Intet flyttes, før du kører CTS → Flyt valgte fotos.', ui.ButtonSet.OK);
 }
 
 function flytValgte() {
