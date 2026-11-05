@@ -86,39 +86,48 @@
   function tegnLinjer() {
     sikrTomSidsteLinje();
     var c = $('k1-linjer'); c.innerHTML = '';
-    koeb.linjer.forEach(function (ln, i) {
-      var d = document.createElement('div'); d.className = 'linje';
-      var sidste = i === koeb.linjer.length - 1;
-      d.innerHTML =
-        '<input aria-label="Sætnummer ' + (i + 1) + '" inputmode="numeric" autocomplete="off" placeholder="Setnr" value="' + esc(ln.setnr) + '">' +
-        '<div class="ovp" role="group" aria-label="OVP"><button type="button" data-ovp="1" class="' + (ln.ovp ? 'til' : '') + '">OVP</button><button type="button" data-ovp="0" class="' + (ln.ovp ? '' : 'til') + '">Uden</button></div>' +
-        '<button type="button" class="slet" aria-label="Fjern linje"' + (sidste ? ' style="visibility:hidden"' : '') + '>×</button>' +
-        '<div class="navn"></div>';
-      var inp = d.querySelector('input'), navn = d.querySelector('.navn');
-      navnEl.set(ln, navn);
-      visNavn(navn, ln);
-      inp.addEventListener('input', function () {
-        ln.setnr = inp.value.trim(); ln.opslag = null; visNavn(navn, ln); gemKladde();
-        if (ln.setnr && i === koeb.linjer.length - 1) { koeb.linjer.push(tomLinje()); tilfoejSidsteLinje(); }
-        clearTimeout(timere.get(ln)); timere.set(ln, setTimeout(function () { slaaOp(ln); }, 450));
-      });
-      d.querySelectorAll('[data-ovp]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          ln.ovp = b.getAttribute('data-ovp') === '1';
-          d.querySelectorAll('[data-ovp]').forEach(function (x) { x.classList.toggle('til', x === b); });
-          gemKladde();
-        });
-      });
-      d.querySelector('.slet').addEventListener('click', function () { koeb.linjer.splice(koeb.linjer.indexOf(ln), 1); gemKladde(); tegnLinjer(); });
-      c.appendChild(d);
+    koeb.linjer.forEach(function (ln) { c.appendChild(lavLinje(ln)); });
+    nummererLinjer();
+  }
+  function erSidste(ln) { return koeb.linjer[koeb.linjer.length - 1] === ln; }
+  function nummererLinjer() {
+    $('k1-linjer').querySelectorAll('.linje').forEach(function (d, i) {
+      d.querySelector('input').setAttribute('aria-label', 'Sætnummer ' + (i + 1));
+      d.querySelector('.slet').style.visibility = i === koeb.linjer.length - 1 ? 'hidden' : '';
     });
   }
-  function tilfoejSidsteLinje() {
-    // Tegn kun den nye tomme linje, så fokus bliver i feltet man skriver i
-    var fokus = document.activeElement, pos = fokus && fokus.selectionStart;
-    tegnLinjer();
-    var felter = $('k1-linjer').querySelectorAll('input');
-    var f = felter[felter.length - 2]; if (f) { f.focus(); try { f.setSelectionRange(pos, pos); } catch (e) { /* */ } }
+  // Én linje. Ny tom linje tilføjes nedenunder uden at tegne de andre om,
+  // så tastaturet og fokus bliver i det felt, man skriver i (vigtigt på iPhone).
+  function lavLinje(ln) {
+    var d = document.createElement('div'); d.className = 'linje';
+    d.innerHTML =
+      '<input inputmode="numeric" autocomplete="off" placeholder="Setnr" value="' + esc(ln.setnr) + '">' +
+      '<div class="ovp" role="group" aria-label="OVP"><button type="button" data-ovp="1" class="' + (ln.ovp ? 'til' : '') + '">OVP</button><button type="button" data-ovp="0" class="' + (ln.ovp ? '' : 'til') + '">Uden</button></div>' +
+      '<button type="button" class="slet" aria-label="Fjern linje">×</button>' +
+      '<div class="navn"></div>';
+    var inp = d.querySelector('input'), navn = d.querySelector('.navn');
+    navnEl.set(ln, navn);
+    visNavn(navn, ln);
+    inp.addEventListener('input', function () {
+      ln.setnr = inp.value.trim(); ln.opslag = null; visNavn(navn, ln);
+      if (ln.setnr && erSidste(ln)) {
+        var ny = tomLinje(); koeb.linjer.push(ny);
+        $('k1-linjer').appendChild(lavLinje(ny)); nummererLinjer();
+      }
+      gemKladde();
+      clearTimeout(timere.get(ln)); timere.set(ln, setTimeout(function () { slaaOp(ln); }, 450));
+    });
+    d.querySelectorAll('[data-ovp]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        ln.ovp = b.getAttribute('data-ovp') === '1';
+        d.querySelectorAll('[data-ovp]').forEach(function (x) { x.classList.toggle('til', x === b); });
+        gemKladde();
+      });
+    });
+    d.querySelector('.slet').addEventListener('click', function () {
+      koeb.linjer.splice(koeb.linjer.indexOf(ln), 1); d.remove(); nummererLinjer(); gemKladde();
+    });
+    return d;
   }
   function visNavn(el, ln) {
     if (!ln.setnr) { el.textContent = ''; el.className = 'navn'; return; }
