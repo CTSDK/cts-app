@@ -12,7 +12,7 @@
  * (Script Properties) og aldrig i koden.
  */
 
-var VERSION = '1.0.1';
+var VERSION = '1.0.2';
 
 // ---------- Faner og kolonner ----------
 var FANE = {
@@ -229,17 +229,17 @@ function byggIndkoebslog_(ss) {
   var sh = nyFane_(ss, FANE.LOG, 'INDKØBSLOG — Copenhagen Treasures and Services (TEST)',
     ['Indkøbsdato', 'Samlet køb (DKK)', 'Sæt i alt', 'Solgt', 'Klar (På lager)', 'Ikke klar', 'Noter'], 2);
   sh.getRange('C2').setFormula(
-    '=LET(a,INDIRECT("A3:A"),ib,INDIRECT("\'Indkøb\'!B3:B"),' +
-    '{"Sæt i alt";ARRAYFORMULA(IF(a="","",COUNTIF(ib,a)))})');
+    '=LET(logdato,INDIRECT("A3:A"),inddato,INDIRECT("\'Indkøb\'!B3:B"),' +
+    '{"Sæt i alt";ARRAYFORMULA(IF(logdato="","",COUNTIF(inddato,logdato)))})');
   sh.getRange('D2').setFormula(
-    '=LET(a,INDIRECT("A3:A"),ib,INDIRECT("\'Indkøb\'!B3:B"),ist,INDIRECT("\'Indkøb\'!N3:N"),' +
-    '{"Solgt";ARRAYFORMULA(IF(a="","",COUNTIFS(ib,a,ist,"Solgt")))})');
+    '=LET(logdato,INDIRECT("A3:A"),inddato,INDIRECT("\'Indkøb\'!B3:B"),indstatus,INDIRECT("\'Indkøb\'!N3:N"),' +
+    '{"Solgt";ARRAYFORMULA(IF(logdato="","",COUNTIFS(inddato,logdato,indstatus,"Solgt")))})');
   sh.getRange('E2').setFormula(
-    '=LET(a,INDIRECT("A3:A"),ib,INDIRECT("\'Indkøb\'!B3:B"),ist,INDIRECT("\'Indkøb\'!N3:N"),' +
-    '{"Klar (På lager)";ARRAYFORMULA(IF(a="","",COUNTIFS(ib,a,ist,"På lager")))})');
+    '=LET(logdato,INDIRECT("A3:A"),inddato,INDIRECT("\'Indkøb\'!B3:B"),indstatus,INDIRECT("\'Indkøb\'!N3:N"),' +
+    '{"Klar (På lager)";ARRAYFORMULA(IF(logdato="","",COUNTIFS(inddato,logdato,indstatus,"På lager")))})');
   sh.getRange('F2').setFormula(
-    '=LET(a,INDIRECT("A3:A"),c,INDIRECT("C3:C"),d,INDIRECT("D3:D"),e,INDIRECT("E3:E"),' +
-    '{"Ikke klar";ARRAYFORMULA(IF(a="","",c-d-e))})');
+    '=LET(logdato,INDIRECT("A3:A"),ialt,INDIRECT("C3:C"),solgte,INDIRECT("D3:D"),klare,INDIRECT("E3:E"),' +
+    '{"Ikke klar";ARRAYFORMULA(IF(logdato="","",ialt-solgte-klare))})');
   sh.getRange('A3:A').setNumberFormat('0');
   sh.getRange('B3:B').setNumberFormat('#,##0.00');
   sh.setColumnWidths(1, 6, 120); sh.setColumnWidth(7, 400);
@@ -254,23 +254,23 @@ function byggIndkoeb_(ss, dbA, dbB) {
 
   // A: SKU = Købsdato-Setnr, + -a/-b/... ved dubletter (også første række)
   sh.getRange('A2').setFormula(
-    '=LET(b,INDIRECT("B3:B"),c,INDIRECT("C3:C"),r,ROW(b),' +
-    '{"SKU";ARRAYFORMULA(IF(b="","",b&"-"&c&IF(COUNTIFS(b,b,c,c)>1,' +
-    '"-"&CHAR(96+COUNTIFS(b,b,c,c,r,"<="&r)),"")))})');
+    '=LET(datoer,INDIRECT("B3:B"),saetnr,INDIRECT("C3:C"),raekker,ROW(datoer),' +
+    '{"SKU";ARRAYFORMULA(IF(datoer="","",datoer&"-"&saetnr&IF(COUNTIFS(datoer,datoer,saetnr,saetnr)>1,' +
+    '"-"&CHAR(96+COUNTIFS(datoer,datoer,saetnr,saetnr,raekker,"<="&raekker)),"")))})');
   // D: Navn fra DB (prøver også "<nr>-1")
   sh.getRange('D2').setFormula(
-    '=LET(c,INDIRECT("C3:C"),k,{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbB + '},' +
-    '{"Navn";ARRAYFORMULA(IF(c="","",IFERROR(VLOOKUP(TO_TEXT(c),k,2,FALSE),' +
-    'IFERROR(VLOOKUP(TO_TEXT(c)&"-1",k,2,FALSE),"Sæt findes ikke"))))})');
+    '=LET(saetnr,INDIRECT("C3:C"),dbtabel,{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbB + '},' +
+    '{"Navn";ARRAYFORMULA(IF(saetnr="","",IFERROR(VLOOKUP(TO_TEXT(saetnr),dbtabel,2,FALSE),' +
+    'IFERROR(VLOOKUP(TO_TEXT(saetnr)&"-1",dbtabel,2,FALSE),"Sæt findes ikke"))))})');
   // F: Købspris = batchpris × (værdi / sum af batchens værdier)
   sh.getRange('F2').setFormula(
-    '=LET(b,INDIRECT("B3:B"),e,INDIRECT("E3:E"),' +
-    'lg,{INDIRECT("\'Indkøbslog\'!A3:A"),INDIRECT("\'Indkøbslog\'!B3:B")},' +
-    '{"Købspris (DKK)";ARRAYFORMULA(IF(b="","",IFERROR(VLOOKUP(b,lg,2,FALSE)*e/SUMIF(b,b,e),0)))})');
+    '=LET(datoer,INDIRECT("B3:B"),vaerdier,INDIRECT("E3:E"),' +
+    'logtabel,{INDIRECT("\'Indkøbslog\'!A3:A"),INDIRECT("\'Indkøbslog\'!B3:B")},' +
+    '{"Købspris (DKK)";ARRAYFORMULA(IF(datoer="","",IFERROR(VLOOKUP(datoer,logtabel,2,FALSE)*vaerdier/SUMIF(datoer,datoer,vaerdier),0)))})');
   // N: Lagerstatus = Solgt hvis SKU findes i Salg 2026, ellers På lager hvis Klar til salg
   sh.getRange('N2').setFormula(
-    '=LET(a,INDIRECT("A3:A"),k,INDIRECT("K3:K"),s,INDIRECT("\'Salg 2026\'!B4:B"),' +
-    '{"Lagerstatus";ARRAYFORMULA(IF(a="","",IF(COUNTIF(s,a)>0,"Solgt",IF(k=TRUE,"På lager",""))))})');
+    '=LET(skuer,INDIRECT("A3:A"),klar,INDIRECT("K3:K"),solgteskuer,INDIRECT("\'Salg 2026\'!B4:B"),' +
+    '{"Lagerstatus";ARRAYFORMULA(IF(skuer="","",IF(COUNTIF(solgteskuer,skuer)>0,"Solgt",IF(klar=TRUE,"På lager",""))))})');
 
   var max = sh.getMaxRows();
   saetValidering_(sh, START, max - START + 1);
@@ -308,18 +308,18 @@ function byggDbSalgspriser_(ss, dbA, dbC) {
     ['Sæt nr.', 'Tema', 'Gns. salgspris (€)', 'Antal salg', 'Højeste salgspris (€)', 'Laveste pris (€)'], 2);
   // Samme beregning som Excel: alle salg med SKU og pris > 0, grupperet på sætnummer
   sh.getRange('A3').setFormula(
-    '=IFERROR(LET(sk,INDIRECT("\'Salg 2026\'!B4:B"),pr,INDIRECT("\'Salg 2026\'!H4:H"),' +
-    'm,ARRAYFORMULA((sk<>"")*ISNUMBER(pr)*(N(pr)>0)),' +
-    'sku,FILTER(sk,m=1),p,FILTER(pr,m=1),' +
-    'nr,ARRAYFORMULA(IFERROR(REGEXEXTRACT(TO_TEXT(sku),"^[^-]*-([^-]+)"),TO_TEXT(sku))),' +
-    'u,UNIQUE(nr),' +
-    'tema,ARRAYFORMULA(IFERROR(VLOOKUP(u,{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbC + '},2,FALSE),"")),' +
-    'antal,MAP(u,LAMBDA(x,SUM(ARRAYFORMULA(--(nr=x))))),' +
-    'gns,MAP(u,LAMBDA(x,SUM(ARRAYFORMULA((nr=x)*p))/SUM(ARRAYFORMULA(--(nr=x))))),' +
-    'mx,MAP(u,LAMBDA(x,MAX(FILTER(p,nr=x)))),' +
-    'mn,MAP(u,LAMBDA(x,MIN(FILTER(p,nr=x)))),' +
-    'vis,ARRAYFORMULA(IFERROR(VALUE(u),u)),' +
-    'SORT(HSTACK(vis,tema,gns,antal,mx,mn),1,TRUE)),"")');
+    '=IFERROR(LET(salgsku,INDIRECT("\'Salg 2026\'!B4:B"),salgpris,INDIRECT("\'Salg 2026\'!H4:H"),' +
+    'gyldig,ARRAYFORMULA((salgsku<>"")*ISNUMBER(salgpris)*(N(salgpris)>0)),' +
+    'skuliste,FILTER(salgsku,gyldig=1),prisliste,FILTER(salgpris,gyldig=1),' +
+    'nrliste,ARRAYFORMULA(IFERROR(REGEXEXTRACT(TO_TEXT(skuliste),"^[^-]*-([^-]+)"),TO_TEXT(skuliste))),' +
+    'unikke,UNIQUE(nrliste),' +
+    'temaer,ARRAYFORMULA(IFERROR(VLOOKUP(unikke,{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbC + '},2,FALSE),"")),' +
+    'antal,MAP(unikke,LAMBDA(saet,SUM(ARRAYFORMULA(--(nrliste=saet))))),' +
+    'snit,MAP(unikke,LAMBDA(saet,SUM(ARRAYFORMULA((nrliste=saet)*prisliste))/SUM(ARRAYFORMULA(--(nrliste=saet))))),' +
+    'hoejest,MAP(unikke,LAMBDA(saet,MAX(FILTER(prisliste,nrliste=saet)))),' +
+    'lavest,MAP(unikke,LAMBDA(saet,MIN(FILTER(prisliste,nrliste=saet)))),' +
+    'visnr,ARRAYFORMULA(IFERROR(VALUE(unikke),unikke)),' +
+    'SORT(HSTACK(visnr,temaer,snit,antal,hoejest,lavest),1,TRUE)),"")');
   sh.getRange('C3:C').setNumberFormat('[$€]#,##0.00');
   sh.getRange('E3:F').setNumberFormat('[$€]#,##0.00');
 }
@@ -330,14 +330,14 @@ function byggLager_(ss, dbA, dbC, dbD) {
   // Viser sæt der er sorteret + fotograferet + klar til salg + på lager. Overskriv ikke cellerne.
   sh.getRange('A3').setFormula(
     '=IFERROR(LET(' +
-    'a,INDIRECT("\'Indkøb\'!A3:A"),c,INDIRECT("\'Indkøb\'!C3:C"),d,INDIRECT("\'Indkøb\'!D3:D"),' +
-    'i,INDIRECT("\'Indkøb\'!I3:I"),j,INDIRECT("\'Indkøb\'!J3:J"),k,INDIRECT("\'Indkøb\'!K3:K"),' +
-    'l,INDIRECT("\'Indkøb\'!L3:L"),m,INDIRECT("\'Indkøb\'!M3:M"),n,INDIRECT("\'Indkøb\'!N3:N"),' +
-    'q,INDIRECT("\'Indkøb\'!Q3:Q"),' +
-    'th,ARRAYFORMULA(IFERROR(VLOOKUP(TO_TEXT(c),{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbC + '},2,FALSE),"")),' +
-    'st,ARRAYFORMULA(IFERROR(VLOOKUP(TO_TEXT(c),{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbD + '},2,FALSE),"")),' +
-    'v,ARRAYFORMULA((i=TRUE)*(j=TRUE)*(k=TRUE)*(n="På lager")),' +
-    'SORT(FILTER({a,l,m,c,d,th,st,q},v=1),4,TRUE)),"")');
+    'skuer,INDIRECT("\'Indkøb\'!A3:A"),saetnr,INDIRECT("\'Indkøb\'!C3:C"),navne,INDIRECT("\'Indkøb\'!D3:D"),' +
+    'sorteret,INDIRECT("\'Indkøb\'!I3:I"),fotos,INDIRECT("\'Indkøb\'!J3:J"),klar,INDIRECT("\'Indkøb\'!K3:K"),' +
+    'stand,INDIRECT("\'Indkøb\'!L3:L"),platform,INDIRECT("\'Indkøb\'!M3:M"),status,INDIRECT("\'Indkøb\'!N3:N"),' +
+    'noter,INDIRECT("\'Indkøb\'!Q3:Q"),' +
+    'temaer,ARRAYFORMULA(IFERROR(VLOOKUP(TO_TEXT(saetnr),{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbC + '},2,FALSE),"")),' +
+    'undertemaer,ARRAYFORMULA(IFERROR(VLOOKUP(TO_TEXT(saetnr),{ARRAYFORMULA(TO_TEXT(' + dbA + ')),' + dbD + '},2,FALSE),"")),' +
+    'vis,ARRAYFORMULA((sorteret=TRUE)*(fotos=TRUE)*(klar=TRUE)*(status="På lager")),' +
+    'SORT(FILTER({skuer,stand,platform,saetnr,navne,temaer,undertemaer,noter},vis=1),4,TRUE)),"")');
   sh.setColumnWidth(1, 140); sh.setColumnWidth(5, 260); sh.setColumnWidth(8, 300);
 }
 
