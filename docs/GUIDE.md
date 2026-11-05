@@ -34,7 +34,7 @@ Du skal bruge en **computer**, hvor du er logget ind med **CTS-Gmailen**, og din
 
 ## Trin 3 – Byg testarket
 
-1. Gå tilbage til fanen med regnearket **cts-app** og genindlæs siden (F5).
+1. Gå tilbage til fanen med regnearket **cts-app** og genindlæs siden (Ctrl+R eller den runde pil ↻; på ASUS er F5 lysstyrke).
 2. Efter et par sekunder dukker menuen **CTS** op til højre for "Hjælp".
 3. Vælg **CTS → 1. Opsæt testark**.
 4. Første gang beder Google om lov:
@@ -52,7 +52,7 @@ Du skal bruge en **computer**, hvor du er logget ind med **CTS-Gmailen**, og din
 ## Trin 4 – Udrul maskinrummet (giver appen en adresse at ringe til)
 
 1. Gå til **Apps Script**-fanen.
-2. Klik på den blå knap **Udrul** øverst til højre og vælg **Ny udrulning**.
+2. Klik på den blå knap **Implementer** (kan også hedde "Udrul") øverst til højre og vælg **Ny implementering**.
 3. Klik på tandhjulet ved "Vælg type" og vælg **Webapp**.
 4. Udfyld:
    - **Beskrivelse:** `v1`
@@ -60,7 +60,7 @@ Du skal bruge en **computer**, hvor du er logget ind med **CTS-Gmailen**, og din
    - **Hvem har adgang:** **Alle**
 
    "Alle" betyder, at adressen kan nås udefra. Uden den hemmelige nøgle bliver alle kald dog afvist.
-5. Klik **Udrul**. Hvis Google beder om godkendelse igen, så gør som i trin 3.4.
+5. Klik **Implementer**. Hvis Google beder om godkendelse igen, så gør som i trin 3.4.
 6. Kopiér **Webapp-URL'en**. Den slutter på **/exec**.
 
 ---
@@ -107,6 +107,6 @@ Send Claude en kort melding om hvert punkt: virkede / virkede ikke, gerne med sk
 Claude giver dig besked, når der er en ny version af `Code.gs`. Så gør du sådan her:
 
 1. Sæt den nye kode ind som i trin 2 og gem.
-2. Vælg **Udrul → Administrer udrulninger** → klik på **blyanten** → under **Version** vælger du **Ny version** → **Udrul**.
+2. Vælg **Implementer → Administrer implementeringer** → klik på **blyanten** → under **Version** vælger du **Ny version** → **Implementer**.
 
 Adressen forbliver den samme, så du skal ikke ændre noget i appen.
