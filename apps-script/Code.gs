@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.2.0';
+var VERSION = '1.2.1';
 
 // ---------- Faner ----------
 var FANE = {
@@ -354,8 +354,8 @@ function formlerIndkoebslog_(sh) {
       'pre,ARRAYFORMULA(UPPER(IFERROR(LEFT(skuer,FIND("-",skuer)-1),""))),beloeb,ARRAYFORMULA(IF(ISNUMBER(ordre),ordre,0)),' +
       '{"Salg ' + aar + ' (DKK)";MAP(logdato,LAMBDA(batchdato,IF(batchdato="","",SUMPRODUCT((pre=UPPER(TO_TEXT(batchdato)))*beloeb)*\'' + S + '\'!$R$2)))})');
   });
-  sh.getRange('K2').setFormula('=LET(logdato,' + ind_(L, 'A', 3) + ',s25,' + ind_(L, 'I', 3) + ',s26,' + ind_(L, 'J', 3) +
-    ',{"Salg i alt (DKK)";ARRAYFORMULA(IF(logdato="","",s25+s26))})');
+  sh.getRange('K2').setFormula('=LET(logdato,' + ind_(L, 'A', 3) + ',salg2025,' + ind_(L, 'I', 3) + ',salg2026,' + ind_(L, 'J', 3) +
+    ',{"Salg i alt (DKK)";ARRAYFORMULA(IF(logdato="","",salg2025+salg2026))})');
   sh.getRange('L2').setFormula('=LET(logdato,' + ind_(L, 'A', 3) + ',pris,' + ind_(L, 'B', 3) + ',salg,' + ind_(L, 'K', 3) +
     ',{"ROI";ARRAYFORMULA(IF(logdato="","",IFERROR(salg/pris-1,"")))})');
 }
@@ -373,11 +373,21 @@ function formlerIndkoeb_(sh, db) {
   // F: Købspris = fast pris hvis udfyldt, ellers (batchpris − faste priser) × værdi / sum af værdier uden fast pris
   sh.getRange('F2').setFormula('=LET(datoer,' + ind_(I, 'B', 3) + ',vaerdier,' + ind_(I, 'E', 3) + ',fast,' + ind_(I, 'U', 3) + ',' +
     'logtabel,{' + ind_(L, 'A', 3) + ',' + ind_(L, 'B', 3) + '},' +
-    '{"Købspris (DKK)";ARRAYFORMULA(IF(datoer="","",IF(fast<>"",fast,IFERROR((VLOOKUP(datoer,logtabel,2,FALSE)-SUMIF(datoer,datoer,fast))' +
-    '*vaerdier/SUMIFS(vaerdier,datoer,datoer,fast,""),0))))})');
+    'fastsum,MAP(datoer,LAMBDA(batchdato,IF(batchdato="",0,SUMIFS(fast,datoer,batchdato)))),' +
+    'udensum,MAP(datoer,LAMBDA(batchdato,IF(batchdato="",0,SUMIFS(vaerdier,datoer,batchdato,fast,"")))),' +
+    '{"Købspris (DKK)";ARRAYFORMULA(IF(datoer="","",IF(fast<>"",fast,IFERROR((VLOOKUP(datoer,logtabel,2,FALSE)-fastsum)' +
+    '*vaerdier/udensum,0))))})');
   // N: Lagerstatus = Solgt hvis SKU findes i Salg 2025/2026, ellers På lager hvis Klar til salg
-  sh.getRange('N2').setFormula('=LET(skuer,' + ind_(I, 'A', 3) + ',klar,' + ind_(I, 'K', 3) + ',s25,' + ind_(FANE.SALG25, 'B', SALG_START) + ',s26,' + ind_(FANE.SALG26, 'B', SALG_START) + ',' +
-    '{"Lagerstatus";ARRAYFORMULA(IF(skuer="","",IF(COUNTIF(s25,skuer)+COUNTIF(s26,skuer)>0,"Solgt",IF(klar=TRUE,"På lager",""))))})');
+  sh.getRange('N2').setFormula('=LET(skuer,' + ind_(I, 'A', 3) + ',klar,' + ind_(I, 'K', 3) + ',solgt2025,' + ind_(FANE.SALG25, 'B', SALG_START) + ',solgt2026,' + ind_(FANE.SALG26, 'B', SALG_START) + ',' +
+    '{"Lagerstatus";ARRAYFORMULA(IF(skuer="","",IF(COUNTIF(solgt2025,skuer)+COUNTIF(solgt2026,skuer)>0,"Solgt",IF(klar=TRUE,"På lager",""))))})');
+}
+
+// Summer pr. ordre (samme dato + køber) beregnet række for række. SUMIFS udvider ikke i ARRAYFORMULA,
+// derfor MAP med SUMIFS pr. række.
+function gruppe_(navne) {
+  return navne.map(function (x) {
+    return 'g' + x + ',MAP(dato,kober,LAMBDA(rdato,rkober,SUMIFS(' + x + ',dato,rdato,kober,rkober))),';
+  }).join('');
 }
 
 function formlerSalg_(sh, aar) {
@@ -385,7 +395,6 @@ function formlerSalg_(sh, aar) {
   var v = function (k) { return ind_(S, k, SALG_START); };
   var lad = 'dato,' + v('A') + ',sku,' + v('B') + ',kober,' + v('C') + ',fragtud,' + v('F') + ',gebyr,' + v('G') + ',ordre,' + v('H') +
     ',fragtind,' + v('I') + ',refund,' + v('J') + ',raekker,ARRAYFORMULA(ROW(dato)),tom,ARRAYFORMULA((dato="")*(sku="")),';
-  var grp = function (x) { return 'SUMIFS(' + x + ',dato,dato,kober,kober)'; };
   var forste = 'COUNTIFS(dato,dato,kober,kober,raekker,"<"&raekker)=0';
   // E: indkøbspris fra Indkøb
   sh.getRange('E3').setFormula('=LET(' + lad + 'opslag,{' + ind_(I, 'A', 3) + ',' + ind_(I, 'F', 3) + '},' +
@@ -394,14 +403,16 @@ function formlerSalg_(sh, aar) {
   if (aar === '2025') {
     sh.getRange('K3').setFormula('=LET(' + lad + '{"Ordre Sum + Fragt (DKK)";ARRAYFORMULA(IF(tom,"",(IF(ISNUMBER(ordre),ordre,0)+IF(ISNUMBER(fragtind),fragtind,0)-IF(ISNUMBER(refund),refund,0))*$R$2))})');
   } else {
-    sh.getRange('K3').setFormula('=LET(' + lad + '{"Ordre Sum + Fragt (DKK)";ARRAYFORMULA(IF(tom,"",IF(' + forste + ',(' + grp('ordre') + '+' + grp('fragtind') + '-' + grp('refund') + ')*$R$2,"")))})');
+    sh.getRange('K3').setFormula('=LET(' + lad + gruppe_(['ordre', 'fragtind', 'refund']) +
+      '{"Ordre Sum + Fragt (DKK)";ARRAYFORMULA(IF(tom,"",IF(' + forste + ',(gordre+gfragtind-grefund)*$R$2,"")))})');
   }
   // L: Fortjeneste pr. sæt (fragt, gebyr og refusion fordelt efter ordresum inden for dato + køber)
-  sh.getRange('L3').setFormula('=LET(' + lad + 'indkoeb,' + v('E') + ',' +
-    '{"Fortjeneste sæt (DKK)";ARRAYFORMULA(IF(tom,"",IFERROR((ordre+ordre/' + grp('ordre') + '*(' + grp('fragtind') + '-' + grp('gebyr') + '-' + grp('refund') + '))*$R$2' +
-    '-(ordre/' + grp('ordre') + ')*' + grp('fragtud') + '-indkoeb,"")))})');
+  sh.getRange('L3').setFormula('=LET(' + lad + gruppe_(['ordre', 'fragtind', 'gebyr', 'refund', 'fragtud']) + 'indkoeb,' + v('E') + ',' +
+    '{"Fortjeneste sæt (DKK)";ARRAYFORMULA(IF(tom,"",IFERROR((ordre+ordre/gordre*(gfragtind-ggebyr-grefund))*$R$2' +
+    '-(ordre/gordre)*gfragtud-indkoeb,"")))})');
   // M: Fortjeneste pr. ordre på ordrens første række
-  sh.getRange('M3').setFormula('=LET(' + lad + 'fsaet,' + v('L') + ',{"Fortjeneste Ordre (DKK)";ARRAYFORMULA(IF(tom,"",IF(' + forste + ',SUMIFS(fsaet,dato,dato,kober,kober),"")))})');
+  sh.getRange('M3').setFormula('=LET(' + lad + 'fsaet,' + v('L') + ',gfsaet,MAP(dato,kober,LAMBDA(rdato,rkober,SUMIFS(fsaet,dato,rdato,kober,rkober))),' +
+    '{"Fortjeneste Ordre (DKK)";ARRAYFORMULA(IF(tom,"",IF(' + forste + ',gfsaet,"")))})');
   // N: Skattepligtigt (2026 slås op i Indkøbslog; 2025 er indtastet)
   if (aar === '2026') {
     sh.getRange('N3').setFormula('=LET(sku,' + v('B') + ',logtabel,{ARRAYFORMULA(UPPER(TO_TEXT(' + ind_(L, 'A', 3) + '))),' + ind_(L, 'C', 3) + '},' +
@@ -431,20 +442,21 @@ function formlerSkat_(sh, aar) {
   var S = FANE['SALG' + aar.slice(2)], U = FANE['UDG' + aar.slice(2)];
   var v = function (k) { return ind_(S, k, SALG_START); };
   var kurs = '\'' + S + '\'!$R$2';
-  var lad = 'LET(dato,' + v('A') + ',kober,' + v('C') + ',indkoeb,' + v('E') + ',fragtud,' + v('F') + ',gebyr,' + v('G') + ',ordre,' + v('H') +
-    ',fragtind,' + v('I') + ',refund,' + v('J') + ',skat,' + v('N') + ',erja,ARRAYFORMULA(skat="Ja"),' +
-    'andel,ARRAYFORMULA(IFERROR(ordre/SUMIFS(ordre,dato,dato,kober,kober),0)),';
-  var grp = function (x) { return 'SUMIFS(' + x + ',dato,dato,kober,kober)'; };
+  var basis = 'LET(dato,' + v('A') + ',kober,' + v('C') + ',fragtud,' + v('F') + ',gebyr,' + v('G') + ',ordre,' + v('H') +
+    ',fragtind,' + v('I') + ',refund,' + v('J') + ',skat,' + v('N') + ',erja,ARRAYFORMULA(skat="Ja"),';
+  var lad = function (g) {
+    return basis + gruppe_(['ordre'].concat(g)) + 'andel,ARRAYFORMULA(IFERROR(IF(ISNUMBER(ordre),ordre,0)/gordre,0)),';
+  };
   sh.getRange('B4').setFormula('=' + kurs);
   sh.getRange('B7').setFormula('=SUM(' + v('K') + ')');
-  var b8 = 'SUMPRODUCT(erja*IF(ISNUMBER(ordre),ordre,0))*' + kurs + '+SUMPRODUCT(erja*andel*' + grp('fragtind') + ')*' + kurs;
-  if (aar === '2026') b8 += '-SUMPRODUCT(erja*andel*' + grp('refund') + ')*' + kurs;
-  sh.getRange('B8').setFormula('=' + lad + 'ARRAYFORMULA(' + b8 + '))');
+  var b8 = 'SUMPRODUCT(erja*IF(ISNUMBER(ordre),ordre,0))*' + kurs + '+SUMPRODUCT(erja*andel*gfragtind)*' + kurs;
+  if (aar === '2026') b8 += '-SUMPRODUCT(erja*andel*grefund)*' + kurs;
+  sh.getRange('B8').setFormula('=' + lad(aar === '2026' ? ['fragtind', 'refund'] : ['fragtind']) + 'ARRAYFORMULA(' + b8 + '))');
   sh.getRange('B10').setFormula('=SUMIF(' + v('N') + ',"Ja",' + v('E') + ')');
-  sh.getRange('B11').setFormula('=' + lad + 'ARRAYFORMULA(SUMPRODUCT(erja*andel*' + grp('gebyr') + ')*' + kurs + '))');
-  sh.getRange('B13').setFormula('=' + lad + 'ARRAYFORMULA(SUMPRODUCT(erja*andel*' + grp('fragtud') + ')))');
+  sh.getRange('B11').setFormula('=' + lad(['gebyr']) + 'ARRAYFORMULA(SUMPRODUCT(erja*andel*ggebyr)*' + kurs + '))');
+  sh.getRange('B13').setFormula('=' + lad(['fragtud']) + 'ARRAYFORMULA(SUMPRODUCT(erja*andel*gfragtud)))');
   sh.getRange('B14').setFormula('=\'' + U + '\'!$Q$3');
-  sh.getRange('B17').setFormula('=' + lad + 'ARRAYFORMULA(SUMPRODUCT(IFERROR(erja/COUNTIFS(dato,dato,kober,kober,skat,"Ja"),0))))');
+  sh.getRange('B17').setFormula('=' + basis + 'ARRAYFORMULA(SUMPRODUCT(IFERROR(erja/COUNTIFS(dato,dato,kober,kober,skat,"Ja"),0))))');
   sh.getRange('B18').setFormula('=B8-B10-B11-B13-B14');
 }
 
@@ -563,6 +575,8 @@ function dato_(s) {
   var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || ''));
   return m ? m[1] + '-' + m[2] + '-' + m[3] : s;
 }
+// Tekst som "7236-2" eller "260906-7236-2" må ikke læses som dato/tal af Sheets
+function tekst_(v) { return typeof v === 'string' && /^[\d\s\-\/.:,]+$/.test(v) && /[\-\/.:,\s]/.test(v) ? "'" + v : v; }
 function vaerdi_(v) { return v && typeof v === 'object' && v.formel ? v.formel : (v === undefined || v === null ? '' : v); }
 
 function skrivData_(ss, data) {
@@ -578,7 +592,7 @@ function skrivData_(ss, data) {
   sikrRaekker_(ind, START + n + 200);
   var bc = [], e = [], gm = [], ov = [];
   data.indkoeb.forEach(function (r) {
-    bc.push([r.dato, r.setnr === '' ? '' : r.setnr]);
+    bc.push([r.dato, r.setnr === '' ? '' : tekst_(r.setnr)]);
     e.push([r.vaerdi === '' ? '' : r.vaerdi]);
     gm.push([r.salgFor, r.ovp, r.sorteret === true, r.fotos === true, r.klar === true, r.stand === '' ? '' : r.stand, r.platform]);
     //       O   P   Q noter  R kilde  S vejl.  T kompl. U fast    V foto-SKU
@@ -597,7 +611,7 @@ function skrivData_(ss, data) {
     sikrRaekker_(sh, SALG_START + rk.length + 300);
     if (!rk.length) return;
     var g = function (r, k) { return vaerdi_(r[k]); };
-    sh.getRange(SALG_START, 1, rk.length, 4).setValues(rk.map(function (r) { return [dato_(g(r, 'A')), g(r, 'B'), g(r, 'C'), g(r, 'D')]; }));
+    sh.getRange(SALG_START, 1, rk.length, 4).setValues(rk.map(function (r) { return [dato_(g(r, 'A')), tekst_(g(r, 'B')), g(r, 'C'), g(r, 'D')]; }));
     sh.getRange(SALG_START, 6, rk.length, 5).setValues(rk.map(function (r) { return [g(r, 'F'), g(r, 'G'), g(r, 'H'), g(r, 'I'), g(r, 'J')]; }));
     if (aar === '2025') sh.getRange(SALG_START, 14, rk.length, 1).setValues(rk.map(function (r) { return [g(r, 'N')]; }));
     sh.getRange(SALG_START, 15, rk.length, 2).setValues(rk.map(function (r) { return [g(r, 'O'), g(r, 'P')]; }));
@@ -619,7 +633,7 @@ function skrivData_(ss, data) {
   var eb = ss.getSheetByName(FANE.EBAY);
   var er = data.ebay.raekker;
   sikrRaekker_(eb, START + er.length + 20);
-  if (er.length) eb.getRange(START, 1, er.length, 2).setValues(er);
+  if (er.length) eb.getRange(START, 1, er.length, 2).setValues(er.map(function (r) { return [tekst_(r[0]), r[1]]; }));
   SpreadsheetApp.flush();
 }
 
@@ -967,7 +981,7 @@ function opretBatch_(d) {
   var bc = [], e = [], gm = [], ov = [];
   saet.forEach(function (s) {
     var nr = String(s.setnr).trim();
-    bc.push([datoNr, /^\d+$/.test(nr) ? Number(nr) : nr]);
+    bc.push([datoNr, /^\d+$/.test(nr) ? Number(nr) : tekst_(nr)]);
     e.push([Number(s.vaerdi)]);
     gm.push(['', s.ovp ? 'Ja' : 'Nej', false, false, false, '', '']);
     ov.push(['', '', '', s.kilde, false, false, '', '']);
