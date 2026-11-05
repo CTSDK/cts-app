@@ -24,6 +24,7 @@
     if (navn === 'koeb2') visKoeb2();
     if (navn === 'lager') visLager();
     if (navn === 'udbakke') tegnUdbakke();
+    if (navn === 'salg') visSalg();
   }
   document.addEventListener('click', function (e) {
     var g = e.target.closest('[data-gaa]');
@@ -480,15 +481,124 @@
     if (vis.length > 300) { var m = document.createElement('div'); m.className = 'lille'; m.textContent = 'Viser de første 300. Søg for at indsnævre.'; c.appendChild(m); }
   }
 
+  // ================= Registrér salg =================
+  var SALGKLADDE = 'cts.salgkladde';
+  var salg = null;
+  var vareEl = new WeakMap();
+  function nySalg() { return { iso: iDag(), platform: 'eBay', koeber: '', ordrenr: '', bilag: '', fragtInd: '', gebyr: '', fragtUd: '', refund: '', varer: [{ sku: '', pris: '' }] }; }
+  function gemSalgKladde() { try { localStorage.setItem(SALGKLADDE, JSON.stringify(salg)); } catch (e) { /* */ } }
+  function ledige() { return Data.lager().filter(function (r) { return r.lagerstatus !== 'Solgt'; }); }
+  function findLedig(tekst) {
+    var t = String(tekst || '').trim(); if (!t) return null;
+    var alle = ledige();
+    var eks = alle.find(function (r) { return r.sku.toUpperCase() === t.toUpperCase(); });
+    if (eks) return eks;
+    var paaNr = alle.filter(function (r) { return r.setnr === t; });
+    return paaNr.length === 1 ? paaNr[0] : null;
+  }
+  var SFELTER = { 's-koeber': 'koeber', 's-ordrenr': 'ordrenr', 's-bilag': 'bilag', 's-fragtind': 'fragtInd', 's-gebyr': 'gebyr', 's-fragtud': 'fragtUd', 's-refund': 'refund' };
+  function visSalg() {
+    if (!salg) { try { salg = JSON.parse(localStorage.getItem(SALGKLADDE)); } catch (e) { salg = null; } }
+    if (!salg) salg = nySalg();
+    $('s-dato').value = salg.iso; $('s-platform').value = salg.platform;
+    Object.keys(SFELTER).forEach(function (id) { $(id).value = salg[SFELTER[id]] || ''; });
+    var dl = $('s-skuer'); dl.innerHTML = '';
+    ledige().forEach(function (r) { var o = document.createElement('option'); o.value = r.sku; o.label = r.navn; dl.appendChild(o); });
+    tegnVarer(); $('s-fejl').textContent = ''; regnSalg();
+  }
+  $('s-dato').addEventListener('change', function () { salg.iso = this.value; gemSalgKladde(); regnSalg(); });
+  $('s-platform').addEventListener('change', function () { salg.platform = this.value; gemSalgKladde(); });
+  Object.keys(SFELTER).forEach(function (id) {
+    $(id).addEventListener('input', function () { salg[SFELTER[id]] = this.value; gemSalgKladde(); regnSalg(); });
+  });
+  function tegnVarer() {
+    var l = salg.varer; if (!l.length || String(l[l.length - 1].sku).trim()) l.push({ sku: '', pris: '' });
+    var c = $('s-varer'); c.innerHTML = '';
+    l.forEach(function (v) { c.appendChild(lavVare(v)); });
+    nummererVarer();
+  }
+  function nummererVarer() {
+    $('s-varer').querySelectorAll('.vare').forEach(function (d, i, alle) { d.querySelector('.slet').style.visibility = i === alle.length - 1 ? 'hidden' : ''; });
+  }
+  function lavVare(v) {
+    var d = document.createElement('div'); d.className = 'vare';
+    d.innerHTML = '<input class="sku" list="s-skuer" autocomplete="off" autocapitalize="off" placeholder="SKU eller setnr" aria-label="SKU" value="' + esc(v.sku) + '">' +
+      '<input class="pris" inputmode="decimal" placeholder="Pris €" aria-label="Pris i euro" value="' + esc(String(v.pris).replace('.', ',')) + '">' +
+      '<button type="button" class="slet" aria-label="Fjern vare">×</button><div class="info"></div>';
+    var si = d.querySelector('.sku'), pi = d.querySelector('.pris'), info = d.querySelector('.info');
+    vareEl.set(v, info); visVare(v);
+    si.addEventListener('input', function () {
+      v.sku = si.value.trim();
+      var hit = findLedig(v.sku); if (hit && hit.sku !== v.sku && hit.setnr === v.sku) { v.sku = hit.sku; }
+      visVare(v);
+      if (v.sku && salg.varer[salg.varer.length - 1] === v) { var ny = { sku: '', pris: '' }; salg.varer.push(ny); $('s-varer').appendChild(lavVare(ny)); nummererVarer(); }
+      gemSalgKladde(); regnSalg();
+    });
+    si.addEventListener('change', function () { var hit = findLedig(si.value); if (hit) { v.sku = hit.sku; si.value = hit.sku; visVare(v); gemSalgKladde(); regnSalg(); } });
+    pi.addEventListener('input', function () { v.pris = pi.value; gemSalgKladde(); regnSalg(); });
+    d.querySelector('.slet').addEventListener('click', function () { salg.varer.splice(salg.varer.indexOf(v), 1); d.remove(); nummererVarer(); gemSalgKladde(); regnSalg(); });
+    return d;
+  }
+  function visVare(v) {
+    var el = vareEl.get(v); if (!el) return;
+    if (!v.sku) { el.textContent = ''; el.className = 'info'; return; }
+    var r = findLedig(v.sku);
+    var solgt = !r && Data.lager().some(function (x) { return x.sku.toUpperCase() === v.sku.toUpperCase() && x.lagerstatus === 'Solgt'; });
+    if (r) { el.textContent = r.sku + ' · ' + r.navn + ' · købspris ' + B.kr(r.koebspris) + ' kr' + (r.stand ? ' · stand ' + r.stand : ''); el.className = 'info fundet'; }
+    else { el.textContent = solgt ? 'Er allerede solgt' : 'Findes ikke på lager – skriv hele SKU\'et'; el.className = 'info ikke'; }
+  }
+  function regnSalg() {
+    var t = B.tal, n = function (x) { var v = t(x); return isNaN(v) ? 0 : v; };
+    var varer = salg.varer.filter(function (v) { return v.sku; });
+    var sumH = varer.reduce(function (a, v) { return a + n(v.pris); }, 0);
+    $('s-sum').textContent = B.kr(sumH + n(salg.fragtInd)) + ' €';
+    var kurs = Data.kurs((salg.iso || '').slice(0, 4));
+    var ok = varer.length && varer.every(function (v) { return findLedig(v.sku) && n(v.pris) >= 0; }) && sumH > 0;
+    if (!ok) { $('s-fortj').textContent = '–'; return; }
+    var f = varer.reduce(function (a, v) {
+      var r = findLedig(v.sku), andel = n(v.pris) / sumH;
+      return a + (n(v.pris) + andel * (n(salg.fragtInd) - n(salg.gebyr) - n(salg.refund))) * kurs - andel * n(salg.fragtUd) - (r.koebspris || 0);
+    }, 0);
+    $('s-fortj').textContent = 'ca. ' + B.kr(f) + ' kr';
+  }
+  $('s-ny').addEventListener('click', function () {
+    if (salg && salg.varer.some(function (v) { return v.sku; }) && !confirm('Rydde formularen? Det, du har tastet, bliver ikke gemt.')) return;
+    salg = nySalg(); gemSalgKladde(); visSalg();
+  });
+  $('s-gem').addEventListener('click', async function () {
+    var f = $('s-fejl'); f.textContent = '';
+    var varer = salg.varer.filter(function (v) { return v.sku; });
+    if (!salg.iso) { f.textContent = 'Vælg salgsdato.'; return; }
+    if (!salg.koeber.trim()) { f.textContent = 'Skriv køber (by, land).'; return; }
+    if (!varer.length) { f.textContent = 'Tilføj mindst én vare.'; return; }
+    var fejl = varer.filter(function (v) { return !findLedig(v.sku) || isNaN(B.tal(v.pris)) || B.tal(v.pris) < 0; });
+    if (fejl.length) { f.textContent = 'Ret disse varer (findes ikke på lager, allerede solgt eller mangler pris): ' + fejl.map(function (v) { return v.sku; }).join(', '); return; }
+    var dubl = varer.map(function (v) { return findLedig(v.sku).sku; }).filter(function (x, i, a) { return a.indexOf(x) !== i; });
+    if (dubl.length) { f.textContent = 'Samme SKU står to gange: ' + dubl.join(', '); return; }
+    var num = function (x) { var v = B.tal(x); return isNaN(v) ? 0 : v; };
+    var knap = this; knap.disabled = true;
+    try {
+      await Data.tilfoej('registrerSalg', {
+        dato: salg.iso, koeber: salg.koeber.trim(), platform: salg.platform, ordrenr: salg.ordrenr.trim(), bilag: salg.bilag.trim(),
+        fragtInd: num(salg.fragtInd), gebyr: num(salg.gebyr), fragtUd: num(salg.fragtUd), refund: num(salg.refund),
+        varer: varer.map(function (v) { return { sku: findLedig(v.sku).sku, pris: num(v.pris) }; })
+      }, { antal: varer.length });
+      toast(Data.status().online ? 'Gemmer salget i Sheets …' : 'Gemt på telefonen – sendes til Sheets, når der er net');
+      salg = nySalg(); gemSalgKladde(); visSalg();
+    } catch (e) { f.textContent = 'Ikke gemt: ' + e.message; }
+    finally { knap.disabled = false; }
+  });
+
   // ================= Udbakke =================
-  var TYPENAVN = { opretBatch: 'Nyt køb', gemKlargoering: 'Klargøring', uploadFoto: 'Foto' };
+  var TYPENAVN = { opretBatch: 'Nyt køb', gemKlargoering: 'Klargøring', uploadFoto: 'Foto', registrerSalg: 'Salg' };
   function tegnUdbakke() {
     var c = $('u-liste'); c.innerHTML = '';
     var p = Data.poster();
     $('u-antal').textContent = p.length ? p.length + ' venter' + (Data.status().online ? '' : ' · offline') : 'Alt er sendt ✓';
     p.forEach(function (x) {
       var d = document.createElement('div'); d.className = 'post';
-      var hvad = x.type === 'opretBatch' ? 'Batch ' + x.data.dato + ' · ' + x.data.saet.length + ' sæt · ' + B.kr(x.data.pris) + ' kr' : x.data.sku;
+      var hvad = x.type === 'opretBatch' ? 'Batch ' + x.data.dato + ' · ' + x.data.saet.length + ' sæt · ' + B.kr(x.data.pris) + ' kr'
+        : x.type === 'registrerSalg' ? x.data.koeber + ' · ' + x.data.varer.map(function (v) { return v.sku; }).join(', ') : x.data.sku;
       d.innerHTML = '<div class="post-top"><span class="navn">' + TYPENAVN[x.type] + '</span><span class="mono">' + esc(hvad) + '</span></div>' +
         '<div class="lille">' + (x.status === 'fejl' ? '<span class="ikke-off">Fejlede:</span> ' + esc(x.fejl) : x.status === 'sender' ? 'Sender …' : 'Venter på net') + '</div>';
       if (x.status === 'fejl') {
@@ -514,6 +624,7 @@
   Data.paaHaendelse(function (type, info) {
     if (type === 'batchGemt') toast(info.afvig ? 'Batch ' + info.dato + ' gemt – men Sheets regnede anderledes for ' + info.afvig + ' sæt. Tjek arket.' : 'Batch ' + info.dato + ' gemt i Sheets ✓');
     if (type === 'altSendt') toast('Alt er sendt til Sheets ✓');
+    if (type === 'salgGemt') toast('Salg gemt i Sheets ✓ ' + info.antal + ' vare(r)' + (info.fortjeneste !== null && info.fortjeneste !== undefined ? ' · fortjeneste ' + B.kr(info.fortjeneste) + ' kr' : ''));
     if (type === 'fejl') toast('Kunne ikke sendes: ' + info.fejl);
   });
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () { /* ignorer */ });

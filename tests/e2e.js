@@ -129,6 +129,35 @@ fs.mkdirSync(UD, { recursive: true });
   await page.fill('#l-soeg', '');
   await skud('6-lager');
 
+  // Registrér salg (online): 10295 for 100 € + 10 € fragt, 5 € gebyr
+  await page.click('.top .tilbage >> visible=true');
+  await page.click('[data-gaa="salg"]');
+  await page.fill('#s-dato', '2026-11-05');
+  await page.fill('#s-koeber', 'Kaarst, Tyskland');
+  await page.fill('#s-ordrenr', '05-11111-22222');
+  const sv = page.locator('#s-varer .vare .sku').first();
+  await sv.click(); await sv.pressSequentially('10295');          // setnr alene skal finde SKU'et
+  await page.locator('#s-varer .vare .pris').first().fill('100');
+  await page.fill('#s-fragtind', '10'); await page.fill('#s-gebyr', '5');
+  await page.waitForFunction(() => document.querySelector('#s-varer .vare .info').classList.contains('fundet'));
+  assert.strictEqual(await page.textContent('#s-sum'), '110,00 €');
+  assert.strictEqual(await page.textContent('#s-fortj'), 'ca. 574,00 kr');
+  await skud('6b-salg');
+  await page.click('#s-gem');
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('cts.mock')).salg.length === 1);
+  await page.waitForFunction(() => document.getElementById('netbar').hidden);
+  await page.click('.top .tilbage >> visible=true');
+  await page.click('[data-gaa="lager"]');
+  await page.fill('#l-soeg', '10295');
+  await page.waitForFunction(() => document.querySelector('.lager-post .maerke') && document.querySelector('.lager-post .maerke').textContent === 'Solgt');
+  await page.fill('#l-soeg', '');
+  // Solgt sæt kan ikke sælges igen
+  await page.click('.top .tilbage >> visible=true');
+  await page.click('[data-gaa="salg"]');
+  const sv2 = page.locator('#s-varer .vare .sku').first(); await sv2.fill('261028-10295');
+  await page.waitForFunction(() => document.querySelector('#s-varer .vare .info').textContent.includes('allerede solgt'));
+  await page.click('#s-ny');
+
   // Samme batch igen skal afvises
   await page.click('.top .tilbage >> visible=true');
   await page.click('[data-gaa="koeb1"]');
@@ -180,12 +209,20 @@ fs.mkdirSync(UD, { recursive: true });
   await page.click('#k2-gem');
   await page.waitForSelector('#v-koeb3:not([hidden])');
   assert.strictEqual(await page.textContent('#k3-sku'), '261106-6086');
+  // Salg offline
+  await page.click('#k3-tilbage');
+  await page.click('[data-gaa="salg"]');
+  await page.fill('#s-dato', '2026-11-06'); await page.fill('#s-koeber', 'Graz, Østrig');
+  const so = page.locator('#s-varer .vare .sku').first(); await so.click(); await so.pressSequentially('261028-41714');
+  await page.locator('#s-varer .vare .pris').first().fill('60');
+  await page.click('#s-gem');
+  await page.waitForFunction(() => /4 venter/.test(document.getElementById('netbar').textContent));
   // Udbakken overlever genstart uden net
   await page.reload();
-  await page.waitForFunction(() => /3 venter/.test(document.getElementById('netbar').textContent));
+  await page.waitForFunction(() => /4 venter/.test(document.getElementById('netbar').textContent));
   await page.click('#netbar');
   await page.waitForSelector('#v-udbakke:not([hidden])');
-  assert.strictEqual(await page.locator('#u-liste .post').count(), 3);
+  assert.strictEqual(await page.locator('#u-liste .post').count(), 4);
   await skud('9-udbakke');
   // Net tilbage → alt sendes i rækkefølge
   await ctx.setOffline(false);
@@ -195,6 +232,7 @@ fs.mkdirSync(UD, { recursive: true });
   assert.strictEqual(lagret.fotos['261028-41711'].length, 1, 'offline-foto sendt');
   assert.ok(lagret.ind.find(r => r.sku === '261028-41711').klar, 'klar sendt');
   assert.ok(lagret.log.some(l => l.dato === '261106'), 'offline-batch sendt');
+  assert.ok(lagret.salg.some(x => x.sku === '261028-41714'), 'offline-salg sendt');
 
   // Ingen vandret scroll
   const bred = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);

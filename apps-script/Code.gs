@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.2.8';
+var VERSION = '1.3.0';
 
 // ---------- Faner ----------
 var FANE = {
@@ -1116,8 +1116,61 @@ var HANDLINGER = {
   gemKlargoering: function (d) { return medLaas_(function () { return gemKlargoering_(d); }); },
   uploadFoto: function (d) { return medLaas_(function () { return uploadFoto_(d); }); },
   hentLager: function () { return hentLager_(); },
-  hentAlt: function () { return hentAlt_(); }
+  hentAlt: function () { return hentAlt_(); },
+  registrerSalg: function (d) { return medLaas_(function () { return registrerSalg_(d); }); }
 };
+
+// ---------- Salg: én ordre (samme dato + køber) indsættes øverst i Salg <år> ----------
+// Fragt, gebyr, refusion, eBay-ordrenr. og bilagsnr. skrives kun på ordrens første række (som i Excel).
+function registrerSalg_(d) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d.dato || ''));
+  if (!m) throw fejl_('Salgsdato mangler.');
+  var aar = m[1], fane = FANE['SALG' + aar.slice(2)];
+  var sh = fane ? SpreadsheetApp.getActive().getSheetByName(fane) : null;
+  if (!sh) throw fejl_('Fanen "Salg ' + aar + '" findes ikke.');
+  var koeber = String(d.koeber || '').trim();
+  if (!koeber) throw fejl_('Køber mangler.');
+  var varer = (d.varer || []).filter(function (v) { return String(v.sku || '').trim(); });
+  if (!varer.length) throw fejl_('Ingen varer i ordren.');
+  // Tjek SKU'er mod Indkøb
+  var data = laesIndkoeb_(), status = {};
+  data.raekker.forEach(function (r) { status[String(r.v[K.SKU - 1])] = String(r.v[K.LAGERSTATUS - 1] || ''); });
+  var set = {};
+  varer.forEach(function (v) {
+    var sku = String(v.sku).trim();
+    if (status[sku] === undefined) throw fejl_('SKU ' + sku + ' findes ikke i Indkøb.');
+    if (status[sku] === 'Solgt') throw fejl_('SKU ' + sku + ' er allerede solgt.');
+    if (set[sku]) throw fejl_('SKU ' + sku + ' står to gange i ordren.');
+    set[sku] = true;
+    if (!(Number(v.pris) >= 0)) throw fejl_('Pris mangler for ' + sku + '.');
+  });
+  var tal = function (x) { var n = Number(x); return x === '' || x === null || x === undefined || isNaN(n) || n === 0 ? '' : n; };
+  var n = varer.length;
+  sh.insertRowsBefore(SALG_START, n);
+  sh.getRange(SALG_START, 1, n, 16).setBackground(null).setFontColor(null).setFontWeight('normal').setHorizontalAlignment(null).setWrap(false);
+  var dato = Utilities.parseDate(m[1] + '-' + m[2] + '-' + m[3], SpreadsheetApp.getActive().getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+  var raekker = varer.map(function (v, i) {
+    var f = i === 0;
+    return {
+      ad: [dato, tekst_(String(v.sku).trim()), koeber, d.platform || 'eBay'],
+      fj: [f ? tal(d.fragtUd) : '', f ? tal(d.gebyr) : '', Number(v.pris), f ? tal(d.fragtInd) : '', f ? tal(d.refund) : ''],
+      op: [f ? String(d.ordrenr || '') : '', f ? String(d.bilag || '') : '']
+    };
+  });
+  sh.getRange(SALG_START, 1, n, 4).setValues(raekker.map(function (r) { return r.ad; }));
+  sh.getRange(SALG_START, 6, n, 5).setValues(raekker.map(function (r) { return r.fj; }));
+  sh.getRange(SALG_START, 15, n, 2).setValues(raekker.map(function (r) { return r.op; }));
+  sh.getRange(SALG_START, 1, n, 1).setNumberFormat('dd-mm-yyyy');
+  sh.getRange(SALG_START, 6, n, 1).setNumberFormat('#,##0.00');
+  sh.getRange(SALG_START, 7, n, 4).setNumberFormat('[$€]#,##0.00');
+  SpreadsheetApp.flush();
+  // Resultat: fortjeneste pr. sæt og ordre som arket regner det
+  var v = sh.getRange(SALG_START, 1, n, 13).getValues();
+  var res = v.map(function (r) { return { sku: String(r[1]), indkoebspris: Number(r[4]) || 0, fortjeneste: r[11] === '' ? null : Math.round(Number(r[11]) * 100) / 100 }; });
+  var ordre = v[0][12] === '' ? null : Math.round(Number(v[0][12]) * 100) / 100;
+  var lager = laesIndkoeb_().raekker.filter(function (r) { return set[String(r.v[K.SKU - 1])]; }).map(tilSaet_);
+  return { aar: aar, raekker: res, fortjenesteOrdre: ordre, saet: lager };
+}
 
 function medLaas_(fn) {
   var laas = LockService.getScriptLock();
@@ -1141,7 +1194,9 @@ function hentAlt_() {
   var logRaekker = l > 0 ? log.getRange(START, 1, l, 2).getValues()
     .filter(function (r) { return r[0] !== ''; })
     .map(function (r) { return [String(r[0]), Number(r[1])]; }) : [];
-  return { db: dbRaekker, salg: salg, lager: hentLager_(), log: logRaekker };
+  var kurs = {};
+  ['SALG25', 'SALG26'].forEach(function (k) { var sh = SpreadsheetApp.getActive().getSheetByName(FANE[k]); if (sh) kurs['20' + k.slice(4)] = Number(sh.getRange('R2').getValue()) || 7.46; });
+  return { db: dbRaekker, salg: salg, lager: hentLager_(), log: logRaekker, kurs: kurs };
 }
 
 function slaaOp_(setnr) {

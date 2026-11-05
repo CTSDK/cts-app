@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/app.css?v=6">
+<link rel="stylesheet" href="css/app.css?v=7">
 </head>
 <body>
 <div id="testbanner" class="banner" hidden></div>
@@ -35,9 +35,9 @@
       <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7"/></svg></span>
       <span class="kort-tekst"><b>Lager</b><small>Klar, ikke klar, på eBay</small></span>
     </button>
-    <button class="kort" disabled>
+    <button class="kort" data-gaa="salg">
       <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v12H4zM8 7V5h8v2"/></svg></span>
-      <span class="kort-tekst"><b>Registrér salg</b><small>Kommer i fase 3</small></span>
+      <span class="kort-tekst"><b>Registrér salg</b><small>Ordre, fragt, gebyr</small></span>
     </button>
     <button class="kort" disabled>
       <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V10M10 19V5M16 19v-6M22 19H2"/></svg></span>
@@ -167,6 +167,43 @@
   </footer>
 </section>
 
+<!-- ============ REGISTRÉR SALG ============ -->
+<section id="v-salg" class="visning" hidden>
+  <header class="top"><button class="tilbage" data-gaa="forside" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Registrér salg</h2><button class="link" id="s-ny">Ny ordre</button></header>
+  <div class="indhold">
+    <div class="raekke2">
+      <div><label for="s-dato">Salgsdato</label><input id="s-dato" type="date"></div>
+      <div><label for="s-platform">Platform</label>
+        <select id="s-platform"><option>eBay</option><option>Catawiki</option><option>BrickLink</option><option>DBA</option><option>Facebook</option><option>Andet</option></select></div>
+    </div>
+    <label for="s-koeber">Køber (by, land)</label>
+    <input id="s-koeber" autocomplete="off" placeholder="Fx Kaarst, Tyskland">
+    <div class="raekke2">
+      <div><label for="s-ordrenr">eBay-ordrenr.</label><input id="s-ordrenr" autocomplete="off" placeholder="00-00000-00000"></div>
+      <div><label for="s-bilag">Bilagsnr.</label><input id="s-bilag" autocomplete="off" placeholder="Fx B140"></div>
+    </div>
+    <h3>Varer</h3>
+    <datalist id="s-skuer"></datalist>
+    <div id="s-varer" class="linjer"></div>
+    <h3>Fragt og gebyr (hele ordren)</h3>
+    <div class="raekke2">
+      <div><label for="s-fragtind">Fragt modtaget (€)</label><input id="s-fragtind" inputmode="decimal" placeholder="0,00"></div>
+      <div><label for="s-gebyr">Portals gebyr (€)</label><input id="s-gebyr" inputmode="decimal" placeholder="0,00"></div>
+    </div>
+    <div class="raekke2">
+      <div><label for="s-fragtud">Udgift fragt (DKK)</label><input id="s-fragtud" inputmode="decimal" placeholder="0,00"></div>
+      <div><label for="s-refund">Refunderet (€)</label><input id="s-refund" inputmode="decimal" placeholder="0,00"></div>
+    </div>
+    <div class="sum sum-kolonne">
+      <div><span>Ordre sum (varer + fragt)</span><b id="s-sum">0,00 €</b></div>
+      <div><span>Anslået fortjeneste</span><b id="s-fortj">–</b></div>
+    </div>
+    <p class="lille">Fortjenesten er appens overslag – Sheets regner den præcist, når salget er gemt.</p>
+    <div id="s-fejl" class="besked fejl" role="alert"></div>
+  </div>
+  <footer class="bund"><button id="s-gem" class="knap knap-gul">Gem salg</button></footer>
+</section>
+
 <!-- ============ LAGER ============ -->
 <section id="v-lager" class="visning" hidden>
   <header class="top"><button class="tilbage" data-gaa="forside" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Lager</h2><button class="link" id="l-opdater">Opdater</button></header>
@@ -186,12 +223,12 @@
 
 <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="js/beregn.js?v=6"></script>
-<script src="js/api.js?v=6"></script>
-<script src="js/lokal.js?v=6"></script>
-<script src="js/data.js?v=6"></script>
-<script src="js/foto.js?v=6"></script>
-<script src="js/beskaer.js?v=6"></script>
-<script src="js/app.js?v=6"></script>
+<script src="js/beregn.js?v=7"></script>
+<script src="js/api.js?v=7"></script>
+<script src="js/lokal.js?v=7"></script>
+<script src="js/data.js?v=7"></script>
+<script src="js/foto.js?v=7"></script>
+<script src="js/beskaer.js?v=7"></script>
+<script src="js/app.js?v=7"></script>
 </body>
 </html>

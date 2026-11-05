@@ -182,3 +182,13 @@ body.laast { overflow: hidden; }
 .netbar.sender { background: var(--navy-lys); color: var(--navy); }
 .netbar.fejl { background: var(--roed-bg); color: var(--roed); }
 .forside-links { display: flex; flex-wrap: wrap; justify-content: space-between; padding: 0 4px; }
+
+/* Salg */
+.vare { background: var(--kort); border-radius: 14px; padding: 10px; display: grid; grid-template-columns: 1fr 110px auto; gap: 8px; align-items: center; }
+.vare input { min-height: 44px; }
+.vare .sku { font-family: var(--mono); }
+.vare .info { grid-column: 1 / -1; font-size: 13px; color: var(--daempet); min-height: 18px; }
+.vare .info.fundet { color: var(--groen); }
+.vare .info.ikke { color: var(--roed); }
+.sum-kolonne { flex-direction: column; gap: 6px; display: flex; }
+.sum-kolonne > div { display: flex; justify-content: space-between; }

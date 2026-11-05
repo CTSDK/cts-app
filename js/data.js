@@ -7,7 +7,7 @@
   'use strict';
 
   var B = rod.Beregn, Api = rod.Api, Lokal = rod.Lokal;
-  var kopi = { db: null, salg: {}, lager: [], log: {}, hentet: 0 };
+  var kopi = { db: null, salg: {}, lager: [], log: {}, hentet: 0, kurs: {} };
   var udbakke = [];
   var lyttere = [], haendelser = [];
   var status = { online: navigator.onLine, sender: false, henter: false, fejl: '' };
@@ -18,8 +18,8 @@
 
   async function start() {
     try {
-      var v = await Promise.all(['db', 'salg', 'lager', 'log', 'hentet'].map(function (k) { return Lokal.hent(k); }));
-      kopi.db = v[0] || null; kopi.salg = v[1] || {}; kopi.lager = v[2] || []; kopi.log = v[3] || {}; kopi.hentet = v[4] || 0;
+      var v = await Promise.all(['db', 'salg', 'lager', 'log', 'hentet', 'kurs'].map(function (k) { return Lokal.hent(k); }));
+      kopi.db = v[0] || null; kopi.salg = v[1] || {}; kopi.lager = v[2] || []; kopi.log = v[3] || {}; kopi.hentet = v[4] || 0; kopi.kurs = v[5] || {};
       udbakke = (await Lokal.udbakke.alle()) || [];
       udbakke.forEach(function (p) { if (p.status === 'sender') p.status = 'venter'; });
     } catch (e) { status.fejl = 'Lokal lagring virker ikke: ' + e.message; }
@@ -60,6 +60,8 @@
       } else if (p.type === 'uploadFoto') {
         var f = idx[p.data.sku]; if (!f) return;
         f.fotos = true; f.ventendeFotos++;
+      } else if (p.type === 'registrerSalg') {
+        (p.data.varer || []).forEach(function (v) { var x = idx[v.sku]; if (x) { x.lagerstatus = 'Solgt'; x.ventende = true; } });
       }
     });
     return res;
@@ -149,6 +151,10 @@
     } else if (p.type === 'gemKlargoering') {
       erstat(svar);
       await Lokal.saet('lager', kopi.lager);
+    } else if (p.type === 'registrerSalg') {
+      (svar.saet || []).forEach(erstat);
+      await Lokal.saet('lager', kopi.lager);
+      haendelse('salgGemt', { antal: (svar.raekker || []).length, fortjeneste: svar.fortjenesteOrdre });
     } else if (p.type === 'uploadFoto') {
       var r = kopi.lager.find(function (x) { return x.sku === p.data.sku; });
       if (r) { r.antalFotos = svar.antalFotos; r.fotos = true; }
@@ -183,8 +189,8 @@
       // bevar fototællinger, som lagerlisten ikke indeholder
       var gl = {}; kopi.lager.forEach(function (r) { gl[r.sku] = r.antalFotos; });
       (d.lager || []).forEach(function (r) { if (r.antalFotos === undefined) r.antalFotos = gl[r.sku] || (r.fotos ? 1 : 0); });
-      kopi = { db: db, salg: salg, lager: d.lager || [], log: log, hentet: Date.now() };
-      await Promise.all([Lokal.saet('db', db), Lokal.saet('salg', salg), Lokal.saet('lager', kopi.lager), Lokal.saet('log', log), Lokal.saet('hentet', kopi.hentet)]);
+      kopi = { db: db, salg: salg, lager: d.lager || [], log: log, hentet: Date.now(), kurs: d.kurs || {} };
+      await Promise.all([Lokal.saet('db', db), Lokal.saet('salg', salg), Lokal.saet('lager', kopi.lager), Lokal.saet('log', log), Lokal.saet('hentet', kopi.hentet), Lokal.saet('kurs', kopi.kurs)]);
       status.online = true;
       return true;
     } catch (e) {
@@ -212,6 +218,6 @@
     lager: lager, batch: batch, batchFindes: batchFindes, harDb: harDb, slaaOp: slaaOp,
     tilfoej: tilfoej, venter: venter, fejlede: fejlede, poster: poster, proevIgen: proevIgen, slet: slet, koer: koer,
     hentAlt: hentAlt, opdaterFotos: opdaterFotos, status: function () { return status; },
-    hentetTid: function () { return kopi.hentet; }, sendteFotos: function (sku) { return sendteFotos[sku] || []; }
+    hentetTid: function () { return kopi.hentet; }, kurs: function (aar) { return Number(kopi.kurs[String(aar)]) || 7.46; }, sendteFotos: function (sku) { return sendteFotos[sku] || []; }
   };
 })(this);

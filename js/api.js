@@ -60,7 +60,7 @@
     };
     var SALG = { '6086': { gns: 275, antal: 2, hoejeste: 300, laveste: 250 } }; // som testsalgene i testarket
     var NOEGLE = 'cts.mock';
-    function laes() { try { return JSON.parse(localStorage.getItem(NOEGLE)) || { log: [], ind: [], fotos: {} }; } catch (e) { return { log: [], ind: [], fotos: {} }; } }
+    function laes() { var t = { log: [], ind: [], fotos: {}, salg: [] }; try { var x = JSON.parse(localStorage.getItem(NOEGLE)); if (x) { x.salg = x.salg || []; return x; } } catch (e) { /* */ } return t; }
     function skriv(s) { localStorage.setItem(NOEGLE, JSON.stringify(s)); }
     function genberegn(s) {
       // SKU og købspris som regnearkets formler
@@ -75,7 +75,7 @@
         var sum = s.ind.filter(function (x) { return x.dato === r.dato; }).reduce(function (a, x) { return a + x.vaerdi; }, 0);
         r.koebspris = log && sum ? Math.round(log.pris * r.vaerdi / sum * 100) / 100 : 0;
         r.navn = DB[r.setnr] ? DB[r.setnr][0] : 'Sæt findes ikke';
-        r.lagerstatus = r.klar ? 'På lager' : '';
+        r.lagerstatus = (s.salg || []).some(function (x) { return x.sku === r.sku; }) ? 'Solgt' : (r.klar ? 'På lager' : '');
         r.antalFotos = (s.fotos[r.sku] || []).length;
       });
     }
@@ -123,13 +123,36 @@
         skriv(s); return { navn: navn, antalFotos: liste.length, gentaget: false };
       },
       hentLager: function () { var s = laes(); genberegn(s); return s.ind; },
+      registrerSalg: function (d) {
+        var s = laes(); genberegn(s);
+        var varer = (d.varer || []).filter(function (v) { return v.sku; });
+        if (!varer.length) throw srv('Ingen varer i ordren.');
+        varer.forEach(function (v) {
+          var r = s.ind.find(function (x) { return x.sku === v.sku; });
+          if (!r) throw srv('SKU ' + v.sku + ' findes ikke i Indkøb.');
+          if (r.lagerstatus === 'Solgt') throw srv('SKU ' + v.sku + ' er allerede solgt.');
+        });
+        var kurs = 7.46, sumH = varer.reduce(function (a, v) { return a + Number(v.pris); }, 0);
+        var n = function (x) { return Number(x) || 0; };
+        var raekker = varer.map(function (v) {
+          var r = s.ind.find(function (x) { return x.sku === v.sku; });
+          var andel = sumH ? Number(v.pris) / sumH : 0;
+          var f = (Number(v.pris) + andel * (n(d.fragtInd) - n(d.gebyr) - n(d.refund))) * kurs - andel * n(d.fragtUd) - r.koebspris;
+          s.salg.push({ dato: d.dato, sku: v.sku, koeber: d.koeber, pris: Number(v.pris) });
+          return { sku: v.sku, indkoebspris: r.koebspris, fortjeneste: Math.round(f * 100) / 100 };
+        });
+        genberegn(s); skriv(s);
+        return { aar: d.dato.slice(0, 4), raekker: raekker, fortjenesteOrdre: Math.round(raekker.reduce(function (a, r) { return a + r.fortjeneste; }, 0) * 100) / 100,
+          saet: s.ind.filter(function (r) { return varer.some(function (v) { return v.sku === r.sku; }); }) };
+      },
       hentAlt: function () {
         var s = laes(); genberegn(s);
         return {
           db: Object.keys(DB).map(function (k) { return [k].concat(DB[k]); }),
           salg: Object.keys(SALG).map(function (k) { var x = SALG[k]; return [k, x.gns, x.antal, x.hoejeste, x.laveste]; }),
           lager: s.ind.map(function (r) { var c = Object.assign({}, r); delete c.antalFotos; return c; }),
-          log: s.log.map(function (l) { return [l.dato, l.pris]; })
+          log: s.log.map(function (l) { return [l.dato, l.pris]; }),
+          kurs: { '2025': 7.46, '2026': 7.46 }
         };
       }
     };

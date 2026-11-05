@@ -123,3 +123,17 @@ Appen virker også uden net, fx i en kælder eller hos en sælger:
 - En **mørk bjælke øverst** viser fx *"Offline · 12 venter på net"*. Tryk på den for at se, hvad der venter.
 - Hvis noget **fejler** hos Google (fx batchen findes allerede), står det i rødt under *Venter på at blive sendt* med knapperne **Prøv igen** og **Slet**.
 - Åbn appen **med net mindst én gang**, før du tager den med et sted uden net – så har den en frisk kopi.
+
+---
+
+## Registrér salg
+
+1. Forsiden → **Registrér salg**.
+2. Udfyld **salgsdato**, **platform**, **køber (by, land)** og gerne **eBay-ordrenr.** og **bilagsnr.**
+3. **Varer:** skriv SKU – eller bare sætnummeret, hvis der kun er ét på lager – og prisen i €. Der kommer automatisk en ny linje til næste vare i samme ordre.
+4. **Fragt og gebyr** gælder hele ordren (de skrives kun på ordrens første række i Sheets, som i Excel).
+5. Appen viser **ordresum** og en **anslået fortjeneste**. Sheets regner den præcise.
+6. **Gem salg.** Virker også uden net – salget sendes, når der er forbindelse. Sættet står derefter som **Solgt** i Lager.
+
+Et sæt, der allerede er solgt, kan ikke vælges igen.
+Fotos af solgte sæt fjernes ikke automatisk – brug **CTS → Fjern fotos af solgte sæt**, når du vil rydde op.
