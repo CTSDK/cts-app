@@ -346,8 +346,11 @@
     if (Foto.kameraKoerer()) { Foto.stopKamera($('k3-video')); kameraUi(); return; }
     try { await Foto.startKamera($('k3-video')); }
     catch (e) {
-      var t = e && e.name === 'NotAllowedError' ? 'Kameraet blev ikke tilladt. Tjek Indstillinger → Safari → Kamera, eller brug knappen herunder.' : (e.message || String(e));
-      f.textContent = 'Live-kamera virker ikke: ' + t;
+      var standalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+      var t = e && e.name === 'NotAllowedError'
+        ? 'iPhonen afviste kameraet uden at spørge. Tjek Indstillinger → Apps → Safari → Kamera (skal være Spørg eller Tillad).'
+        : (e.message || String(e));
+      f.textContent = 'Live-kamera virker ikke: ' + t + ' [' + (e && e.name) + ', ' + (standalone ? 'hjemmeskærm' : 'Safari') + ']. Brug imens knappen herover.';
     }
     kameraUi();
   });

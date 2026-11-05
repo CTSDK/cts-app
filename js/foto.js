@@ -13,14 +13,17 @@
       throw new Error('Live-kamera understøttes ikke her. Brug "Tag foto med telefonens kamera".');
     }
     stopKamera(video);
-    stroem = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1440 } }
-    });
+    try {
+      stroem = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1440 } }
+      });
+    } catch (e) { e.trin = 'tilladelse'; throw e; }
     video.setAttribute('playsinline', '');
     video.muted = true;
     video.srcObject = stroem;
-    await video.play();
+    // play() kan afvises af iOS uden at kameraet er blokeret – videoen har autoplay, så det ignoreres
+    try { await video.play(); } catch (e) { /* ignorer */ }
     return true;
   }
 
