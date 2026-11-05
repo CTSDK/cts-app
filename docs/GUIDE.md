@@ -92,6 +92,7 @@ Du skal bruge en **computer**, hvor du er logget ind med **CTS-Gmailen**, og din
 6. Tryk **Gem i Sheets**. Tjek bagefter i regnearket, at fanen Indkøb viser de samme tal, og at SKU'erne er `261028-10271` osv.
 7. På **Klargør**-siden:
    - Tryk **Start kamera**. iPhonen spørger om lov til kameraet. Tryk **Tillad**.
+   - Spørger den ikke, og står der "afviste kameraet": **Indstillinger → Apps → Safari → Kamera** står sikkert på **Afvis**. Sæt den til **Tillad**, luk appen helt og åbn den igen. (Testet 05-11-2026 på iOS 27.2 – virker fra hjemmeskærmen.)
    - Tag 2–3 fotos med **Tag foto**. De sendes ét ad gangen, og under hvert foto står **.01.jpg**, **.02.jpg** osv.
    - Virker live-kameraet ikke, så brug knappen **Tag foto med telefonens kamera** og skriv til Claude, hvad der skete.
    - Sæt **Stand**, sæt flueben i **Sorteret**, og tryk **Klar til salg**.
