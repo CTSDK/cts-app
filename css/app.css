@@ -157,3 +157,21 @@ h3 { margin: 8px 0 0; font-size: 15px; }
   .raekke2, .vaerdi-raekke { grid-template-columns: 1fr; }
   .fotos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* Beskæring */
+body.laast { overflow: hidden; }
+.beskaer { position: fixed; inset: 0; z-index: 20; background: #141413; color: #fff; display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+.beskaer-top { text-align: center; font-size: 14px; color: #cfc9bd; padding: 12px 16px 6px; }
+.beskaer-flade { position: relative; flex: 1; margin: 8px 16px; touch-action: none; user-select: none; -webkit-user-select: none; overflow: hidden; }
+.beskaer-flade canvas { position: absolute; }
+.b-ramme { position: absolute; box-shadow: 0 0 0 9999px rgba(0,0,0,.6); outline: 2px solid var(--gul); cursor: move; }
+.b-ramme i { position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; }
+.b-ramme i::after { content: ""; position: absolute; left: 14px; top: 14px; width: 16px; height: 16px; background: var(--gul); border-radius: 4px; }
+.b-ramme i[data-h="n"]::after, .b-ramme i[data-h="s"]::after { width: 24px; height: 8px; left: 10px; top: 18px; }
+.b-ramme i[data-h="e"]::after, .b-ramme i[data-h="w"]::after { width: 8px; height: 24px; left: 18px; top: 10px; }
+.b-ramme i[data-h="nw"] { left: 0; top: 0; }   .b-ramme i[data-h="n"] { left: 50%; top: 0; }   .b-ramme i[data-h="ne"] { left: 100%; top: 0; }
+.b-ramme i[data-h="e"] { left: 100%; top: 50%; } .b-ramme i[data-h="se"] { left: 100%; top: 100%; }
+.b-ramme i[data-h="s"] { left: 50%; top: 100%; } .b-ramme i[data-h="sw"] { left: 0; top: 100%; } .b-ramme i[data-h="w"] { left: 0; top: 50%; }
+.beskaer-knapper { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 8px; padding: 10px 16px 16px; }
+.beskaer-knapper .knap { color: var(--tekst); font-size: 15px; padding: 0 8px; }

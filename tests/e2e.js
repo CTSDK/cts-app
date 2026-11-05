@@ -61,13 +61,41 @@ fs.mkdirSync(UD, { recursive: true });
   assert.ok(await page.isDisabled('#k3-klar'), 'Klar er låst før krav er opfyldt');
   await page.click('#k3-start');
   await page.waitForFunction(() => document.getElementById('k3-video').videoWidth > 0);
-  await page.click('#k3-tag'); await page.click('#k3-tag');
-  // Reserve: fil-input
+  // Foto 1: beskær ved at trække hjørnet nederst til højre ind
+  await page.click('#k3-tag');
+  await page.waitForSelector('.beskaer:not([hidden])');
+  await skud('4a-beskaer');
+  const h = await page.locator('.b-ramme i[data-h="se"]').boundingBox();
+  await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(h.x - 80, h.y - 60, { steps: 5 });
+  await page.mouse.up();
+  // flyt rammen
+  const rb = await page.locator('.b-ramme').boundingBox();
+  await page.mouse.move(rb.x + rb.width / 2, rb.y + rb.height / 2);
+  await page.mouse.down(); await page.mouse.move(rb.x + rb.width / 2 + 20, rb.y + rb.height / 2 + 10, { steps: 3 }); await page.mouse.up();
+  await page.click('[data-b="ok"]');
+  await page.waitForSelector('.beskaer', { state: 'hidden' });
+  // Foto 2: hele billedet
+  await page.click('#k3-tag');
+  await page.click('[data-b="hele"]');
+  await page.click('[data-b="ok"]');
+  // Reserve: fil-input – først "Tag om" (må ikke gemmes), så igen med OK
   const jpg = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 3000; c.height = 2000; c.getContext('2d').fillRect(0, 0, 10, 10); return c.toDataURL('image/png').split(',')[1]; });
-  await page.setInputFiles('#k3-fil', { name: 'IMG_0001.png', mimeType: 'image/png', buffer: Buffer.from(jpg, 'base64') });
+  const fil = { name: 'IMG_0001.png', mimeType: 'image/png', buffer: Buffer.from(jpg, 'base64') };
+  await page.setInputFiles('#k3-fil', fil);
+  await page.waitForSelector('.beskaer:not([hidden])');
+  await page.click('[data-b="om"]');
+  await page.setInputFiles('#k3-fil', fil);
+  await page.waitForSelector('.beskaer:not([hidden])');
+  await page.click('[data-b="ok"]');
   await page.waitForFunction(() => document.querySelectorAll('#k3-fotos .foto.ok').length === 3);
   const navne = await page.$$eval('#k3-fotos .foto span', e => e.map(x => x.textContent));
   assert.deepStrictEqual(navne, ['.01.jpg', '.02.jpg', '.03.jpg']);
+  const maal = await page.$$eval('#k3-fotos .foto img', e => e.map(x => [x.naturalWidth, x.naturalHeight]));
+  console.log('fotomål (px):', JSON.stringify(maal));
+  assert.ok(maal[0][0] < maal[1][0] && maal[0][1] < maal[1][1], 'foto 1 er beskåret');
+  assert.ok(Math.max(...maal[2]) <= 1600, 'fil nedskaleret til maks 1600');
   const stoerrelse = await page.evaluate(() => JSON.parse(localStorage.getItem('cts.mock')).fotos['261028-10271'].map(f => f.kb));
   console.log('fotostørrelser (KB):', stoerrelse.join(', '));
   await page.click('#k3-plus');

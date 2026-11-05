@@ -3,7 +3,7 @@
   'use strict';
 
   var $ = function (id) { return document.getElementById(id); };
-  var B = window.Beregn, Api = window.Api, Foto = window.Foto;
+  var B = window.Beregn, Api = window.Api, Foto = window.Foto, Beskaer = window.Beskaer;
   var KILDER_MANUEL = ['BrickLink', 'eBay', 'Egen vurdering'];
   var KLADDE = 'cts.kladde';
 
@@ -354,19 +354,33 @@
     }
     kameraUi();
   });
-  $('k3-tag').addEventListener('click', function () {
+  // Foto → beskæring → upload-kø. SKU låses, når fotoet tages.
+  var beskaerer = false;
+  async function beskaerOgSend(raa, sku) {
+    var r = await Beskaer.aabn(raa);
+    if (r) koe.tilfoej(sku, Foto.beskaerTilJpg(raa, r));
+    return !!r;
+  }
+  $('k3-tag').addEventListener('click', async function () {
+    if (beskaerer) return;
+    var sku = k3.sku;
     try {
-      var jpg = Foto.tagBillede($('k3-video'));
-      koe.tilfoej(k3.sku, jpg);
-      var v = $('k3-video'); v.style.opacity = '0.3'; setTimeout(function () { v.style.opacity = ''; }, 120);
+      var raa = Foto.tagRaa($('k3-video'));
+      beskaerer = true;
+      await beskaerOgSend(raa, sku);
     } catch (e) { $('k3-kamerafejl').textContent = e.message; }
+    finally { beskaerer = false; }
   });
   $('k3-fil').addEventListener('change', async function () {
     var filer = Array.prototype.slice.call(this.files || []); this.value = '';
-    for (var i = 0; i < filer.length; i++) {
-      try { koe.tilfoej(k3.sku, await Foto.filTilJpg(filer[i])); }
-      catch (e) { $('k3-kamerafejl').textContent = e.message; }
-    }
+    var sku = k3.sku;
+    beskaerer = true;
+    try {
+      for (var i = 0; i < filer.length; i++) {
+        try { await beskaerOgSend(await Foto.filTilRaa(filer[i]), sku); }
+        catch (e) { $('k3-kamerafejl').textContent = e.message; }
+      }
+    } finally { beskaerer = false; }
   });
   document.addEventListener('visibilitychange', function () {
     if (document.hidden && aktiv === 'koeb3') { Foto.stopKamera($('k3-video')); kameraUi(); }
