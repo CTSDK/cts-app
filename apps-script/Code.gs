@@ -12,7 +12,7 @@
  * (Script Properties) og aldrig i koden.
  */
 
-var VERSION = '1.0.2';
+var VERSION = '1.0.3';
 
 // ---------- Faner og kolonner ----------
 var FANE = {
@@ -139,12 +139,21 @@ function opsaetTestark() {
     var dbD = "DB!$D$" + dbStart + ":$D";
     PropertiesService.getScriptProperties().setProperty('DB_START', String(dbStart));
 
+    // Formler skrives med engelsk syntaks (komma mellem argumenter). Arket sættes midlertidigt
+    // til engelsk landestandard, mens formlerne skrives, og derefter tilbage til dansk.
+    var landestandard = ss.getSpreadsheetLocale();
+    ss.setSpreadsheetLocale('en_US');
+    SpreadsheetApp.flush();
     trin_('Indkøbslog', function () { byggIndkoebslog_(ss); });
     trin_('Indkøb', function () { byggIndkoeb_(ss, dbA, dbB); });
     trin_('Salg 2026', function () { byggSalg_(ss); });
     trin_('DB Salgspriser', function () { byggDbSalgspriser_(ss, dbA, dbC); });
     trin_('Lager', function () { byggLager_(ss, dbA, dbC, dbD); });
+    SpreadsheetApp.flush();
+    ss.setSpreadsheetLocale(landestandard || 'da_DK');
+    SpreadsheetApp.flush();
   } catch (err) {
+    try { if (landestandard) ss.setSpreadsheetLocale(landestandard); } catch (e) { /* ignorer */ }
     ui.alert('Opsætningen stoppede',
       String(err.message || err) + '\n\nDet er ufarligt: kør CTS → 1. Opsæt testark igen. ' +
       'Virker det stadig ikke, så send et skærmbillede af denne besked til Claude.', ui.ButtonSet.OK);
@@ -167,8 +176,10 @@ function opsaetTestark() {
   p.setProperty('TILSTAND', 'test');
   hentNoegle_();
 
-  ui.alert('Færdig',
-    'Testarket er bygget.\nFotos gemmes i: ' + stiTil_(test) +
+  var fejl = tjekFormler_(ss);
+  ui.alert(fejl.length ? 'Bygget – men med formelfejl' : 'Færdig',
+    (fejl.length ? 'Disse celler viser fejl – send et skærmbillede til Claude:\n' + fejl.join('\n') + '\n\n' : 'Testarket er bygget, og formlerne virker.\n') +
+    'Fotos gemmes i: ' + stiTil_(test) +
     '\n\nNæste trin: CTS → 2. Vis API-nøgle.', ui.ButtonSet.OK);
 }
 
@@ -188,6 +199,20 @@ function proev_(fn, hvad) {
     try { return fn(); } catch (e) { sidste = e; SpreadsheetApp.flush(); Utilities.sleep(2000 * (i + 1)); }
   }
   throw new Error('Kunne ikke ' + hvad + ': ' + (sidste && sidste.message));
+}
+
+// Finder formelceller, der viser en fejlværdi
+function tjekFormler_(ss) {
+  var celler = [[FANE.LOG, 'C2'], [FANE.LOG, 'D2'], [FANE.LOG, 'E2'], [FANE.LOG, 'F2'],
+    [FANE.INDKOEB, 'A2'], [FANE.INDKOEB, 'D2'], [FANE.INDKOEB, 'F2'], [FANE.INDKOEB, 'N2'],
+    [FANE.DBS, 'A3'], [FANE.LAGER, 'A3']];
+  var fejl = [];
+  celler.forEach(function (c) {
+    var sh = ss.getSheetByName(c[0]); if (!sh) return;
+    var v = sh.getRange(c[1]).getDisplayValue();
+    if (/^#/.test(v)) fejl.push(c[0] + '!' + c[1] + ': ' + v);
+  });
+  return fejl;
 }
 
 function findDbStart_(db) {
