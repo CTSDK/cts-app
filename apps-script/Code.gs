@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.2.2';
+var VERSION = '1.2.3';
 
 // ---------- Faner ----------
 var FANE = {
@@ -771,9 +771,13 @@ function kontrol_(ss, data) {
 // ======================================================================
 
 function sorterFotos() {
-  var ui = SpreadsheetApp.getUi();
+  var ui = SpreadsheetApp.getUi(), ss = SpreadsheetApp.getActive();
   var res;
+  ss.toast('Sorteringen kører (højst 4 minutter pr. runde) …', 'Sortér gamle fotos', 10);
   try { res = sorterFotos_(); } catch (e) { ui.alert('Sortér gamle fotos', e.message, ui.ButtonSet.OK); return; }
+  ss.toast(res.flyttet + ' flyttet · ' + res.solgte + ' solgte i papirkurv · ' + res.ikke + ' ikke matchet' +
+    (res.mere ? ' · fortsætter automatisk om 1 minut' : ' · færdig ✓'), 'Sortér gamle fotos', 30);
+  return;
   ui.alert('Sortér gamle fotos',
     res.flyttet + ' fotos flyttet til købsmapperne, ' + res.solgte + ' fotos af solgte sæt lagt i papirkurven, ' +
     res.ikke + ' kunne ikke matches (se fanen Foto-import og mappen "_Ikke matchet").' +
@@ -806,6 +810,19 @@ function sorterFotos_() {
     norm[nk] = norm[nk] === undefined ? sku : null; // null = tvetydig
     raekkeFor[sku] = r;
   });
+  // Sætnummer uden variant/suffiks (7669-2 → 7669, 607-b → 607) → SKU'er
+  var kerne = function (nr) { return String(nr).toUpperCase().replace(/-\d+$/, '').replace(/-?[A-Z]$/, ''); };
+  var paaNr = {};
+  data.raekker.forEach(function (r) {
+    var sku = String(r.v[K.SKU - 1]), nr = String(r.v[K.SETNR - 1] || '');
+    if (!nr || /^#/.test(sku)) return;
+    (paaNr[kerne(nr)] = paaNr[kerne(nr)] || []).push(sku);
+  });
+  var findPaaNr = function (base) {
+    var rest = base.indexOf('-') >= 0 ? base.slice(base.indexOf('-') + 1) : base;
+    var l = paaNr[kerne(rest)];
+    return l && l.length === 1 ? l[0] : null;
+  };
   var find = function (base) {
     var b = base.toUpperCase();
     var kand = [b];
@@ -822,27 +839,31 @@ function sorterFotos_() {
   var logLinjer = [], mapper = {}, taelling = {}, fotoSku = {};
   var flyttet = 0, ikke = 0, solgte = 0, mere = false;
 
-  var filer = [];
-  var saml = function (mappe) {
-    var f = mappe.getFiles(); while (f.hasNext()) filer.push(f.next());
-    var u = mappe.getFolders(); while (u.hasNext()) { var m = u.next(); if (m.getId() !== ikkeMappe.getId()) saml(m); }
+  var filer = [], iIkke = {};
+  var saml = function (mappe, erIkke) {
+    var f = mappe.getFiles(); while (f.hasNext()) { var x = f.next(); filer.push(x); if (erIkke) iIkke[x.getId()] = true; }
+    var u = mappe.getFolders(); while (u.hasNext()) { var m = u.next(); saml(m, erIkke || m.getId() === ikkeMappe.getId()); }
   };
-  saml(kilde);
+  saml(kilde, false);
 
   for (var i = 0; i < filer.length; i++) {
-    if (Date.now() - start > 4.5 * 60 * 1000) { mere = true; break; }
+    if (Date.now() - start > 4 * 60 * 1000) { mere = true; break; }
     var fil = filer[i], navn = fil.getName();
     var m = /^(.+?)[-_ .](\d{1,3})\.(jpe?g|png|heic|heif|webp)$/i.exec(navn);
-    var sku = m ? find(m[1]) : null;
+    var sku = m ? find(m[1]) : null, note = '';
+    if (m && !sku) { sku = findPaaNr(m[1]); if (sku) note = ' (matchet på sætnummer – filnavnet sagde ' + m[1] + ')'; }
     var tid = Utilities.formatDate(new Date(), 'Europe/Copenhagen', 'dd-MM HH:mm');
     if (!sku) {
-      fil.moveTo(ikkeMappe); ikke++;
-      logLinjer.push([tid, navn, m ? 'Ingen SKU i Indkøb matcher "' + m[1] + '"' : 'Navnet følger ikke mønstret <SKU>-NN', '_Ikke matchet']);
+      ikke++;
+      if (!iIkke[fil.getId()]) {
+        fil.moveTo(ikkeMappe);
+        logLinjer.push([tid, navn, m ? 'Ingen entydig SKU i Indkøb for "' + m[1] + '"' : 'Navnet følger ikke mønstret <SKU>-NN', '_Ikke matchet']);
+      }
       continue;
     }
     if (String(raekkeFor[sku].v[K.LAGERSTATUS - 1]) === 'Solgt') {
       fil.setTrashed(true); solgte++;
-      logLinjer.push([tid, navn, 'Solgt – lagt i papirkurven', sku]);
+      logLinjer.push([tid, navn, 'Solgt – lagt i papirkurven' + note, sku]);
       continue;
     }
     var dato = String(raekkeFor[sku].v[K.DATO - 1]);
@@ -855,7 +876,7 @@ function sorterFotos_() {
     fil.moveTo(mappe); fil.setName(nyt);
     t.navne[nyt.toUpperCase()] = true; t.antal[sku] = (t.antal[sku] || 0) + 1; t.hoejeste[sku] = Math.max(t.hoejeste[sku] || 0, nr);
     fotoSku[sku] = true; flyttet++;
-    logLinjer.push([tid, navn, 'Flyttet', dato + '/' + nyt]);
+    logLinjer.push([tid, navn, 'Flyttet' + note, dato + '/' + nyt]);
   }
 
   // Notér Foto-SKU og Fotos = sand for de matchede sæt
