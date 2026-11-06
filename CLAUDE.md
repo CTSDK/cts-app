@@ -28,6 +28,14 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
   Erfaringer: skriv formler mens arket er på `en_US` (`medEngelsk_`), SUMIFS udvider ikke i ARRAYFORMULA (brug MAP+SUMIFS),
   LET-navne må ikke ligne celler (fx `s25`), tekst som "7236-2" skal skrives med apostrof (`tekst_`).
 
+## Status 1.5.0 (06-11-2026, bygget – ikke testet hos Thomas)
+- Nummerorden: `sorterKoeb_` flytter hele rækker (moveRows) efter sætnummer ved opretBatch/tilfoejSaet/retSaet; menu "Sortér alle køb i nummerorden".
+  App: `Beregn.saetOrden` sorterer Lager/køb (tal, endelse, nyeste køb). Test: tests/sortering.test.js.
+- Menubjælke i bunden (Hjem · Nyt køb · Lager · Salg · Mere); "Mere" = udbakke + indstillinger. Cache v9.
+- Rettet: efter "Ret" hoppede appen til forkert sæt (valgte efter indeks).
+- DB: tilføjet 30343, 30577, 31100 (fra Thomas' Rebrickable-skærmbilleder). 6 tomme rækker i Indkøb (261015/260916) slettet efter aftale.
+- 261028 har nu 7 sæt (Tilføj sæt testet i rigtigt ark, sum 600 ✓). Ret/Fjern endnu ikke testet i rigtigt ark.
+
 ## Status (06-11-2026)
 - **Testet og virker:** nyt køb (3 sider), købsprisfordeling, klargøring med live-kamera + fri beskæring, Lager, offline-tilstand,
   import af hele Excel-projektmappen (Kontrol-fanen: 5232/5232 tal = Excel). Sheets er nu det rigtige regneark; Excel er arkiv.

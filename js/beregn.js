@@ -53,7 +53,21 @@
     return Number(t);
   }
 
-  var api = { vaerdiFraSalg: vaerdiFraSalg, koebspriser: koebspriser, skuer: skuer, batchId: batchId, kr: kr, tal: tal };
+  // Nummerorden for sæt: talværdien af sætnummeret (677 før 6044), så endelse ("7236-2"), så nyeste køb, så SKU
+  function noegle(nr) {
+    var t = String(nr == null ? '' : nr).trim(), m = t.match(/^(\d+)(.*)$/);
+    return m ? [0, Number(m[1]), m[2]] : [t === '' ? 2 : 1, 0, t];
+  }
+  function saetOrden(a, b) {
+    var x = noegle(a.setnr), y = noegle(b.setnr);
+    if (x[0] !== y[0]) return x[0] - y[0];
+    if (x[1] !== y[1]) return x[1] - y[1];
+    if (x[2] !== y[2]) return x[2] < y[2] ? -1 : 1;
+    if (String(a.dato) !== String(b.dato)) return String(a.dato) < String(b.dato) ? 1 : -1;
+    return String(a.sku) < String(b.sku) ? -1 : String(a.sku) > String(b.sku) ? 1 : 0;
+  }
+
+  var api = { saetOrden: saetOrden, vaerdiFraSalg: vaerdiFraSalg, koebspriser: koebspriser, skuer: skuer, batchId: batchId, kr: kr, tal: tal };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else rod.Beregn = api;
 })(this);

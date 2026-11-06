@@ -127,7 +127,18 @@ fs.mkdirSync(UD, { recursive: true });
   await page.fill('#l-soeg', 'porsche');
   assert.strictEqual(await page.locator('.lager-post').count(), 1);
   await page.fill('#l-soeg', '');
+  // nummerorden: 10271, 10295, 41711, 41714
+  const raekkefoelge = await page.$$eval('.lager-post .mono', e => e.map(x => x.textContent.split('-')[1]));
+  assert.deepStrictEqual(raekkefoelge, ['10271', '10295', '41711', '41714'], 'lager i nummerorden');
+  assert.ok(await page.locator('.fanebar [data-fane="lager"].til').count() === 1, 'Lager-fanen er markeret');
   await skud('6-lager');
+  // menubjælken: Mere → Indstillinger → tilbage til Mere
+  await page.click('.fanebar [data-fane="mere"]');
+  await page.waitForSelector('#v-mere:not([hidden])');
+  await page.click('#v-mere [data-gaa="indstillinger"]');
+  await page.click('#v-indstillinger .tilbage');
+  await page.waitForSelector('#v-mere:not([hidden])');
+  await page.click('.fanebar [data-fane="lager"]');
 
   // Registrér salg (online): 10295 for 100 € + 10 € fragt, 5 € gebyr
   await page.click('.top .tilbage >> visible=true');

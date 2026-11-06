@@ -17,6 +17,8 @@
     if (aktiv === 'koeb3' && navn !== 'koeb3') { Foto.stopKamera($('k3-video')); kameraUi(); }
     document.querySelectorAll('.visning').forEach(function (v) { v.hidden = v.id !== 'v-' + navn; });
     aktiv = navn;
+    var fane = { koeb2: 'koeb1', koeb3: k3 && k3.fra === 'lager' ? 'lager' : 'koeb1', indstillinger: 'mere', udbakke: 'mere' }[navn] || navn;
+    document.querySelectorAll('[data-fane]').forEach(function (b) { b.classList.toggle('til', b.getAttribute('data-fane') === fane); });
     window.scrollTo(0, 0);
     if (navn === 'forside') tjekForbindelse();
     if (navn === 'indstillinger') visIndstillinger();
@@ -49,6 +51,7 @@
     else if (v || st.sender) { t = 'Sender … ' + v + ' tilbage'; kl = 'sender'; }
     else { t = ''; kl = ''; }
     var bar = $('netbar'); bar.textContent = t; bar.className = 'netbar ' + kl; bar.hidden = !t;
+    $('m-venter').textContent = f ? f + ' fejlede · ' + v + ' venter' : v ? v + ' venter' : 'Alt er sendt';
     var el = $('forbindelse');
     if (el && el.className.indexOf('fejl') >= 0 && /Indstillinger/.test(el.textContent)) return;
     var hentet = Data.hentetTid();
@@ -530,7 +533,10 @@
     this.disabled = false;
     if (!b) return;
     $('k3-retform').hidden = true;
-    var x = b.saet[Math.max(0, Math.min(gl, b.saet.length - 1))];
+    // Samme sæt igen: samme SKU, hvis sætnummeret er uændret, ellers det rettede sætnummer
+    var nr = String(d.setnr).trim();
+    var x = b.saet.find(function (y) { return y.sku === k3.sku && y.setnr === nr; }) ||
+      b.saet.filter(function (y) { return y.setnr === nr; }).pop() || k3Saet()[Math.max(0, Math.min(gl, k3Saet().length - 1))];
     vaelgSaet(x && x.sku); toast('Sættet er rettet');
   });
   $('k3-fjern').addEventListener('click', async function () {

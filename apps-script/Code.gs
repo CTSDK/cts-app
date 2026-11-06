@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.4.6';
+var VERSION = '1.5.0';
 
 // ---------- Faner ----------
 var FANE = {
@@ -58,6 +58,7 @@ function onOpen() {
     .addItem('Lav valgliste for ikke-matchede fotos', 'lavValgliste')
     .addItem('Flyt valgte fotos', 'flytValgte')
     .addItem('Fjern fotos af solgte sæt', 'fjernSolgteFotos')
+    .addItem('Sortér alle køb i nummerorden', 'sorterAlleKoeb')
     .addSeparator()
     .addItem('Vis API-nøgle', 'visNoegle')
     .addItem('Opdatér formler (bevarer data)', 'opdaterFormler')
@@ -1179,6 +1180,7 @@ function tilfoejSaet_(d) {
   ind.getRange(fra, K.DATO, n, 2).setNumberFormat('0');
   ind.getRange(fra, K.VAERDI, n, 1).setNumberFormat('[$€]#,##0.00');
   SpreadsheetApp.flush();
+  sorterKoeb_(dato);
   synkFotonavne_(dato);
   return hentBatch_(dato);
 }
@@ -1194,6 +1196,7 @@ function retSaet_(d) {
   ark.getRange(rk, K.VAERDI).setValue(Number(d.vaerdi) > 0 ? Number(d.vaerdi) : '');
   ark.getRange(rk, K.KILDE).setValue(KILDER.indexOf(d.kilde) >= 0 ? d.kilde : '');
   SpreadsheetApp.flush();
+  sorterKoeb_(dato);
   synkFotonavne_(dato);
   return hentBatch_(dato);
 }
@@ -1206,6 +1209,53 @@ function fjernSaet_(d) {
   SpreadsheetApp.flush();
   synkFotonavne_(dato);
   return hentBatch_(dato);
+}
+
+// ---------- Nummerorden: sættene i et køb står efter sætnummer ----------
+// Hele rækker flyttes (moveRows), så noter, flueben og formater følger med. Ens sæt beholder
+// deres indbyrdes rækkefølge, så -a/-b og fotonavne ikke skifter.
+function saetNoegle_(nr) {
+  var t = String(nr == null ? '' : nr).trim(), m = t.match(/^(\d+)(.*)$/);
+  return m ? [0, Number(m[1]), m[2]] : [t === '' ? 2 : 1, 0, t];
+}
+function sammenlignSaet_(a, b) {
+  for (var i = 0; i < 2; i++) if (a[i] !== b[i]) return a[i] - b[i];
+  return a[2] < b[2] ? -1 : a[2] > b[2] ? 1 : 0;
+}
+// Returnerer antal flyttede rækker, eller -1 hvis købets rækker ikke ligger samlet
+function sorterKoeb_(dato, data) {
+  data = data || laesIndkoeb_();
+  var rk = batchRaekker_(data, dato), n = rk.length;
+  if (n < 2) return 0;
+  var start = rk[0].raekke;
+  for (var i = 1; i < n; i++) if (rk[i].raekke !== start + i) return -1;
+  var orden = rk.map(function (r, j) { return { j: j, k: saetNoegle_(r.v[K.SETNR - 1]) }; });
+  orden.sort(function (a, b) { return sammenlignSaet_(a.k, b.k) || a.j - b.j; });
+  var nu = rk.map(function (r, j) { return j; }), flyttet = 0, sh = data.ark;
+  for (var t = 0; t < n; t++) {
+    var p = nu.indexOf(orden[t].j);
+    if (p === t) continue;
+    sh.moveRows(sh.getRange(start + p, 1), start + t);
+    nu.splice(p, 1); nu.splice(t, 0, orden[t].j);
+    flyttet++;
+  }
+  if (flyttet) SpreadsheetApp.flush();
+  return flyttet;
+}
+function sorterAlleKoeb() {
+  var ui = SpreadsheetApp.getUi(), t0 = Date.now();
+  var data = laesIndkoeb_(), set = {}, datoer = [];
+  data.raekker.forEach(function (r) { var d = String(r.v[K.DATO - 1]); if (!set[d]) { set[d] = 1; datoer.push(d); } });
+  var sorteret = [], spredt = [], ialt = 0;
+  for (var i = 0; i < datoer.length; i++) {
+    if (Date.now() - t0 > 240000) { ui.alert('Sortér køb', 'Tiden løb ud efter ' + i + ' af ' + datoer.length + ' køb. Kør menupunktet igen for at fortsætte.', ui.ButtonSet.OK); return; }
+    var f = sorterKoeb_(datoer[i], data);
+    if (f < 0) spredt.push(datoer[i]);
+    else if (f > 0) { sorteret.push(datoer[i]); ialt += f; }
+  }
+  ui.alert('Sortér køb', 'Færdig. ' + datoer.length + ' køb tjekket.\n\n' +
+    (sorteret.length ? 'Sorteret: ' + sorteret.join(', ') + ' (' + ialt + ' rækker flyttet).' : 'Alle køb stod allerede i nummerorden.') +
+    (spredt.length ? '\n\nIkke sorteret, fordi rækkerne ikke ligger samlet: ' + spredt.join(', ') : ''), ui.ButtonSet.OK);
 }
 
 function saetListet_(d) {
@@ -1519,6 +1569,7 @@ function opretBatch_(d) {
   ind.getRange(START, K.VAERDI, n, 1).setNumberFormat('[$€]#,##0.00');
   ind.getRange(START, K.KOEBSPRIS, n, 2).setNumberFormat('#,##0.00');
   SpreadsheetApp.flush();
+  sorterKoeb_(dato);
   return hentBatch_(dato);
 }
 

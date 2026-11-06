@@ -71,7 +71,7 @@
     return res;
   }
 
-  function lager() { return anvend(kopi.lager, udbakke); }
+  function lager() { return anvend(kopi.lager, udbakke).slice().sort(B.saetOrden); }
   function batch(dato) { return lager().filter(function (r) { return r.dato === String(dato); }); }
   function batchFindes(dato) {
     if (kopi.log[String(dato)] !== undefined) return true;

@@ -114,6 +114,19 @@ Adressen forbliver den samme, så du skal ikke ændre noget i appen.
 
 ---
 
+## Menubjælken i bunden
+
+Nederst i appen er der altid fem faner: **Hjem · Nyt køb · Lager · Salg · Mere**. Under **Mere** ligger *Venter på at blive sendt* og *Indstillinger*. Den fane, du er på, er blå.
+
+## Nummerorden
+
+- Sættene i et køb står i **nummerorden efter sætnummer** i arket (677 før 6044). Det sker automatisk ved nyt køb, tilføj sæt og ret sæt.
+- **Lager** i appen viser alle sæt i nummerorden, så du hurtigt kan se, om et sæt er på lager.
+- To ens sæt i samme køb beholder -a og -b, så SKU'er og fotonavne ikke skifter.
+- Menupunktet **CTS → Sortér alle køb i nummerorden** sorterer alle eksisterende køb én gang.
+
+---
+
 ## Uden net (offline)
 
 Appen virker også uden net, fx i en kælder eller hos en sælger:
