@@ -619,7 +619,7 @@
   function temaFor(s) { return (Data.harDb() && Data.slaaOp(s.setnr).tema) || UDEN_TEMA; }
   function tegnLager() {
     var q = $('l-soeg').value.trim().toLowerCase();
-    var lager = Data.lager();
+    var lager = Data.lager().filter(function (s) { return s.lagerstatus !== 'Solgt'; }); // solgte sæt vises ikke i Lager
     var status = lager.filter(function (s) {
       if (filter === 'klar' && !erKlar(s)) return false;
       if (filter === 'ikke' && (s.klar || s.lagerstatus === 'Solgt')) return false;

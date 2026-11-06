@@ -148,7 +148,7 @@ Appen virker også uden net, fx i en kælder eller hos en sælger:
 3. **Varer:** skriv SKU – eller bare sætnummeret, hvis der kun er ét på lager – og prisen i €. Der kommer automatisk en ny linje til næste vare i samme ordre.
 4. **Fragt og gebyr** gælder hele ordren (de skrives kun på ordrens første række i Sheets, som i Excel).
 5. Appen viser **ordresum** og en **anslået fortjeneste**. Sheets regner den præcise.
-6. **Gem salg.** Virker også uden net – salget sendes, når der er forbindelse. Sættet står derefter som **Solgt** i Lager.
+6. **Gem salg.** Virker også uden net – salget sendes, når der er forbindelse. Sættet forsvinder derefter fra Lager (solgte sæt vises ikke dér).
 
 Et sæt, der allerede er solgt, kan ikke vælges igen.
 Fotos af solgte sæt fjernes ikke automatisk – brug **CTS → Fjern fotos af solgte sæt**, når du vil rydde op.

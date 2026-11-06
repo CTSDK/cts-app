@@ -1,11 +1,11 @@
 // Service worker: gemmer selve appen på telefonen, så den kan starte uden net.
 // Kald til Google (maskinrummet) går aldrig gennem cachen.
-var CACHE = 'cts-app-v10';
+var CACHE = 'cts-app-v11';
 var FILER = [
   './', 'index.html', 'manifest.webmanifest',
-  'css/app.css?v=10',
-  'js/beregn.js?v=10', 'js/api.js?v=10', 'js/lokal.js?v=10', 'js/data.js?v=10',
-  'js/foto.js?v=10', 'js/beskaer.js?v=10', 'js/app.js?v=10',
+  'css/app.css?v=11',
+  'js/beregn.js?v=11', 'js/api.js?v=11', 'js/lokal.js?v=11', 'js/data.js?v=11',
+  'js/foto.js?v=11', 'js/beskaer.js?v=11', 'js/app.js?v=11',
   'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png'
 ];
 

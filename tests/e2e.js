@@ -160,7 +160,8 @@ fs.mkdirSync(UD, { recursive: true });
   await page.click('.top .tilbage >> visible=true');
   await page.click('[data-gaa="lager"]');
   await page.fill('#l-soeg', '10295');
-  await page.waitForFunction(() => document.querySelector('.lager-post .maerke') && document.querySelector('.lager-post .maerke').textContent === 'Solgt');
+  // solgte sæt vises ikke i Lager
+  await page.waitForFunction(() => document.getElementById('l-antal').textContent.startsWith('0 af 3'));
   await page.fill('#l-soeg', '');
   // Solgt sæt kan ikke sælges igen
   await page.click('.top .tilbage >> visible=true');
@@ -239,7 +240,7 @@ fs.mkdirSync(UD, { recursive: true });
   await skud('7-offline-forside');
   // Lager fra kopien
   await page.click('[data-gaa="lager"]');
-  await page.waitForFunction(() => document.getElementById('l-antal').textContent.includes('af 4'));
+  await page.waitForFunction(() => document.getElementById('l-antal').textContent.includes('af 3'));
   await page.fill('#l-soeg', '41711');
   await page.locator('.lager-post').first().click();
   await page.waitForSelector('#v-koeb3:not([hidden])');
@@ -298,4 +299,4 @@ fs.mkdirSync(UD, { recursive: true });
   assert.deepStrictEqual(fejl, [], 'ingen JS-fejl');
   console.log('e2e: alle tests OK');
   await browser.close();
-})().catch(e => { console.error('FEJL:', e.message); process.exit(1); });
+})().catch(e => { console.error('FEJL:', e.stack); process.exit(1); });
