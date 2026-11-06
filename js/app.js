@@ -44,6 +44,8 @@
     var el = $('forbindelse');
     var ind = Api.indstillinger();
     if (!Api.erMock() && (!ind.url || !ind.noegle)) { el.textContent = 'Ikke forbundet – gå til Indstillinger'; el.className = 'status fejl'; return; }
+    // Fjern en gammel "Ikke forbundet"-besked, nu hvor adresse og nøgle er udfyldt
+    if (/Indstillinger/.test(el.textContent)) { el.textContent = 'Tjekker forbindelse …'; el.className = 'status'; }
     Data.hentAlt();
     visStatus();
   }
