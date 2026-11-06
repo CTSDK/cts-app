@@ -50,4 +50,6 @@ assert.strictEqual(rensNote_('Sort: 250113B. Komplet, med manual [Rigtig foto ko
 assert.strictEqual(rensNote_('Sort: 00'), '');
 assert.strictEqual(ordliste_('With manual. Original manual torn', 'en'), 'With building instructions. Original building instructions torn');
 assert.strictEqual(ordliste_('Mit Handbuch', 'de'), 'Mit Bauanleitung');
+assert.strictEqual(ordliste_('Karton 6/10, Blöcke 10/10', 'de'), 'Karton 6/10, Steine 10/10');
+assert.strictEqual(ordliste_('box 6/10, blocks 10/10, 2 mini figures', 'en'), 'box 6/10, bricks 10/10, 2 minifigures');
 console.log('\nlisting: alle tests OK');

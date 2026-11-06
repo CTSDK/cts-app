@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.4.5';
+var VERSION = '1.4.6';
 
 // ---------- Faner ----------
 var FANE = {
@@ -1305,11 +1305,19 @@ function oversaet_(tekst, sprog, cache) {
   return cache[k];
 }
 
-// Faste LEGO-ord efter oversættelse
+// Faste LEGO-ord efter oversættelse (Google oversætter fx "klodser" til "blocks"/"Blöcke")
+var ORDLISTE = {
+  en: [[/\b(?:instruction )?manuals?\b/gi, 'building instructions'], [/\binstructions? booklets?\b/gi, 'building instructions'],
+    [/\bblocks\b/gi, 'bricks'], [/\bblock\b/gi, 'brick'], [/\bcubes\b/gi, 'bricks'], [/\blabels\b/gi, 'stickers'],
+    [/\bmini ?figures?\b/gi, function (m) { return /s$/i.test(m) ? 'minifigures' : 'minifigure'; }],
+    [/\bOVP vorhanden\b/g, 'original box included'], [/\bOVP\b/g, 'original box (OVP)']],
+  de: [[/\b(?:Handbuch|Handbücher|Bedienungsanleitung(?:en)?|Anleitungsheft)\b/g, 'Bauanleitung'],
+    [/\bBlöcke\b/g, 'Steine'], [/\bBlock\b/g, 'Stein'], [/\bKlötze\b/g, 'Steine'], [/\bKlotz\b/g, 'Stein'],
+    [/\bEtiketten\b/g, 'Aufkleber'], [/\bMinifiguren?\b/g, function (m) { return m; }], [/\bBox\b/g, 'Karton']]
+};
 function ordliste_(t, sprog) {
-  if (sprog === 'en') return String(t).replace(/\b(?:instruction )?manuals?\b/gi, 'building instructions').replace(/\binstructions? booklets?\b/gi, 'building instructions');
-  if (sprog === 'de') return String(t).replace(/\b(?:Handbuch|Handbücher|Bedienungsanleitung(?:en)?)\b/g, 'Bauanleitung');
-  return t;
+  var l = ORDLISTE[sprog]; if (!l) return t;
+  return l.reduce(function (x, r) { return x.replace(r[0], r[1]); }, String(t));
 }
 
 function lavListings_(d) {
