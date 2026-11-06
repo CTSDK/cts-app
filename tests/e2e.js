@@ -10,7 +10,7 @@ fs.mkdirSync(UD, { recursive: true });
 
 (async () => {
   const browser = await chromium.launch({ args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] });
-  const ctx = await browser.newContext({ ...devices['iPhone 13'], permissions: ['camera'] });
+  const ctx = await browser.newContext({ ...devices['iPhone 13'], permissions: ['camera', 'clipboard-read', 'clipboard-write'] });
   const page = await ctx.newPage();
   const fejl = [];
   page.on('pageerror', e => fejl.push(e.message));
@@ -157,6 +157,53 @@ fs.mkdirSync(UD, { recursive: true });
   const sv2 = page.locator('#s-varer .vare .sku').first(); await sv2.fill('261028-10295');
   await page.waitForFunction(() => document.querySelector('#s-varer .vare .info').textContent.includes('allerede solgt'));
   await page.click('#s-ny');
+
+  // ===== Ret køb: tilføj, ret, fjern =====
+  await page.click('.top .tilbage >> visible=true');
+  await page.click('[data-gaa="lager"]');
+  await page.fill('#l-soeg', '10271');
+  await page.locator('.lager-post').first().click();
+  await page.waitForSelector('#v-koeb3:not([hidden])');
+  assert.ok((await page.textContent('#k3-koeb')).includes('åbent'), 'købet er åbent');
+  await page.click('#k3-tilfoej');
+  await page.fill('#ny-setnr', '6086');
+  await page.waitForFunction(() => document.getElementById('ny-navn').textContent.includes("Black Knight"));
+  assert.strictEqual(await page.inputValue('#ny-vaerdi'), '300', 'egne salg med OVP → højeste pris');
+  await skud('6c-tilfoej');
+  await page.click('#ny-gem');
+  await page.waitForFunction(() => document.getElementById('k3-sku').textContent === '261028-6086');
+  assert.strictEqual(await page.locator('#k3-vaelg button').count(), 5);
+  let mock = await page.evaluate(() => JSON.parse(localStorage.getItem('cts.mock')));
+  let sum = mock.ind.filter(r => r.dato === '261028').reduce((a, r) => a + r.koebspris, 0);
+  assert.ok(Math.abs(sum - 600) < 0.05, 'batchprisen fordeles stadig til 600 kr: ' + sum);
+  // Ret: OVP fra → værdi bliver gennemsnit (275)
+  await page.click('#k3-ret');
+  await page.click('[data-ret-ovp="0"]');
+  await page.fill('#ret-vaerdi', '275');
+  await page.click('#ret-gem');
+  await page.waitForFunction(() => document.getElementById('k3-info').textContent.startsWith('Uden æske'));
+  // Fjern
+  await page.click('#k3-fjern');
+  await page.waitForFunction(() => document.querySelectorAll('#k3-vaelg button').length === 4);
+  mock = await page.evaluate(() => JSON.parse(localStorage.getItem('cts.mock')));
+  assert.ok(!mock.ind.some(r => r.setnr === '6086' && r.dato === '261028'), '6086 er fjernet');
+
+  // ===== Listings =====
+  await page.locator('#k3-vaelg button', { hasText: '10271' }).click();
+  await page.click('#k3-lav-listings');
+  await page.waitForFunction(() => document.getElementById('k3-listing-besked').textContent.includes('1 sæt'));
+  assert.ok(!(await page.isHidden('#k3-listing')));
+  assert.ok((await page.textContent('#lt-titel')).startsWith('LEGO Creator 10271'));
+  await page.locator('[data-kopier="titel"]').click();
+  await page.waitForFunction(() => document.getElementById('toast').textContent.includes('Kopieret'));
+  await skud('6d-listing');
+  await page.check('#k3-listet', { force: true });
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('cts.mock')).ind.find(r => r.sku === '261028-10271').listet === true);
+  await page.click('#k3-lav-listings');
+  await page.waitForFunction(() => document.getElementById('k3-listing-besked').textContent.includes('Ingen sæt'));
+  await page.uncheck('#k3-listet', { force: true });
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('cts.mock')).ind.find(r => r.sku === '261028-10271').listet === false);
+  await page.click('#k3-tilbage');
 
   // Samme batch igen skal afvises
   await page.click('.top .tilbage >> visible=true');

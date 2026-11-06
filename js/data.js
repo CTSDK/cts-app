@@ -8,6 +8,7 @@
 
   var B = rod.Beregn, Api = rod.Api, Lokal = rod.Lokal;
   var kopi = { db: null, salg: {}, lager: [], log: {}, hentet: 0, kurs: {} };
+  var listings = { saet: {}, doc: {} }; // sku → {titel, zustand, beskrivelse}; dato → dokument-url
   var udbakke = [];
   var lyttere = [], haendelser = [];
   var status = { online: navigator.onLine, sender: false, henter: false, fejl: '' };
@@ -20,6 +21,7 @@
     try {
       var v = await Promise.all(['db', 'salg', 'lager', 'log', 'hentet', 'kurs'].map(function (k) { return Lokal.hent(k); }));
       kopi.db = v[0] || null; kopi.salg = v[1] || {}; kopi.lager = v[2] || []; kopi.log = v[3] || {}; kopi.hentet = v[4] || 0; kopi.kurs = v[5] || {};
+      listings = (await Lokal.hent('listings')) || { saet: {}, doc: {} };
       udbakke = (await Lokal.udbakke.alle()) || [];
       udbakke.forEach(function (p) { if (p.status === 'sender') p.status = 'venter'; });
     } catch (e) { status.fejl = 'Lokal lagring virker ikke: ' + e.message; }
@@ -60,6 +62,8 @@
       } else if (p.type === 'uploadFoto') {
         var f = idx[p.data.sku]; if (!f) return;
         f.fotos = true; f.ventendeFotos++;
+      } else if (p.type === 'saetListet') {
+        var li = idx[p.data.sku]; if (li) { li.listet = p.data.listet; li.ventende = true; }
       } else if (p.type === 'registrerSalg') {
         (p.data.varer || []).forEach(function (v) { var x = idx[v.sku]; if (x) { x.lagerstatus = 'Solgt'; x.ventende = true; } });
       }
@@ -151,6 +155,9 @@
     } else if (p.type === 'gemKlargoering') {
       erstat(svar);
       await Lokal.saet('lager', kopi.lager);
+    } else if (p.type === 'saetListet') {
+      erstat(svar);
+      await Lokal.saet('lager', kopi.lager);
     } else if (p.type === 'registrerSalg') {
       (svar.saet || []).forEach(erstat);
       await Lokal.saet('lager', kopi.lager);
@@ -199,6 +206,31 @@
     } finally { status.henter = false; fyr(); }
   }
 
+  // Køb: tilføj/ret/fjern kræver net (SKU'er og købspriser regnes af arket)
+  async function retKoeb(handling, data) {
+    var b = await Api.kald(handling, data, 2);
+    erstatBatch(b);
+    return b;
+  }
+  function erstatBatch(b) {
+    var dato = String(b.dato);
+    kopi.lager = b.saet.concat(kopi.lager.filter(function (r) { return r.dato !== dato; }));
+    Lokal.saet('lager', kopi.lager); fyr();
+  }
+  function koebStatus(dato) {
+    var rk = batch(dato);
+    var mangler = rk.filter(function (r) { return !r.klar && r.lagerstatus !== 'Solgt'; }).length;
+    return { aaben: String(dato) === '250000' || mangler > 0 || !rk.length, mangler: mangler, ialt: rk.length, privat: String(dato) === '250000' };
+  }
+  async function lavListings(dato) {
+    var r = await Api.kald('lavListings', { dato: dato }, 1);
+    (r.saet || []).forEach(function (x) { listings.saet[x.sku] = { titel: x.titel, zustand: x.zustand, beskrivelse: x.beskrivelse }; });
+    if (r.url) listings.doc[String(dato)] = r.url;
+    await Lokal.saet('listings', listings);
+    fyr();
+    return r;
+  }
+
   // Præcise fototællinger for en batch (kun når der er net – ellers bruges kopien)
   async function opdaterFotos(dato) {
     try {
@@ -218,6 +250,8 @@
     lager: lager, batch: batch, batchFindes: batchFindes, harDb: harDb, slaaOp: slaaOp,
     tilfoej: tilfoej, venter: venter, fejlede: fejlede, poster: poster, proevIgen: proevIgen, slet: slet, koer: koer,
     hentAlt: hentAlt, opdaterFotos: opdaterFotos, status: function () { return status; },
+    retKoeb: retKoeb, koebStatus: koebStatus, lavListings: lavListings,
+    listing: function (sku) { return listings.saet[sku] || null; }, listingDoc: function (dato) { return listings.doc[String(dato)] || ''; },
     hentetTid: function () { return kopi.hentet; }, kurs: function (aar) { return Number(kopi.kurs[String(aar)]) || 7.46; }, sendteFotos: function (sku) { return sendteFotos[sku] || []; }
   };
 })(this);

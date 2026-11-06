@@ -292,7 +292,8 @@
     $('k3-sorteret').checked = !!s.sorteret;
     $('k3-noter').value = s.noter || '';
     $('k3-status').textContent = '';
-    tegnFotos(); visKrav();
+    $('k3-retform').hidden = true;
+    tegnFotos(); visKrav(); visKoebStatus(); visListing();
   }
 
   function formular() {
@@ -426,11 +427,154 @@
   }
 
   function opdaterK3() {
+    visKoebStatus();
     if (!findSaet(k3.sku)) return;
+    visListing();
     tegnVaelger(); tegnFotos(); visKrav();
     var s = findSaet(k3.sku);
     $('k3-info').textContent = (s.ovp ? 'Med æske (OVP)' : 'Uden æske') + ' · købspris ' + B.kr(s.koebspris) + ' kr' + (s.lagerstatus ? ' · ' + s.lagerstatus : '') + (s.ventende ? ' · venter på at blive sendt' : '');
   }
+
+  // ================= Ret køb: status, tilføj, ret, fjern =================
+  function visKoebStatus() {
+    var st = Data.koebStatus(k3.dato);
+    $('k3-koeb').textContent = st.privat ? 'Eget LEGO (250000) · altid åbent · ' + st.ialt + ' sæt'
+      : 'Køb ' + k3.dato + ' · ' + (st.aaben ? 'åbent · ' + st.mangler + ' af ' + st.ialt + ' mangler klargøring' : 'lukket · alle sæt klargjort eller solgt');
+    var s = findSaet(k3.sku), solgt = s && s.lagerstatus === 'Solgt';
+    $('k3-ret').hidden = !s || solgt; $('k3-fjern').hidden = !s || solgt;
+  }
+  var ny = { ovp: true, opslag: null };
+  function visVaerdiFelt(prefix, opslag, ovp) {
+    var privat = String(k3.dato) === '250000';
+    var auto = opslag && opslag.salg ? B.vaerdiFraSalg(opslag.salg, ovp) : null;
+    $(prefix + '-vaerdi-raekke').hidden = privat;
+    if (auto !== null && !privat) { $(prefix + '-vaerdi').value = String(auto).replace('.', ','); $(prefix + '-kilde').value = 'Egne salg'; }
+  }
+  function slaaOpFelt(prefix, cb) {
+    var nr = $(prefix + '-setnr').value.trim();
+    var o = nr ? (Data.harDb() ? Data.slaaOp(nr) : null) : null;
+    $(prefix + '-navn').textContent = !nr ? '' : !o ? 'Sæt-databasen er ikke hentet endnu' : o.fundet ? o.navn + (o.aar ? ' (' + o.aar + ')' : '') : 'Sæt findes ikke i DB';
+    $(prefix + '-navn').className = 'lille ' + (o && o.fundet ? 'ok-tekst' : '');
+    if (cb) cb(o);
+  }
+  $('k3-tilfoej').addEventListener('click', function () {
+    ny = { ovp: true, opslag: null };
+    ['ny-setnr', 'ny-vaerdi'].forEach(function (id) { $(id).value = ''; }); $('ny-kilde').value = ''; $('ny-navn').textContent = ''; $('ny-fejl').textContent = '';
+    document.querySelectorAll('[data-ny-ovp]').forEach(function (b) { b.classList.toggle('til', b.getAttribute('data-ny-ovp') === '1'); });
+    visVaerdiFelt('ny', null, true);
+    $('k3-ny').hidden = false; $('ny-setnr').focus();
+  });
+  $('ny-annuller').addEventListener('click', function () { $('k3-ny').hidden = true; });
+  $('ny-setnr').addEventListener('input', function () { slaaOpFelt('ny', function (o) { ny.opslag = o; visVaerdiFelt('ny', o, ny.ovp); }); });
+  document.querySelectorAll('[data-ny-ovp]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      ny.ovp = b.getAttribute('data-ny-ovp') === '1';
+      document.querySelectorAll('[data-ny-ovp]').forEach(function (x) { x.classList.toggle('til', x === b); });
+      visVaerdiFelt('ny', ny.opslag, ny.ovp);
+    });
+  });
+  async function koebHandling(handling, data, fejlFelt) {
+    try { return await Data.retKoeb(handling, data); }
+    catch (e) {
+      if (/^LUKKET:/.test(e.message)) {
+        if (!confirm(e.message.replace('LUKKET: ', '') + '\n\nVil du åbne købet igen og tilføje sættet?')) return null;
+        data.genaabn = true; return await koebHandling(handling, data, fejlFelt);
+      }
+      $(fejlFelt).textContent = e.fraServer ? e.message : 'Kræver net – prøv igen, når der er forbindelse.';
+      return null;
+    }
+  }
+  function saetData(prefix, ovp) {
+    var privat = String(k3.dato) === '250000';
+    var v = B.tal($(prefix + '-vaerdi').value);
+    return { setnr: $(prefix + '-setnr').value.trim(), ovp: ovp, vaerdi: privat || isNaN(v) ? '' : v, kilde: privat ? '' : $(prefix + '-kilde').value };
+  }
+  function tjekSaet(d, fejlFelt) {
+    if (!d.setnr) { $(fejlFelt).textContent = 'Skriv sætnummer.'; return false; }
+    if (String(k3.dato) !== '250000' && (!(d.vaerdi > 0) || !d.kilde)) { $(fejlFelt).textContent = 'Udfyld værdi og kilde.'; return false; }
+    return true;
+  }
+  $('ny-gem').addEventListener('click', async function () {
+    $('ny-fejl').textContent = '';
+    var d = saetData('ny', ny.ovp); if (!tjekSaet(d, 'ny-fejl')) return;
+    this.disabled = true;
+    var b = await koebHandling('tilfoejSaet', { dato: k3.dato, saet: [d] }, 'ny-fejl');
+    this.disabled = false;
+    if (!b) return;
+    $('k3-ny').hidden = true;
+    var nyeste = b.saet.filter(function (x) { return x.setnr === String(d.setnr); }).pop();
+    vaelgSaet(nyeste ? nyeste.sku : (b.saet[0] && b.saet[0].sku));
+    toast('Sæt tilføjet · købspriserne er fordelt igen');
+  });
+  var ret = { ovp: true };
+  $('k3-ret').addEventListener('click', function () {
+    var s = findSaet(k3.sku); if (!s) return;
+    ret = { ovp: !!s.ovp };
+    $('ret-setnr').value = s.setnr; $('ret-vaerdi').value = s.vaerdi ? String(s.vaerdi).replace('.', ',') : ''; $('ret-kilde').value = s.kilde || '';
+    document.querySelectorAll('[data-ret-ovp]').forEach(function (b) { b.classList.toggle('til', (b.getAttribute('data-ret-ovp') === '1') === ret.ovp); });
+    $('ret-fejl').textContent = ''; slaaOpFelt('ret'); $('ret-vaerdi-raekke').hidden = String(k3.dato) === '250000';
+    $('k3-retform').hidden = false;
+  });
+  $('ret-annuller').addEventListener('click', function () { $('k3-retform').hidden = true; });
+  $('ret-setnr').addEventListener('input', function () { slaaOpFelt('ret'); });
+  document.querySelectorAll('[data-ret-ovp]').forEach(function (b) {
+    b.addEventListener('click', function () { ret.ovp = b.getAttribute('data-ret-ovp') === '1'; document.querySelectorAll('[data-ret-ovp]').forEach(function (x) { x.classList.toggle('til', x === b); }); });
+  });
+  $('ret-gem').addEventListener('click', async function () {
+    $('ret-fejl').textContent = '';
+    var d = saetData('ret', ret.ovp); if (!tjekSaet(d, 'ret-fejl')) return;
+    var gl = k3Saet().map(function (x) { return x.sku; }).indexOf(k3.sku);
+    d.sku = k3.sku;
+    this.disabled = true;
+    var b = await koebHandling('retSaet', d, 'ret-fejl');
+    this.disabled = false;
+    if (!b) return;
+    $('k3-retform').hidden = true;
+    var x = b.saet[Math.max(0, Math.min(gl, b.saet.length - 1))];
+    vaelgSaet(x && x.sku); toast('Sættet er rettet');
+  });
+  $('k3-fjern').addEventListener('click', async function () {
+    var s = findSaet(k3.sku); if (!s) return;
+    if (!confirm('Fjerne ' + s.sku + ' ' + s.navn + ' fra købet? Købspriserne fordeles på de øvrige sæt.')) return;
+    var b = await koebHandling('fjernSaet', { sku: s.sku }, 'k3-status');
+    if (!b) return;
+    if (b.saet.length) vaelgSaet(b.saet[0].sku); else gaa(k3.fra);
+    toast('Sættet er fjernet fra købet');
+  });
+
+  // ================= Listings =================
+  function visListing() {
+    var s = findSaet(k3.sku), l = s && Data.listing(s.sku);
+    $('k3-listing').hidden = !l;
+    if (l) { $('lt-titel').textContent = l.titel; $('lt-zustand').textContent = l.zustand; $('lt-beskrivelse').textContent = l.beskrivelse; }
+    $('k3-listet').checked = !!(s && s.listet);
+    var url = Data.listingDoc(k3.dato); $('k3-doc').hidden = !url; if (url) $('k3-doc').href = url;
+  }
+  $('k3-lav-listings').addEventListener('click', async function () {
+    var m = $('k3-listing-besked'); m.textContent = 'Laver listings …'; this.disabled = true;
+    try {
+      var r = await Data.lavListings(k3.dato);
+      m.textContent = r.antal ? r.antal + ' sæt er skrevet i dokumentet "' + k3.dato + ' Listings" i købsmappen.' : r.besked;
+      visListing();
+    } catch (e) { m.textContent = e.fraServer ? 'Fejl: ' + e.message : 'Kræver net – prøv igen, når der er forbindelse.'; }
+    finally { this.disabled = false; }
+  });
+  document.querySelectorAll('[data-kopier]').forEach(function (b) {
+    b.addEventListener('click', async function () {
+      var l = Data.listing(k3.sku); if (!l) return;
+      var t = l[b.getAttribute('data-kopier')];
+      try { await navigator.clipboard.writeText(t); toast('Kopieret ✓'); }
+      catch (e) {
+        var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); toast('Kopieret ✓'); } catch (e2) { toast('Kunne ikke kopiere'); }
+        ta.remove();
+      }
+    });
+  });
+  $('k3-listet').addEventListener('change', function () {
+    Data.tilfoej('saetListet', { sku: k3.sku, listet: this.checked }, { sku: k3.sku });
+    toast(this.checked ? 'Markeret som listet – kommer ikke med i dokumentet næste gang' : 'Ikke listet');
+  });
 
   // ================= Lager =================
   var filter = 'alle';
@@ -590,7 +734,7 @@
   });
 
   // ================= Udbakke =================
-  var TYPENAVN = { opretBatch: 'Nyt køb', gemKlargoering: 'Klargøring', uploadFoto: 'Foto', registrerSalg: 'Salg' };
+  var TYPENAVN = { opretBatch: 'Nyt køb', gemKlargoering: 'Klargøring', uploadFoto: 'Foto', registrerSalg: 'Salg', saetListet: 'Listet' };
   function tegnUdbakke() {
     var c = $('u-liste'); c.innerHTML = '';
     var p = Data.poster();

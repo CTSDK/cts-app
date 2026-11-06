@@ -137,3 +137,25 @@ Appen virker også uden net, fx i en kælder eller hos en sælger:
 
 Et sæt, der allerede er solgt, kan ikke vælges igen.
 Fotos af solgte sæt fjernes ikke automatisk – brug **CTS → Fjern fotos af solgte sæt**, når du vil rydde op.
+
+---
+
+## Ret et køb (tilføj, ret, fjern sæt)
+
+Åbn et sæt fra købet (Lager → tryk på sættet). Øverst på klargøringssiden står købets status, fx *"Køb 261028 · åbent · 3 af 7 mangler klargøring"*.
+
+- **+ Tilføj sæt:** sætnummer, OVP og værdi + kilde (værdien udfyldes selv, hvis der er egne salg). Sættet lægges ind i samme køb, og købspriserne fordeles igen.
+- **Ret** (ved SKU'en): ret sætnummer, OVP, værdi eller kilde.
+- **Fjern:** fjerner sættet fra købet (fx hvis der kun var en vejledning). Solgte sæt kan ikke rettes eller fjernes.
+- Et køb er **lukket**, når alle sæt er klargjort eller solgt. Tilføjer du alligevel, spørger appen, om købet skal åbnes igen.
+- **Eget LEGO (250000)** er altid åbent, og der spørges ikke om værdi.
+- Ret og tilføj kræver net.
+
+## Listings til eBay
+
+1. På klargøringssiden: **Lav listings for købet**.
+2. Dokumentet **"<købsdato> Listings"** laves (eller opdateres) i købsmappen i Drive med alle sæt, der er **klar til salg**, **ikke solgt** og **ikke listet** – sat under hinanden med titel, Zustandsbeschreibung og Beschreibung (tysk + engelsk).
+3. I appen kan du også kopiere hver del for det valgte sæt med **Kopiér**.
+4. Når sættet er lagt på eBay: sæt flueben i **Listet på eBay**. Så kommer det ikke med i dokumentet næste gang.
+
+Noterne oversættes automatisk til tysk og engelsk. "Sort: …"-koder og tekst i [firkantede parenteser] kommer ikke med.

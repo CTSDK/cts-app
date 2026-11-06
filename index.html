@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/app.css?v=7">
+<link rel="stylesheet" href="css/app.css?v=8">
 </head>
 <body>
 <div id="testbanner" class="banner" hidden></div>
@@ -114,11 +114,41 @@
   <header class="top"><button class="tilbage" id="k3-tilbage" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Klargør</h2><span class="side">Side 3 af 3</span></header>
   <div class="trin"><i class="til"></i><i class="til"></i><i class="til"></i></div>
   <div class="indhold">
+    <div class="koebsstatus"><span id="k3-koeb"></span><button type="button" class="link" id="k3-tilfoej">+ Tilføj sæt</button></div>
+    <div id="k3-ny" class="post" hidden>
+      <b>Tilføj sæt til købet</b>
+      <div class="vare-form">
+        <input id="ny-setnr" inputmode="numeric" autocomplete="off" placeholder="Setnr" aria-label="Sætnummer">
+        <div class="ovp" role="group" aria-label="OVP"><button type="button" data-ny-ovp="1" class="til">OVP</button><button type="button" data-ny-ovp="0">Uden</button></div>
+      </div>
+      <div id="ny-navn" class="lille"></div>
+      <div class="vaerdi-raekke" id="ny-vaerdi-raekke">
+        <input id="ny-vaerdi" inputmode="decimal" placeholder="Værdi €" aria-label="Værdi i euro">
+        <select id="ny-kilde" aria-label="Kilde"><option value="">Vælg kilde</option><option>Egne salg</option><option>BrickLink</option><option>eBay</option><option>Egen vurdering</option></select>
+      </div>
+      <div class="knapper"><button type="button" class="knap" id="ny-annuller">Annullér</button><button type="button" class="knap knap-primaer" id="ny-gem">Tilføj</button></div>
+      <div id="ny-fejl" class="besked fejl" role="alert"></div>
+    </div>
     <div id="k3-vaelg" class="vaelg" role="tablist" aria-label="Vælg sæt"></div>
     <div class="saetkort">
-      <div class="mono" id="k3-sku"></div>
+      <div class="saetkort-top"><div class="mono" id="k3-sku"></div>
+        <div><button type="button" class="link lille-link" id="k3-ret">Ret</button><button type="button" class="link lille-link" id="k3-fjern">Fjern</button></div></div>
       <div class="navn" id="k3-navn"></div>
       <div class="lille" id="k3-info"></div>
+    </div>
+    <div id="k3-retform" class="post" hidden>
+      <b>Ret sæt</b>
+      <div class="vare-form">
+        <input id="ret-setnr" inputmode="numeric" autocomplete="off" aria-label="Sætnummer">
+        <div class="ovp" role="group" aria-label="OVP"><button type="button" data-ret-ovp="1">OVP</button><button type="button" data-ret-ovp="0">Uden</button></div>
+      </div>
+      <div id="ret-navn" class="lille"></div>
+      <div class="vaerdi-raekke" id="ret-vaerdi-raekke">
+        <input id="ret-vaerdi" inputmode="decimal" placeholder="Værdi €" aria-label="Værdi i euro">
+        <select id="ret-kilde" aria-label="Kilde"><option value="">Vælg kilde</option><option>Egne salg</option><option>BrickLink</option><option>eBay</option><option>Egen vurdering</option></select>
+      </div>
+      <div class="knapper"><button type="button" class="knap" id="ret-annuller">Annullér</button><button type="button" class="knap knap-primaer" id="ret-gem">Gem</button></div>
+      <div id="ret-fejl" class="besked fejl" role="alert"></div>
     </div>
 
     <div class="kamera">
@@ -160,6 +190,17 @@
     <textarea id="k3-noter" rows="3"></textarea>
     <div id="k3-krav" class="lille"></div>
     <div id="k3-status" class="besked" role="status"></div>
+
+    <h3>Listing til eBay</h3>
+    <button type="button" class="knap" id="k3-lav-listings">Lav listings for købet</button>
+    <div id="k3-listing-besked" class="lille"></div>
+    <div id="k3-listing" class="liste" hidden>
+      <div class="post"><div class="post-top"><b>Titel</b><button type="button" class="link lille-link" data-kopier="titel">Kopiér</button></div><div class="listing-tekst" id="lt-titel"></div></div>
+      <div class="post"><div class="post-top"><b>Zustandsbeschreibung</b><button type="button" class="link lille-link" data-kopier="zustand">Kopiér</button></div><div class="listing-tekst" id="lt-zustand"></div></div>
+      <div class="post"><div class="post-top"><b>Beschreibung</b><button type="button" class="link lille-link" data-kopier="beskrivelse">Kopiér</button></div><div class="listing-tekst" id="lt-beskrivelse"></div></div>
+      <label class="chip"><input type="checkbox" id="k3-listet"><span>Listet på eBay</span></label>
+      <a id="k3-doc" class="link" href="#" target="_blank" rel="noopener" hidden>Åbn dokumentet med alle listings</a>
+    </div>
   </div>
   <footer class="bund bund2">
     <button id="k3-gem" class="knap">Gem</button>
@@ -223,12 +264,12 @@
 
 <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="js/beregn.js?v=7"></script>
-<script src="js/api.js?v=7"></script>
-<script src="js/lokal.js?v=7"></script>
-<script src="js/data.js?v=7"></script>
-<script src="js/foto.js?v=7"></script>
-<script src="js/beskaer.js?v=7"></script>
-<script src="js/app.js?v=7"></script>
+<script src="js/beregn.js?v=8"></script>
+<script src="js/api.js?v=8"></script>
+<script src="js/lokal.js?v=8"></script>
+<script src="js/data.js?v=8"></script>
+<script src="js/foto.js?v=8"></script>
+<script src="js/beskaer.js?v=8"></script>
+<script src="js/app.js?v=8"></script>
 </body>
 </html>

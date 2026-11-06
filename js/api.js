@@ -123,6 +123,49 @@
         skriv(s); return { navn: navn, antalFotos: liste.length, gentaget: false };
       },
       hentLager: function () { var s = laes(); genberegn(s); return s.ind; },
+      tilfoejSaet: function (d) {
+        var s = laes();
+        if (!s.log.some(function (l) { return l.dato === String(d.dato); })) throw srv('Købet ' + d.dato + ' findes ikke i Indkøbslog.');
+        genberegn(s);
+        var rk = s.ind.filter(function (r) { return r.dato === String(d.dato); });
+        var aaben = String(d.dato) === '250000' || rk.some(function (r) { return !r.klar && r.lagerstatus !== 'Solgt'; });
+        if (!aaben && !d.genaabn) throw srv('LUKKET: Købet ' + d.dato + ' er lukket, fordi alle sæt er klargjort eller solgt.');
+        var sidste = -1; s.ind.forEach(function (r, i) { if (r.dato === String(d.dato)) sidste = i; });
+        var nye = d.saet.map(function (x) { return { dato: String(d.dato), setnr: String(x.setnr), vaerdi: Number(x.vaerdi) || 0, ovp: !!x.ovp, kilde: x.kilde || '', sorteret: false, fotos: false, klar: false, stand: '', platform: '', noter: '', vejledning: false, komplet: false, listet: false }; });
+        s.ind.splice.apply(s.ind, [sidste + 1, 0].concat(nye));
+        genberegn(s); skriv(s); return H.hentBatch({ dato: d.dato });
+      },
+      retSaet: function (d) {
+        var s = laes(); genberegn(s);
+        var r = s.ind.find(function (x) { return x.sku === d.sku; });
+        if (!r) throw srv('SKU ' + d.sku + ' findes ikke i Indkøb.');
+        if (r.lagerstatus === 'Solgt') throw srv('Sættet er solgt og kan ikke rettes.');
+        r.setnr = String(d.setnr); r.ovp = !!d.ovp; r.vaerdi = Number(d.vaerdi) || 0; r.kilde = d.kilde || '';
+        genberegn(s); skriv(s); return H.hentBatch({ dato: r.dato });
+      },
+      fjernSaet: function (d) {
+        var s = laes(); genberegn(s);
+        var i = s.ind.findIndex(function (x) { return x.sku === d.sku; });
+        if (i < 0) throw srv('SKU ' + d.sku + ' findes ikke i Indkøb.');
+        if (s.ind[i].lagerstatus === 'Solgt') throw srv('Sættet er solgt og kan ikke fjernes.');
+        var dato = s.ind[i].dato; s.ind.splice(i, 1);
+        genberegn(s); skriv(s); return H.hentBatch({ dato: dato });
+      },
+      saetListet: function (d) {
+        var s = laes(); var r = s.ind.find(function (x) { genberegn(s); return x.sku === d.sku; });
+        if (!r) throw srv('SKU ' + d.sku + ' findes ikke.');
+        r.listet = d.listet === true; genberegn(s); skriv(s); return r;
+      },
+      lavListings: function (d) {
+        var s = laes(); genberegn(s);
+        var rk = s.ind.filter(function (r) { return r.dato === String(d.dato) && r.klar && r.lagerstatus !== 'Solgt' && !r.listet; });
+        if (!rk.length) return { antal: 0, url: '', saet: [], besked: 'Ingen sæt i købet er klar til salg og endnu ikke listet.' };
+        return { antal: rk.length, url: 'https://docs.google.com/document/d/mock', saet: rk.map(function (r) {
+          var db = DB[r.setnr] || ['', '', '', ''];
+          return { sku: r.sku, navn: r.navn, titel: 'LEGO ' + db[1] + ' ' + r.setnr + ' ' + r.navn + ' (' + db[3] + ')' + (r.ovp ? ' OVP' : '') + (r.komplet ? ' komplett' : ''),
+            zustand: 'Zustand ' + r.stand + '/10.', beskrivelse: 'Schauen Sie sich auch meine anderen LEGO-Angebote an …\n\nLEGO ' + db[1] + ' ' + r.setnr + ' ' + r.navn };
+        }) };
+      },
       registrerSalg: function (d) {
         var s = laes(); genberegn(s);
         var varer = (d.varer || []).filter(function (v) { return v.sku; });
