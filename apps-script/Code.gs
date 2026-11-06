@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.4.4';
+var VERSION = '1.4.5';
 
 // ---------- Faner ----------
 var FANE = {
@@ -1278,14 +1278,14 @@ function listingTekst_(i) {
   var zDE = [sn ? sn[0] + ', siehe Fotos und Beschreibung.' : 'Siehe Fotos und Beschreibung.', i.komplet ? 'Komplett.' : '', ovpDE ? ovpDE + '.' : '',
     i.vejledning ? 'Anleitung vorhanden.' : '', i.noteDE ? 'Hinweis: ' + i.noteDE : ''].filter(Boolean).join(' ');
   var zEN = [sn ? sn[1] + ', see photos and description.' : 'See photos and description.', i.komplet ? 'Complete.' : '', ovpEN ? ovpEN + '.' : '',
-    i.vejledning ? 'Instructions included.' : '', i.noteEN ? 'Note: ' + i.noteEN : ''].filter(Boolean).join(' ');
+    i.vejledning ? 'Building instructions included.' : '', i.noteEN ? 'Note: ' + i.noteEN : ''].filter(Boolean).join(' ');
   var zustand = FLAG_DE + ' ' + zDE + '\n\n' + FLAG_EN + ' ' + zEN;
   var serieDE = tema ? '* Aus der ' + tema + '-Reihe' + (under ? ' (' + under + ')' : '') + (aar ? ', ' + aar : '') : (aar ? '* Erscheinungsjahr ' + aar : '');
   var serieEN = tema ? '* From the ' + tema + ' line' + (under ? ' (' + under + ')' : '') + (aar ? ', ' + aar : '') : (aar ? '* Released ' + aar : '');
   var navnLinje = ['LEGO', tema, nr, i.navn].filter(Boolean).join(' ');
   // null = linjen udelades; '' = bevidst tom linje
   var de = ['>>> English description below <<<', '', TEKST.introDE, '', navnLinje, '', serieDE || null, i.komplet ? '* Komplett' : null, ovpDE ? '* ' + ovpDE : null, i.vejledning ? '* Anleitung vorhanden' : null, stand ? '* Zustand: ' + stand + '/10 – ' + vDE : null, i.noteDE ? '* Hinweis: ' + i.noteDE : null, '* ' + TEKST.fragtDE];
-  var en = [TEKST.introEN, '', navnLinje, '', serieEN || null, i.komplet ? '* Complete' : null, ovpEN ? '* ' + ovpEN : null, i.vejledning ? '* Instructions included' : null, stand ? '* Condition: ' + stand + '/10 — ' + vEN : null, i.noteEN ? '* Note: ' + i.noteEN : null, '* ' + TEKST.fragtEN];
+  var en = [TEKST.introEN, '', navnLinje, '', serieEN || null, i.komplet ? '* Complete' : null, ovpEN ? '* ' + ovpEN : null, i.vejledning ? '* Building instructions included' : null, stand ? '* Condition: ' + stand + '/10 — ' + vEN : null, i.noteEN ? '* Note: ' + i.noteEN : null, '* ' + TEKST.fragtEN];
   var rens = function (l) { return l.filter(function (x) { return x !== null; }); };
   return { titel: titel, zustand: zustand, beskrivelse: rens(de).join('\n') + '\n\n---\n\n' + rens(en).join('\n'), navnLinje: navnLinje };
 }
@@ -1301,8 +1301,15 @@ function dbOpslag_() {
 function oversaet_(tekst, sprog, cache) {
   if (!tekst) return '';
   var k = sprog + '|' + tekst;
-  if (cache[k] === undefined) { try { cache[k] = LanguageApp.translate(tekst, '', sprog); } catch (e) { cache[k] = tekst; } }
+  if (cache[k] === undefined) { try { cache[k] = LanguageApp.translate(tekst, '', sprog); } catch (e) { cache[k] = tekst; } cache[k] = ordliste_(cache[k], sprog); }
   return cache[k];
+}
+
+// Faste LEGO-ord efter oversættelse
+function ordliste_(t, sprog) {
+  if (sprog === 'en') return String(t).replace(/\b(?:instruction )?manuals?\b/gi, 'building instructions').replace(/\binstructions? booklets?\b/gi, 'building instructions');
+  if (sprog === 'de') return String(t).replace(/\b(?:Handbuch|Handbücher|Bedienungsanleitung(?:en)?)\b/g, 'Bauanleitung');
+  return t;
 }
 
 function lavListings_(d) {
