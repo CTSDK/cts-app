@@ -23,7 +23,7 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
 ## Status (06-11-2026)
 - **Testet og virker:** nyt køb (3 sider), købsprisfordeling, klargøring med live-kamera + fri beskæring, Lager, offline-tilstand,
   import af hele Excel-projektmappen (Kontrol-fanen: 5232/5232 tal = Excel). Sheets er nu det rigtige regneark; Excel er arkiv.
-- **Bygget, ikke testet hos Thomas (maskinrum 1.4.0, kun testet i simulering):** Registrér salg; ret køb (tilføj/ret/fjern sæt,
+- **Bygget, ikke testet hos Thomas (maskinrum 1.4.1; listings testet i rigtigt ark med 260830 06-11, øvrigt kun i simulering):** Registrér salg; ret køb (tilføj/ret/fjern sæt,
   åbent/lukket, 250000 altid åben); listings (Listet-kolonne W, Google Doc "<batch> Listings", tekstgenerator testet i tests/listing.test.js).
   Thomas skal opdatere koden til 1.4.0, lave ny version og godkende Google Docs-adgang (CTS → Lav listings for et køb).
 - **Næste:** (1) undersøg Google Drive/Sheets-forbindelsen (se nedenfor), (2) test Registrér salg med første rigtige salg,
@@ -40,6 +40,8 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
   Beschreibung DE + "---" + EN. Kun fakta, ingen AI. Noter (dansk) oversættes automatisk med Google Oversæt (LanguageApp);
   "Sort: …"-koder og [tekst i firkantede parenteser] udelades. Antal dele/figurer udelades.
   Titel: `LEGO {Tema} {Setnr} {Navn} ({År}) [Vintage hvis ≥20 år] [OVP hvis æske] [komplett hvis komplet]` – aldrig "ohne OVP"/"unvollständig".
+  Zustand/Beschreibung: KUN det positive – "Komplett" (intet om dele), "Mit Original-Karton (OVP)", "Anleitung liegt bei"; ellers intet. Mangler fra Noter.
+  NB: Vejledning/Komplet er false for alle 991 importerede sæt (fandtes ikke i Excel) – Thomas krydser af ved gennemgang.
   Stand-vendinger: 10 neuwertig, 9 sehr gut, 8 sehr guter gebrauchter Zustand, 7 guter, altersgerechter Zustand,
   6 gebrauchter Zustand mit leichten Spuren, 5 deutliche Gebrauchsspuren, 1–4 starke Gebrauchsspuren.
   Thomas' faste tekst (DE/EN, CoolRunner/Homerunner/Bring-forsendelse) står i samtalen 06-11 – spørg Thomas om den igen, hvis den mangler.
