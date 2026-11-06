@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.3.0';
+var VERSION = '1.4.0';
 
 // ---------- Faner ----------
 var FANE = {
@@ -30,9 +30,9 @@ var K = {
   SKU: 1, DATO: 2, SETNR: 3, NAVN: 4, VAERDI: 5, KOEBSPRIS: 6, SALGFOR: 7, OVP: 8,
   SORTERET: 9, FOTOS: 10, KLAR: 11, STAND: 12, PLATFORM: 13, LAGERSTATUS: 14,
   SALGSDATO: 15, SALGSPRIS: 16, NOTER: 17, KILDE: 18, VEJLEDNING: 19, KOMPLET: 20,
-  FAST: 21, FOTOSKU: 22
+  FAST: 21, FOTOSKU: 22, LISTET: 23
 };
-var INDKOEB_KOLONNER = 22;
+var INDKOEB_KOLONNER = 23;
 // Indkøbslog: A dato, B pris, C skattepligt, D noter, E..L formler, M mappe-id (skjult)
 var LK = { DATO: 1, PRIS: 2, SKAT: 3, NOTER: 4, MAPPEID: 13 };
 var START = 3; // første datarække i Indkøb, Indkøbslog, Udgifter og eBay-afstemning
@@ -53,6 +53,7 @@ function onOpen() {
     .createMenu('CTS')
     .addItem('Importér fra Excel (sletter alt)', 'importerFraExcel')
     .addItem('Kør kontrol mod Excel', 'koerKontrol')
+    .addItem('Lav listings for et køb', 'lavListingsMenu')
     .addItem('Sortér gamle fotos', 'sorterFotos')
     .addItem('Lav valgliste for ikke-matchede fotos', 'lavValgliste')
     .addItem('Flyt valgte fotos', 'flytValgte')
@@ -229,7 +230,7 @@ function byggIndkoeb_(ss) {
     ['SKU', 'Købsdato', 'Set nr.', 'Navn', 'BL or eBay Average (€)', 'Købspris (DKK)',
       'Sættes til salg for:', 'Original Box', 'Sorteret', 'Fotos', 'Klar til salg', 'Stand (1-10)',
       'Salgsplatform', 'Lagerstatus', 'Salgsdato', 'Salgspris', 'Noter',
-      'Værdikilde', 'Vejledning', 'Komplet', 'Fast købspris (DKK)', 'Foto-SKU'], 2);
+      'Værdikilde', 'Vejledning', 'Komplet', 'Fast købspris (DKK)', 'Foto-SKU', 'Listet'], 2);
   sh.getRange('B3:C').setNumberFormat('0');
   sh.getRange('E3:E').setNumberFormat('[$€]#,##0.00');
   sh.getRange('F3:G').setNumberFormat('#,##0.00');
@@ -242,7 +243,7 @@ function byggIndkoeb_(ss) {
 function saetValidering_(sh, fra, antal) {
   if (antal < 1) return;
   var cb = SpreadsheetApp.newDataValidation().requireCheckbox().build();
-  [K.SORTERET, K.FOTOS, K.KLAR, K.VEJLEDNING, K.KOMPLET].forEach(function (k) { sh.getRange(fra, k, antal, 1).setDataValidation(cb); });
+  [K.SORTERET, K.FOTOS, K.KLAR, K.VEJLEDNING, K.KOMPLET, K.LISTET].forEach(function (k) { sh.getRange(fra, k, antal, 1).setDataValidation(cb); });
   var liste = function (v) { return SpreadsheetApp.newDataValidation().requireValueInList(v, true).setAllowInvalid(true).build(); };
   sh.getRange(fra, K.OVP, antal, 1).setDataValidation(liste(['Ja', 'Nej']));
   sh.getRange(fra, K.STAND, antal, 1).setDataValidation(liste(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']));
@@ -1117,8 +1118,217 @@ var HANDLINGER = {
   uploadFoto: function (d) { return medLaas_(function () { return uploadFoto_(d); }); },
   hentLager: function () { return hentLager_(); },
   hentAlt: function () { return hentAlt_(); },
-  registrerSalg: function (d) { return medLaas_(function () { return registrerSalg_(d); }); }
+  registrerSalg: function (d) { return medLaas_(function () { return registrerSalg_(d); }); },
+  tilfoejSaet: function (d) { return medLaas_(function () { return tilfoejSaet_(d); }); },
+  retSaet: function (d) { return medLaas_(function () { return retSaet_(d); }); },
+  fjernSaet: function (d) { return medLaas_(function () { return fjernSaet_(d); }); },
+  saetListet: function (d) { return medLaas_(function () { return saetListet_(d); }); },
+  lavListings: function (d) { return medLaas_(function () { return lavListings_(d); }); }
 };
+
+// ======================================================================
+//  RET KØB: tilføj, ret og fjern sæt. Et køb er åbent, indtil alle sæt er klargjort eller solgt.
+//  Batch 250000 (eget/familiens LEGO) er altid åben, og værdi er ikke påkrævet.
+// ======================================================================
+
+var PRIVAT_BATCH = '250000';
+
+function batchRaekker_(data, dato) {
+  return data.raekker.filter(function (r) { return String(r.v[K.DATO - 1]) === String(dato); });
+}
+function batchStatus_(rk, dato) {
+  var mangler = rk.filter(function (r) { return r.v[K.KLAR - 1] !== true && String(r.v[K.LAGERSTATUS - 1]) !== 'Solgt'; }).length;
+  return { aaben: String(dato) === PRIVAT_BATCH || mangler > 0 || rk.length === 0, mangler: mangler, ialt: rk.length, privat: String(dato) === PRIVAT_BATCH };
+}
+function tjekSaetData_(s, dato, i) {
+  if (!String(s.setnr || '').trim()) throw fejl_('Sæt ' + (i + 1) + ' mangler sætnummer.');
+  if (String(dato) === PRIVAT_BATCH) return;
+  if (!(Number(s.vaerdi) > 0)) throw fejl_('Sæt ' + s.setnr + ' mangler værdi.');
+  if (KILDER.indexOf(s.kilde) < 0) throw fejl_('Sæt ' + s.setnr + ' har ukendt kilde.');
+}
+
+function tilfoejSaet_(d) {
+  var dato = String(d.dato || ''), saet = d.saet || [];
+  if (!saet.length) throw fejl_('Ingen sæt at tilføje.');
+  var log = ark_(FANE.LOG), findes = false;
+  if (log.getLastRow() >= START) log.getRange(START, 1, log.getLastRow() - START + 1, 1).getValues().forEach(function (r) { if (String(r[0]) === dato) findes = true; });
+  if (!findes) throw fejl_('Købet ' + dato + ' findes ikke i Indkøbslog.');
+  saet.forEach(function (s, i) { tjekSaetData_(s, dato, i); });
+  var data = laesIndkoeb_(), rk = batchRaekker_(data, dato), st = batchStatus_(rk, dato);
+  if (!st.aaben && d.genaabn !== true) throw fejl_('LUKKET: Købet ' + dato + ' er lukket, fordi alle sæt er klargjort eller solgt.');
+  var ind = data.ark, n = saet.length;
+  // Nye sæt sættes ind EFTER købets sidste række, så det første eksemplar af et sæt forbliver -a
+  var efter = rk.length ? Math.max.apply(null, rk.map(function (r) { return r.raekke; })) : START - 1;
+  if (efter < START) ind.insertRowsBefore(START, n); else ind.insertRowsAfter(efter, n);
+  var fra = efter < START ? START : efter + 1;
+  ind.getRange(fra, 1, n, INDKOEB_KOLONNER).setBackground(null).setFontColor(null).setFontWeight('normal').setHorizontalAlignment(null).setWrap(false);
+  var bc = [], e = [], gm = [], ov = [];
+  saet.forEach(function (s) {
+    var nr = String(s.setnr).trim();
+    bc.push([Number(dato), /^\d+$/.test(nr) ? Number(nr) : tekst_(nr)]);
+    e.push([Number(s.vaerdi) > 0 ? Number(s.vaerdi) : '']);
+    gm.push(['', s.ovp ? 'Ja' : 'Nej', false, false, false, '', '']);
+    ov.push(['', '', '', KILDER.indexOf(s.kilde) >= 0 ? s.kilde : '', false, false, '', '']);
+  });
+  ind.getRange(fra, K.DATO, n, 2).setValues(bc);
+  ind.getRange(fra, K.VAERDI, n, 1).setValues(e);
+  ind.getRange(fra, K.SALGFOR, n, 7).setValues(gm);
+  ind.getRange(fra, K.SALGSDATO, n, 8).setValues(ov);
+  ind.getRange(fra, K.LISTET, n, 1).setValue(false);
+  saetValidering_(ind, fra, n);
+  ind.getRange(fra, K.DATO, n, 2).setNumberFormat('0');
+  ind.getRange(fra, K.VAERDI, n, 1).setNumberFormat('[$€]#,##0.00');
+  SpreadsheetApp.flush();
+  synkFotonavne_(dato);
+  return hentBatch_(dato);
+}
+
+function retSaet_(d) {
+  var f = findRaekke_(String(d.sku || ''));
+  if (String(f.r.v[K.LAGERSTATUS - 1]) === 'Solgt') throw fejl_('Sættet er solgt og kan ikke rettes.');
+  var dato = String(f.r.v[K.DATO - 1]), ark = f.ark, rk = f.r.raekke;
+  tjekSaetData_({ setnr: d.setnr, vaerdi: d.vaerdi, kilde: d.kilde }, dato, 0);
+  var nr = String(d.setnr).trim();
+  ark.getRange(rk, K.SETNR).setValue(/^\d+$/.test(nr) ? Number(nr) : tekst_(nr));
+  ark.getRange(rk, K.OVP).setValue(d.ovp ? 'Ja' : 'Nej');
+  ark.getRange(rk, K.VAERDI).setValue(Number(d.vaerdi) > 0 ? Number(d.vaerdi) : '');
+  ark.getRange(rk, K.KILDE).setValue(KILDER.indexOf(d.kilde) >= 0 ? d.kilde : '');
+  SpreadsheetApp.flush();
+  synkFotonavne_(dato);
+  return hentBatch_(dato);
+}
+
+function fjernSaet_(d) {
+  var f = findRaekke_(String(d.sku || ''));
+  if (String(f.r.v[K.LAGERSTATUS - 1]) === 'Solgt') throw fejl_('Sættet er solgt og kan ikke fjernes.');
+  var dato = String(f.r.v[K.DATO - 1]);
+  f.ark.deleteRow(f.r.raekke);
+  SpreadsheetApp.flush();
+  synkFotonavne_(dato);
+  return hentBatch_(dato);
+}
+
+function saetListet_(d) {
+  var f = findRaekke_(String(d.sku || ''));
+  f.ark.getRange(f.r.raekke, K.LISTET).setValue(d.listet === true);
+  SpreadsheetApp.flush();
+  return tilSaet_(findRaekke_(String(d.sku)).r);
+}
+
+// ======================================================================
+//  LISTINGS: én Google Doc pr. køb med alle klare, usolgte og ikke-listede sæt
+// ======================================================================
+
+var STAND_DE = { 10: 'neuwertig', 9: 'sehr gut', 8: 'sehr guter gebrauchter Zustand', 7: 'guter, altersgerechter Zustand',
+  6: 'gebrauchter Zustand mit leichten Spuren', 5: 'deutliche Gebrauchsspuren' };
+var STAND_EN = { 10: 'like new', 9: 'very good', 8: 'very good used condition', 7: 'good condition for its age',
+  6: 'used condition with light wear', 5: 'clear signs of use' };
+var TEKST = {
+  introDE: 'Schauen Sie sich auch meine anderen LEGO-Angebote an und lassen Sie mich wissen, falls Sie etwas Bestimmtes suchen! – nach dem ersten Kauf ist der Versand für weitere Sets kostenlos.',
+  introEN: "Check out my other LEGO listings and let me know if you're looking for something specific! – free shipping on additional sets after your first purchase.",
+  fragtDE: 'Versand per Sparversand über CoolRunner, in Zusammenarbeit mit Homerunner und Bring. Die Pakete werden in Dänemark gesammelt und ein- bis zweimal pro Woche von DHL und anderen Partnerspeditionen abgeholt und in Europa verteilt – die Sendungsverfolgung aktualisiert sich erst, sobald der finale Zusteller das Paket registriert hat, was in der Regel etwa eine Woche dauert.',
+  fragtEN: 'Standard economy shipping (Sparversand) via CoolRunner, working with Homerunner and Bring. Parcels are collected in Denmark and picked up once or twice a week by DHL and other partner carriers for distribution across Europe — tracking only updates once the final carrier registers the parcel, which usually takes about a week.'
+};
+
+// Fjerner sorteringskoder og [interne bemærkninger] fra noter
+function rensNote_(note) {
+  return String(note || '').replace(/Sort:\s*[\w-]+[.;,]?/gi, '').replace(/\[[^\]]*\]/g, '').replace(/^[\s.;,–-]+|[\s;,–-]+$/g, '').replace(/\s{2,}/g, ' ').trim();
+}
+
+// Ren tekstgenerator (ingen Google-kald) – i: {setnr, navn, tema, undertema, aar, ovp, komplet, vejledning, stand, noteDE, noteEN, aarNu}
+function listingTekst_(i) {
+  var nr = String(i.setnr).replace(/-\d+$/, '');
+  var aar = String(i.aar || ''), under = String(i.undertema || '');
+  if (!/^\d{4}$/.test(aar) && /^\d{4}$/.test(under)) { aar = under; under = ''; } // kendt DB-fejl: år i undertema-kolonnen
+  var tema = String(i.tema || '');
+  var vintage = /^\d{4}$/.test(aar) && (Number(i.aarNu) - Number(aar)) >= 20;
+  var kerne = function (medTema) { return ['LEGO', medTema ? tema : '', nr, i.navn, aar ? '(' + aar + ')' : ''].filter(Boolean).join(' '); };
+  var ekstra = [i.ovp ? 'OVP' : '', i.komplet ? 'komplett' : ''].filter(Boolean).join(' ');
+  var titel = [kerne(true), vintage ? 'Vintage' : '', ekstra].filter(Boolean).join(' ');
+  if (titel.length > 80) titel = [kerne(true), ekstra].filter(Boolean).join(' ');
+  if (titel.length > 80) titel = [kerne(false), ekstra].filter(Boolean).join(' ');
+  if (titel.length > 80) titel = titel.slice(0, 80).trim();
+  var stand = Number(i.stand) || 0;
+  var vDE = stand ? (STAND_DE[stand] || 'starke Gebrauchsspuren') : '', vEN = stand ? (STAND_EN[stand] || 'heavy signs of use') : '';
+  var ovpDE = (i.ovp ? 'Mit Original-Karton (OVP)' : 'Kein Original-Karton (OVP)') + ', ' + (i.vejledning ? 'Anleitung liegt bei' : 'ohne Anleitung');
+  var ovpEN = (i.ovp ? 'Original box included' : 'No original box') + ', ' + (i.vejledning ? 'instructions included' : 'no instructions');
+  var kompDE = i.komplet ? 'Komplett, alle Teile vorhanden' : 'Nicht komplett';
+  var kompEN = i.komplet ? 'Complete, all parts included' : 'Not complete';
+  var zustand = [stand ? 'Zustand ' + stand + '/10 – ' + vDE + '.' : '', kompDE + '.', ovpDE + '.', i.noteDE ? 'Hinweis: ' + i.noteDE : ''].filter(Boolean).join(' ');
+  var serieDE = tema ? '* Aus der ' + tema + '-Reihe' + (under ? ' (' + under + ')' : '') + (aar ? ', ' + aar : '') : (aar ? '* Erscheinungsjahr ' + aar : '');
+  var serieEN = tema ? '* From the ' + tema + ' line' + (under ? ' (' + under + ')' : '') + (aar ? ', ' + aar : '') : (aar ? '* Released ' + aar : '');
+  var navnLinje = ['LEGO', tema, nr, i.navn].filter(Boolean).join(' ');
+  // null = linjen udelades; '' = bevidst tom linje
+  var de = [TEKST.introDE, '', navnLinje, '', serieDE || null, '* ' + kompDE, '* ' + ovpDE, stand ? '* Zustand: ' + stand + '/10 – ' + vDE : null, i.noteDE ? '* Hinweis: ' + i.noteDE : null, '* ' + TEKST.fragtDE];
+  var en = [TEKST.introEN, '', navnLinje, '', serieEN || null, '* ' + kompEN, '* ' + ovpEN, stand ? '* Condition: ' + stand + '/10 — ' + vEN : null, i.noteEN ? '* Note: ' + i.noteEN : null, '* ' + TEKST.fragtEN];
+  var rens = function (l) { return l.filter(function (x) { return x !== null; }); };
+  return { titel: titel, zustand: zustand, beskrivelse: rens(de).join('\n') + '\n\n---\n\n' + rens(en).join('\n'), navnLinje: navnLinje };
+}
+
+function dbOpslag_() {
+  var db = ark_(FANE.DB);
+  var start = Number(PropertiesService.getScriptProperties().getProperty('DB_START')) || findDbStart_(db) || 3;
+  var n = db.getLastRow() - start + 1, map = {};
+  if (n > 0) db.getRange(start, 1, n, 5).getDisplayValues().forEach(function (r) { if (r[0] !== '' && !map[r[0]]) map[r[0]] = r; });
+  return function (nr) { nr = String(nr); return map[nr] || map[nr + '-1'] || map[nr.replace(/-\d+$/, '')] || null; };
+}
+
+function oversaet_(tekst, sprog, cache) {
+  if (!tekst) return '';
+  var k = sprog + '|' + tekst;
+  if (cache[k] === undefined) { try { cache[k] = LanguageApp.translate(tekst, '', sprog); } catch (e) { cache[k] = tekst; } }
+  return cache[k];
+}
+
+function lavListings_(d) {
+  var dato = String(d.dato || '');
+  var data = laesIndkoeb_();
+  var rk = batchRaekker_(data, dato).filter(function (r) {
+    return r.v[K.KLAR - 1] === true && String(r.v[K.LAGERSTATUS - 1]) !== 'Solgt' && r.v[K.LISTET - 1] !== true;
+  }).sort(function (a, b) { return String(a.v[K.SKU - 1]).localeCompare(String(b.v[K.SKU - 1])); });
+  if (!rk.length) return { antal: 0, url: '', saet: [], besked: 'Ingen sæt i købet er klar til salg og endnu ikke listet.' };
+  var slaa = dbOpslag_(), cache = {}, aarNu = Number(Utilities.formatDate(new Date(), 'Europe/Copenhagen', 'yyyy'));
+  var ud = rk.map(function (r) {
+    var v = r.v, dbr = slaa(v[K.SETNR - 1]) || ['', v[K.NAVN - 1], '', '', ''];
+    var note = rensNote_(v[K.NOTER - 1]);
+    var t = listingTekst_({
+      setnr: String(v[K.SETNR - 1]), navn: String(v[K.NAVN - 1] || dbr[1]), tema: dbr[2], undertema: dbr[3], aar: dbr[4],
+      ovp: v[K.OVP - 1] === 'Ja', komplet: v[K.KOMPLET - 1] === true, vejledning: v[K.VEJLEDNING - 1] === true,
+      stand: v[K.STAND - 1], noteDE: oversaet_(note, 'de', cache), noteEN: oversaet_(note, 'en', cache), aarNu: aarNu
+    });
+    return { sku: String(v[K.SKU - 1]), navn: String(v[K.NAVN - 1]), titel: t.titel, zustand: t.zustand, beskrivelse: t.beskrivelse };
+  });
+  // Google Doc i købsmappen (erstattes hver gang)
+  var mappe = batchMappe_(dato, true), navn = dato + ' Listings', doc;
+  var it = mappe.getFilesByName(navn);
+  if (it.hasNext()) { doc = DocumentApp.openById(it.next().getId()); doc.getBody().clear(); }
+  else { doc = DocumentApp.create(navn); DriveApp.getFileById(doc.getId()).moveTo(mappe); }
+  var body = doc.getBody();
+  body.appendParagraph(navn).setHeading(DocumentApp.ParagraphHeading.TITLE);
+  body.appendParagraph(ud.length + ' sæt · lavet ' + Utilities.formatDate(new Date(), 'Europe/Copenhagen', 'dd-MM-yyyy HH:mm'));
+  ud.forEach(function (x) {
+    body.appendHorizontalRule();
+    body.appendParagraph(x.sku + ' · ' + x.navn).setHeading(DocumentApp.ParagraphHeading.HEADING2);
+    [['TITEL', x.titel], ['ZUSTANDSBESCHREIBUNG', x.zustand], ['BESCHREIBUNG', x.beskrivelse]].forEach(function (del) {
+      body.appendParagraph(del[0]).setHeading(DocumentApp.ParagraphHeading.HEADING4);
+      del[1].split('\n').forEach(function (linje) { body.appendParagraph(linje).setHeading(DocumentApp.ParagraphHeading.NORMAL); });
+    });
+  });
+  var foerste = body.getChild(0); if (foerste.getType() === DocumentApp.ElementType.PARAGRAPH && foerste.asParagraph().getText() === '' && body.getNumChildren() > 1) foerste.removeFromParent();
+  doc.saveAndClose();
+  return { antal: ud.length, url: doc.getUrl(), saet: ud };
+}
+
+// Menupunkt: lav listings for et køb (bruges også til at godkende adgang til Google Docs første gang)
+function lavListingsMenu() {
+  var ui = SpreadsheetApp.getUi();
+  var svar = ui.prompt('Lav listings', 'Købsdato (fx 261028):', ui.ButtonSet.OK_CANCEL);
+  if (svar.getSelectedButton() !== ui.Button.OK) return;
+  try {
+    var r = lavListings_({ dato: svar.getResponseText().trim() });
+    ui.alert('Lav listings', r.antal ? r.antal + ' sæt er skrevet i dokumentet:\n' + r.url : r.besked, ui.ButtonSet.OK);
+  } catch (e) { ui.alert('Lav listings', e.message, ui.ButtonSet.OK); }
+}
 
 // ---------- Salg: én ordre (samme dato + køber) indsættes øverst i Salg <år> ----------
 // Fragt, gebyr, refusion, eBay-ordrenr. og bilagsnr. skrives kun på ordrens første række (som i Excel).
@@ -1262,6 +1472,7 @@ function opretBatch_(d) {
   ind.getRange(START, K.VAERDI, n, 1).setValues(e);
   ind.getRange(START, K.SALGFOR, n, 7).setValues(gm);
   ind.getRange(START, K.SALGSDATO, n, 8).setValues(ov);
+  ind.getRange(START, K.LISTET, n, 1).setValue(false);
   saetValidering_(ind, START, n);
   ind.getRange(START, K.DATO, n, 2).setNumberFormat('0');
   ind.getRange(START, K.VAERDI, n, 1).setNumberFormat('[$€]#,##0.00');
@@ -1270,8 +1481,21 @@ function opretBatch_(d) {
   return hentBatch_(dato);
 }
 
+// Kolonnen "Listet" (W) kom til i version 1.4.0 – tilføjes til ark, der er importeret før
+function sikrListet_(ind) {
+  if (sikrListet_.ok) return;
+  if (ind.getMaxColumns() < K.LISTET) ind.insertColumnsAfter(ind.getMaxColumns(), K.LISTET - ind.getMaxColumns());
+  var h = ind.getRange(2, K.LISTET);
+  if (h.getValue() !== 'Listet') {
+    h.setValue('Listet').setBackground(NAVY).setFontColor('#ffffff').setFontWeight('bold').setHorizontalAlignment('center');
+    ind.getRange(START, K.LISTET, ind.getMaxRows() - START + 1, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireCheckbox().build());
+  }
+  sikrListet_.ok = true;
+}
+
 function laesIndkoeb_() {
   var ind = ark_(FANE.INDKOEB);
+  sikrListet_(ind);
   var n = ind.getLastRow() - START + 1;
   if (n < 1) return { ark: ind, raekker: [] };
   var v = ind.getRange(START, 1, n, INDKOEB_KOLONNER).getValues(), raekker = [];
@@ -1290,7 +1514,7 @@ function tilSaet_(r) {
     ovp: v[K.OVP - 1] === 'Ja', sorteret: b(v[K.SORTERET - 1]), fotos: b(v[K.FOTOS - 1]), klar: b(v[K.KLAR - 1]),
     stand: v[K.STAND - 1] === '' ? '' : String(v[K.STAND - 1]), platform: String(v[K.PLATFORM - 1] || ''),
     lagerstatus: String(v[K.LAGERSTATUS - 1] || ''), noter: String(v[K.NOTER - 1] || ''), kilde: String(v[K.KILDE - 1] || ''),
-    vejledning: b(v[K.VEJLEDNING - 1]), komplet: b(v[K.KOMPLET - 1])
+    vejledning: b(v[K.VEJLEDNING - 1]), komplet: b(v[K.KOMPLET - 1]), listet: b(v[K.LISTET - 1])
   };
 }
 
@@ -1307,7 +1531,7 @@ function hentBatch_(dato) {
     var lv = log.getRange(START, 1, log.getLastRow() - START + 1, 2).getValues();
     for (var i = 0; i < lv.length; i++) if (String(lv[i][0]) === dato) { pris = Number(lv[i][1]); break; }
   }
-  return { dato: dato, pris: pris, saet: saet };
+  return { dato: dato, pris: pris, saet: saet, status: batchStatus_(batchRaekker_(data, dato), dato) };
 }
 
 function hentLager_() { return laesIndkoeb_().raekker.map(tilSaet_); }
