@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/app.css?v=9">
+<link rel="stylesheet" href="css/app.css?v=10">
 </head>
 <body>
 <div id="testbanner" class="banner" hidden></div>
@@ -128,6 +128,11 @@
       </div>
       <div class="knapper"><button type="button" class="knap" id="ny-annuller">Annullér</button><button type="button" class="knap knap-primaer" id="ny-gem">Tilføj</button></div>
       <div id="ny-fejl" class="besked fejl" role="alert"></div>
+    </div>
+    <div id="k3-find-boks" class="find-boks" hidden>
+      <label for="k3-find" class="skjult">Find sæt i købet</label>
+      <input id="k3-find" type="search" placeholder="Find sæt i købet (nr. eller navn)" autocomplete="off">
+      <button type="button" class="link" id="k3-visalle">Vis alle sæt</button>
     </div>
     <div id="k3-vaelg" class="vaelg" role="tablist" aria-label="Vælg sæt"></div>
     <div class="saetkort">
@@ -250,7 +255,9 @@
   <header class="top"><button class="tilbage" data-gaa="forside" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Lager</h2><button class="link" id="l-opdater">Opdater</button></header>
   <div class="indhold">
     <label for="l-soeg" class="skjult">Søg</label>
-    <input id="l-soeg" type="search" placeholder="Søg SKU, setnr eller navn" autocomplete="off">
+    <input id="l-soeg" type="search" placeholder="Søg SKU, setnr, navn eller tema" autocomplete="off">
+    <label for="l-tema" class="skjult">Tema</label>
+    <select id="l-tema" aria-label="Tema"><option value="">Alle temaer</option></select>
     <div class="filtre" role="group" aria-label="Filter">
       <button data-filter="alle" class="til">Alle</button>
       <button data-filter="klar">Klar</button>
@@ -288,12 +295,12 @@
 
 <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="js/beregn.js?v=9"></script>
-<script src="js/api.js?v=9"></script>
-<script src="js/lokal.js?v=9"></script>
-<script src="js/data.js?v=9"></script>
-<script src="js/foto.js?v=9"></script>
-<script src="js/beskaer.js?v=9"></script>
-<script src="js/app.js?v=9"></script>
+<script src="js/beregn.js?v=10"></script>
+<script src="js/api.js?v=10"></script>
+<script src="js/lokal.js?v=10"></script>
+<script src="js/data.js?v=10"></script>
+<script src="js/foto.js?v=10"></script>
+<script src="js/beskaer.js?v=10"></script>
+<script src="js/app.js?v=10"></script>
 </body>
 </html>

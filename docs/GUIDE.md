@@ -123,6 +123,8 @@ Nederst i appen er der altid fem faner: **Hjem · Nyt køb · Lager · Salg · M
 - Sættene i et køb står i **nummerorden efter sætnummer** i arket (677 før 6044). Det sker automatisk ved nyt køb, tilføj sæt og ret sæt.
 - **Lager** i appen viser alle sæt i nummerorden, så du hurtigt kan se, om et sæt er på lager.
 - To ens sæt i samme køb beholder -a og -b, så SKU'er og fotonavne ikke skifter.
+- **Tema i Lager:** feltet under søgningen viser de temaer, du har sæt i, med antal (fx *Castle (84)*). Det kan kombineres med Alle/Klar/Ikke klar/På eBay. Søgefeltet finder også tema ("pirat" finder Pirates). Sæt, der ikke er i DB, står under *Uden tema*.
+- **Store køb (over 12 sæt):** på klargøringssiden står der et søgefelt *Find sæt i købet* i stedet for alle knapperne, og det valgte sæt står lige under. **Vis alle sæt** klapper knapperne ud.
 - Menupunktet **CTS → Sortér alle køb i nummerorden** sorterer alle eksisterende køb én gang.
 
 ---

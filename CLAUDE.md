@@ -32,6 +32,8 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
 - Nummerorden: `sorterKoeb_` flytter hele rækker (moveRows) efter sætnummer ved opretBatch/tilfoejSaet/retSaet; menu "Sortér alle køb i nummerorden".
   App: `Beregn.saetOrden` sorterer Lager/køb (tal, endelse, nyeste køb). Test: tests/sortering.test.js.
 - Menubjælke i bunden (Hjem · Nyt køb · Lager · Salg · Mere); "Mere" = udbakke + indstillinger. Cache v9.
+- Lager: temafelt (tema fra lokal DB-kopi, antal pr. tema, søgning finder tema; ingen undertema endnu – Thomas). Store køb (>12 sæt):
+  søgefelt i klargøring i stedet for alle knapper, 'Vis alle'. Test: tests/stortkoeb.js. Cache v10.
 - Rettet: efter "Ret" hoppede appen til forkert sæt (valgte efter indeks).
 - DB: tilføjet 30343, 30577, 31100 (fra Thomas' Rebrickable-skærmbilleder). 6 tomme rækker i Indkøb (261015/260916) slettet efter aftale.
 - 261028 har nu 7 sæt (Tilføj sæt testet i rigtigt ark, sum 600 ✓). Ret/Fjern endnu ikke testet i rigtigt ark.

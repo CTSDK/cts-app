@@ -255,7 +255,7 @@
   function findSaet(sku) { return k3Saet().find(function (s) { return s.sku === sku; }); }
 
   function aabnKlargoering(dato, sku, fra) {
-    k3.dato = String(dato); k3.fra = fra || 'forside';
+    k3.dato = String(dato); k3.fra = fra || 'forside'; $('k3-find').value = ''; k3VisAlle = false;
     gaa('koeb3');
     var alle = k3Saet();
     vaelgSaet(sku || (alle[0] && alle[0].sku));
@@ -263,9 +263,18 @@
   }
   $('k3-tilbage').addEventListener('click', function () { gaa(k3.fra); });
 
+  // Store køb (over 12 sæt): søgefelt i stedet for alle knapper, så det valgte sæt står øverst
+  var STORT_KOEB = 12, k3VisAlle = false;
   function tegnVaelger() {
     var c = $('k3-vaelg'); c.innerHTML = '';
-    k3Saet().forEach(function (s) {
+    var alle = k3Saet(), stort = alle.length > STORT_KOEB;
+    var q = stort ? $('k3-find').value.trim().toLowerCase() : '';
+    $('k3-find-boks').hidden = !stort;
+    $('k3-visalle').textContent = k3VisAlle ? 'Skjul listen' : 'Vis alle ' + alle.length + ' sæt';
+    var vis = !stort ? alle : q ? alle.filter(function (s) { return (s.sku + ' ' + s.setnr + ' ' + s.navn).toLowerCase().indexOf(q) >= 0; }) : k3VisAlle ? alle : [];
+    c.hidden = !vis.length && !q;
+    if (q && !vis.length) { var t = document.createElement('div'); t.className = 'lille'; t.textContent = 'Intet sæt i købet passer på "' + q + '"'; c.appendChild(t); }
+    vis.forEach(function (s) {
       var b = document.createElement('button');
       b.type = 'button'; b.setAttribute('role', 'tab');
       b.className = (s.sku === k3.sku ? 'til ' : '') + (s.klar ? 'klar' : '');
@@ -460,6 +469,8 @@
     $(prefix + '-navn').className = 'lille ' + (o && o.fundet ? 'ok-tekst' : '');
     if (cb) cb(o);
   }
+  $('k3-find').addEventListener('input', tegnVaelger);
+  $('k3-visalle').addEventListener('click', function () { k3VisAlle = !k3VisAlle; if (!k3VisAlle) $('k3-find').value = ''; tegnVaelger(); });
   $('k3-tilfoej').addEventListener('click', function () {
     ny = { ovp: true, opslag: null };
     ['ny-setnr', 'ny-vaerdi'].forEach(function (id) { $(id).value = ''; }); $('ny-kilde').value = ''; $('ny-navn').textContent = ''; $('ny-fejl').textContent = '';
@@ -595,6 +606,7 @@
     tegnLager();
   });
   $('l-soeg').addEventListener('input', tegnLager);
+  $('l-tema').addEventListener('change', tegnLager);
   document.querySelectorAll('[data-filter]').forEach(function (b) {
     b.addEventListener('click', function () {
       filter = b.getAttribute('data-filter');
@@ -603,15 +615,29 @@
     });
   });
   function erKlar(s) { return s.klar && s.lagerstatus === 'På lager'; }
+  var UDEN_TEMA = 'Uden tema';
+  function temaFor(s) { return (Data.harDb() && Data.slaaOp(s.setnr).tema) || UDEN_TEMA; }
   function tegnLager() {
     var q = $('l-soeg').value.trim().toLowerCase();
     var lager = Data.lager();
-    var vis = lager.filter(function (s) {
+    var status = lager.filter(function (s) {
       if (filter === 'klar' && !erKlar(s)) return false;
       if (filter === 'ikke' && (s.klar || s.lagerstatus === 'Solgt')) return false;
       if (filter === 'ebay' && !(s.platform === 'eBay' && s.lagerstatus === 'På lager')) return false;
+      return true;
+    });
+    status.forEach(function (s) { s.tema = temaFor(s); });
+    // Temafeltet: de temaer, der er sæt i med det valgte filter, og antal
+    var antal = {}; status.forEach(function (s) { antal[s.tema] = (antal[s.tema] || 0) + 1; });
+    var sel = $('l-tema'), valgt = sel.value;
+    var temaer = Object.keys(antal).sort(function (a, b) { return (a === UDEN_TEMA) - (b === UDEN_TEMA) || a.localeCompare(b); });
+    if (valgt && !antal[valgt]) temaer.push(valgt);
+    sel.innerHTML = '<option value="">Alle temaer (' + status.length + ')</option>' + temaer.map(function (t) { return '<option value="' + esc(t) + '">' + esc(t) + ' (' + (antal[t] || 0) + ')</option>'; }).join('');
+    sel.value = valgt;
+    var vis = status.filter(function (s) {
+      if (valgt && s.tema !== valgt) return false;
       if (!q) return true;
-      return (s.sku + ' ' + s.setnr + ' ' + s.navn).toLowerCase().indexOf(q) >= 0;
+      return (s.sku + ' ' + s.setnr + ' ' + s.navn + ' ' + s.tema).toLowerCase().indexOf(q) >= 0;
     });
     var hentet = Data.hentetTid();
     $('l-antal').textContent = vis.length + ' af ' + lager.length + ' sæt' + (hentet ? ' · kopi fra ' + new Date(hentet).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' }) : ' · ingen kopi hentet endnu');
@@ -621,7 +647,7 @@
       var maerke = s.lagerstatus === 'Solgt' ? ['solgt', 'Solgt'] : erKlar(s) ? ['klar', 'Klar'] : ['', 'Ikke klar'];
       b.innerHTML = '<span class="mono">' + esc(s.sku) + '</span><span class="maerke ' + maerke[0] + '">' + maerke[1] + '</span>' +
         '<span class="navn">' + esc(s.navn) + '</span>' +
-        '<span class="lille">' + [s.stand ? 'Stand ' + s.stand : '', s.platform, s.ovp ? 'OVP' : '', s.ventende || s.ventendeFotos ? 'venter på at blive sendt' : ''].filter(Boolean).join(' · ') + '</span>';
+        '<span class="lille">' + [s.tema !== UDEN_TEMA ? s.tema : '', s.stand ? 'Stand ' + s.stand : '', s.platform, s.ovp ? 'OVP' : '', s.ventende || s.ventendeFotos ? 'venter på at blive sendt' : ''].filter(Boolean).join(' · ') + '</span>';
       b.addEventListener('click', function () {
         if (s.lagerstatus === 'Solgt') { toast('Sættet er solgt.'); return; }
         aabnKlargoering(s.dato, s.sku, 'lager');

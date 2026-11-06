@@ -215,3 +215,5 @@ body.laast { overflow: hidden; }
 .fanebar button.til { color: var(--navy); }
 .fanebar button.til svg { stroke-width: 2.4; }
 .top-titel { padding-left: 8px; }
+.find-boks { display: flex; flex-direction: column; gap: 4px; }
+.find-boks .link { padding: 6px 4px; min-height: 36px; }
