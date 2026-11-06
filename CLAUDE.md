@@ -40,7 +40,10 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
   Beschreibung DE + "---" + EN. Kun fakta, ingen AI. Noter (dansk) oversættes automatisk med Google Oversæt (LanguageApp);
   "Sort: …"-koder og [tekst i firkantede parenteser] udelades. Antal dele/figurer udelades.
   Titel: `LEGO {Tema} {Setnr} {Navn} ({År}) [Vintage hvis ≥20 år] [OVP hvis æske] [komplett hvis komplet]` – aldrig "ohne OVP"/"unvollständig".
-  Zustand/Beschreibung: KUN det positive – "Komplett" (intet om dele), "Mit Original-Karton (OVP)", "Anleitung liegt bei"; ellers intet. Mangler fra Noter.
+  Zustandsbeschreibung: DE+EN i ét felt, uden standtal: "🇩🇪 {Sehr gut (SG)}, siehe Fotos und Beschreibung. [Komplett.] [Original-Verpackung (OVP)
+  vorhanden (æske-note).] [Anleitung vorhanden.] [Hinweis: …] 🇬🇧 …" – betegnelser: 10 Neuwertig/Like new, 8–9 Sehr gut (SG)/Very good (SG),
+  6–7 Gut (G)/Good (G), 4–5 Akzeptabel/Acceptable, 1–3 Stark gebraucht/Heavily used. "Æske: …" i Noter → parentes efter OVP.
+  KUN det positive skrives (Komplett/OVP/Anleitung), intet om dele. Thomas' eksempel er test i tests/listing.test.js.
   NB: Vejledning/Komplet er false for alle 991 importerede sæt (fandtes ikke i Excel) – Thomas krydser af ved gennemgang.
   Stand-vendinger: 10 neuwertig, 9 sehr gut, 8 sehr guter gebrauchter Zustand, 7 guter, altersgerechter Zustand,
   6 gebrauchter Zustand mit leichten Spuren, 5 deutliche Gebrauchsspuren, 1–4 starke Gebrauchsspuren.

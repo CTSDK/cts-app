@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.4.1';
+var VERSION = '1.4.2';
 
 // ---------- Faner ----------
 var FANE = {
@@ -1223,6 +1223,17 @@ var STAND_DE = { 10: 'neuwertig', 9: 'sehr gut', 8: 'sehr guter gebrauchter Zust
   6: 'gebrauchter Zustand mit leichten Spuren', 5: 'deutliche Gebrauchsspuren' };
 var STAND_EN = { 10: 'like new', 9: 'very good', 8: 'very good used condition', 7: 'good condition for its age',
   6: 'used condition with light wear', 5: 'clear signs of use' };
+// Kort standbetegnelse til standbeskrivelsen (uden tal)
+function standNavn_(stand) {
+  var n = Number(stand) || 0;
+  if (!n) return null;
+  if (n >= 10) return ['Neuwertig', 'Like new'];
+  if (n >= 8) return ['Sehr gut (SG)', 'Very good (SG)'];
+  if (n >= 6) return ['Gut (G)', 'Good (G)'];
+  if (n >= 4) return ['Akzeptabel', 'Acceptable'];
+  return ['Stark gebraucht', 'Heavily used'];
+}
+
 var TEKST = {
   introDE: 'Schauen Sie sich auch meine anderen LEGO-Angebote an und lassen Sie mich wissen, falls Sie etwas Bestimmtes suchen! – nach dem ersten Kauf ist der Versand für weitere Sets kostenlos.',
   introEN: "Check out my other LEGO listings and let me know if you're looking for something specific! – free shipping on additional sets after your first purchase.",
@@ -1231,6 +1242,13 @@ var TEKST = {
 };
 
 // Fjerner sorteringskoder og [interne bemærkninger] fra noter
+// Deler noten i æskens stand ("Æske: …") og resten
+function delNote_(note) {
+  var tekst = rensNote_(note), aeske = '';
+  tekst = tekst.replace(/(?:Æske|Aeske|Kasse|Karton|Box)\s*:\s*([^.;]*)[.;]?/i, function (_, x) { aeske = x.trim(); return ''; });
+  return { aeske: aeske, rest: tekst.replace(/^[\s.;,–-]+|[\s;,–-]+$/g, '').replace(/\s{2,}/g, ' ').trim() };
+}
+
 function rensNote_(note) {
   return String(note || '').replace(/Sort:\s*[\w-]+[.;,]?/gi, '').replace(/\[[^\]]*\]/g, '').replace(/^[\s.;,–-]+|[\s;,–-]+$/g, '').replace(/\s{2,}/g, ' ').trim();
 }
@@ -1250,17 +1268,21 @@ function listingTekst_(i) {
   if (titel.length > 80) titel = titel.slice(0, 80).trim();
   var stand = Number(i.stand) || 0;
   var vDE = stand ? (STAND_DE[stand] || 'starke Gebrauchsspuren') : '', vEN = stand ? (STAND_EN[stand] || 'heavy signs of use') : '';
-  // Kun det positive skrives: OVP, Anleitung og komplett står der kun, når det er sandt. Mangler kommer fra noterne.
-  var udstyrDE = [i.ovp ? 'Mit Original-Karton (OVP)' : '', i.vejledning ? 'Anleitung liegt bei' : ''].filter(Boolean).join(', ');
-  var udstyrEN = [i.ovp ? 'Original box included' : '', i.vejledning ? 'instructions included' : ''].filter(Boolean).join(', ');
-  if (udstyrEN) udstyrEN = udstyrEN.charAt(0).toUpperCase() + udstyrEN.slice(1);
-  var zustand = [stand ? 'Zustand ' + stand + '/10 – ' + vDE + '.' : '', i.komplet ? 'Komplett.' : '', udstyrDE ? udstyrDE + '.' : '', i.noteDE ? 'Hinweis: ' + i.noteDE : ''].filter(Boolean).join(' ');
+  // Kun det positive skrives: komplett, OVP og Anleitung står der kun, når det er sandt. Mangler kommer fra noterne.
+  var ovpDE = i.ovp ? 'Original-Verpackung (OVP) vorhanden' + (i.aeskeDE ? ' (' + i.aeskeDE + ')' : '') : '';
+  var ovpEN = i.ovp ? 'Original box (OVP) included' + (i.aeskeEN ? ' (' + i.aeskeEN + ')' : '') : '';
+  var sn = standNavn_(stand);
+  var zDE = [sn ? sn[0] + ', siehe Fotos und Beschreibung.' : 'Siehe Fotos und Beschreibung.', i.komplet ? 'Komplett.' : '', ovpDE ? ovpDE + '.' : '',
+    i.vejledning ? 'Anleitung vorhanden.' : '', i.noteDE ? 'Hinweis: ' + i.noteDE : ''].filter(Boolean).join(' ');
+  var zEN = [sn ? sn[1] + ', see photos and description.' : 'See photos and description.', i.komplet ? 'Complete.' : '', ovpEN ? ovpEN + '.' : '',
+    i.vejledning ? 'Instructions included.' : '', i.noteEN ? 'Note: ' + i.noteEN : ''].filter(Boolean).join(' ');
+  var zustand = '🇩🇪 ' + zDE + ' 🇬🇧 ' + zEN;
   var serieDE = tema ? '* Aus der ' + tema + '-Reihe' + (under ? ' (' + under + ')' : '') + (aar ? ', ' + aar : '') : (aar ? '* Erscheinungsjahr ' + aar : '');
   var serieEN = tema ? '* From the ' + tema + ' line' + (under ? ' (' + under + ')' : '') + (aar ? ', ' + aar : '') : (aar ? '* Released ' + aar : '');
   var navnLinje = ['LEGO', tema, nr, i.navn].filter(Boolean).join(' ');
   // null = linjen udelades; '' = bevidst tom linje
-  var de = [TEKST.introDE, '', navnLinje, '', serieDE || null, i.komplet ? '* Komplett' : null, udstyrDE ? '* ' + udstyrDE : null, stand ? '* Zustand: ' + stand + '/10 – ' + vDE : null, i.noteDE ? '* Hinweis: ' + i.noteDE : null, '* ' + TEKST.fragtDE];
-  var en = [TEKST.introEN, '', navnLinje, '', serieEN || null, i.komplet ? '* Complete' : null, udstyrEN ? '* ' + udstyrEN : null, stand ? '* Condition: ' + stand + '/10 — ' + vEN : null, i.noteEN ? '* Note: ' + i.noteEN : null, '* ' + TEKST.fragtEN];
+  var de = [TEKST.introDE, '', navnLinje, '', serieDE || null, i.komplet ? '* Komplett' : null, ovpDE ? '* ' + ovpDE : null, i.vejledning ? '* Anleitung vorhanden' : null, stand ? '* Zustand: ' + stand + '/10 – ' + vDE : null, i.noteDE ? '* Hinweis: ' + i.noteDE : null, '* ' + TEKST.fragtDE];
+  var en = [TEKST.introEN, '', navnLinje, '', serieEN || null, i.komplet ? '* Complete' : null, ovpEN ? '* ' + ovpEN : null, i.vejledning ? '* Instructions included' : null, stand ? '* Condition: ' + stand + '/10 — ' + vEN : null, i.noteEN ? '* Note: ' + i.noteEN : null, '* ' + TEKST.fragtEN];
   var rens = function (l) { return l.filter(function (x) { return x !== null; }); };
   return { titel: titel, zustand: zustand, beskrivelse: rens(de).join('\n') + '\n\n---\n\n' + rens(en).join('\n'), navnLinje: navnLinje };
 }
@@ -1290,11 +1312,12 @@ function lavListings_(d) {
   var slaa = dbOpslag_(), cache = {}, aarNu = Number(Utilities.formatDate(new Date(), 'Europe/Copenhagen', 'yyyy'));
   var ud = rk.map(function (r) {
     var v = r.v, dbr = slaa(v[K.SETNR - 1]) || ['', v[K.NAVN - 1], '', '', ''];
-    var note = rensNote_(v[K.NOTER - 1]);
+    var note = delNote_(v[K.NOTER - 1]);
     var t = listingTekst_({
       setnr: String(v[K.SETNR - 1]), navn: String(v[K.NAVN - 1] || dbr[1]), tema: dbr[2], undertema: dbr[3], aar: dbr[4],
       ovp: v[K.OVP - 1] === 'Ja', komplet: v[K.KOMPLET - 1] === true, vejledning: v[K.VEJLEDNING - 1] === true,
-      stand: v[K.STAND - 1], noteDE: oversaet_(note, 'de', cache), noteEN: oversaet_(note, 'en', cache), aarNu: aarNu
+      stand: v[K.STAND - 1], noteDE: oversaet_(note.rest, 'de', cache), noteEN: oversaet_(note.rest, 'en', cache),
+      aeskeDE: oversaet_(note.aeske, 'de', cache), aeskeEN: oversaet_(note.aeske, 'en', cache), aarNu: aarNu
     });
     return { sku: String(v[K.SKU - 1]), navn: String(v[K.NAVN - 1]), titel: t.titel, zustand: t.zustand, beskrivelse: t.beskrivelse };
   });
