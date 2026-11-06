@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.4.0';
+var VERSION = '1.4.1';
 
 // ---------- Faner ----------
 var FANE = {
@@ -1250,17 +1250,17 @@ function listingTekst_(i) {
   if (titel.length > 80) titel = titel.slice(0, 80).trim();
   var stand = Number(i.stand) || 0;
   var vDE = stand ? (STAND_DE[stand] || 'starke Gebrauchsspuren') : '', vEN = stand ? (STAND_EN[stand] || 'heavy signs of use') : '';
-  var ovpDE = (i.ovp ? 'Mit Original-Karton (OVP)' : 'Kein Original-Karton (OVP)') + ', ' + (i.vejledning ? 'Anleitung liegt bei' : 'ohne Anleitung');
-  var ovpEN = (i.ovp ? 'Original box included' : 'No original box') + ', ' + (i.vejledning ? 'instructions included' : 'no instructions');
-  var kompDE = i.komplet ? 'Komplett, alle Teile vorhanden' : 'Nicht komplett';
-  var kompEN = i.komplet ? 'Complete, all parts included' : 'Not complete';
-  var zustand = [stand ? 'Zustand ' + stand + '/10 – ' + vDE + '.' : '', kompDE + '.', ovpDE + '.', i.noteDE ? 'Hinweis: ' + i.noteDE : ''].filter(Boolean).join(' ');
+  // Kun det positive skrives: OVP, Anleitung og komplett står der kun, når det er sandt. Mangler kommer fra noterne.
+  var udstyrDE = [i.ovp ? 'Mit Original-Karton (OVP)' : '', i.vejledning ? 'Anleitung liegt bei' : ''].filter(Boolean).join(', ');
+  var udstyrEN = [i.ovp ? 'Original box included' : '', i.vejledning ? 'instructions included' : ''].filter(Boolean).join(', ');
+  if (udstyrEN) udstyrEN = udstyrEN.charAt(0).toUpperCase() + udstyrEN.slice(1);
+  var zustand = [stand ? 'Zustand ' + stand + '/10 – ' + vDE + '.' : '', i.komplet ? 'Komplett.' : '', udstyrDE ? udstyrDE + '.' : '', i.noteDE ? 'Hinweis: ' + i.noteDE : ''].filter(Boolean).join(' ');
   var serieDE = tema ? '* Aus der ' + tema + '-Reihe' + (under ? ' (' + under + ')' : '') + (aar ? ', ' + aar : '') : (aar ? '* Erscheinungsjahr ' + aar : '');
   var serieEN = tema ? '* From the ' + tema + ' line' + (under ? ' (' + under + ')' : '') + (aar ? ', ' + aar : '') : (aar ? '* Released ' + aar : '');
   var navnLinje = ['LEGO', tema, nr, i.navn].filter(Boolean).join(' ');
   // null = linjen udelades; '' = bevidst tom linje
-  var de = [TEKST.introDE, '', navnLinje, '', serieDE || null, '* ' + kompDE, '* ' + ovpDE, stand ? '* Zustand: ' + stand + '/10 – ' + vDE : null, i.noteDE ? '* Hinweis: ' + i.noteDE : null, '* ' + TEKST.fragtDE];
-  var en = [TEKST.introEN, '', navnLinje, '', serieEN || null, '* ' + kompEN, '* ' + ovpEN, stand ? '* Condition: ' + stand + '/10 — ' + vEN : null, i.noteEN ? '* Note: ' + i.noteEN : null, '* ' + TEKST.fragtEN];
+  var de = [TEKST.introDE, '', navnLinje, '', serieDE || null, i.komplet ? '* Komplett' : null, udstyrDE ? '* ' + udstyrDE : null, stand ? '* Zustand: ' + stand + '/10 – ' + vDE : null, i.noteDE ? '* Hinweis: ' + i.noteDE : null, '* ' + TEKST.fragtDE];
+  var en = [TEKST.introEN, '', navnLinje, '', serieEN || null, i.komplet ? '* Complete' : null, udstyrEN ? '* ' + udstyrEN : null, stand ? '* Condition: ' + stand + '/10 — ' + vEN : null, i.noteEN ? '* Note: ' + i.noteEN : null, '* ' + TEKST.fragtEN];
   var rens = function (l) { return l.filter(function (x) { return x !== null; }); };
   return { titel: titel, zustand: zustand, beskrivelse: rens(de).join('\n') + '\n\n---\n\n' + rens(en).join('\n'), navnLinje: navnLinje };
 }

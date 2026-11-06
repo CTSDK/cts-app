@@ -11,7 +11,8 @@ console.log('TITEL:', t.titel, '(' + t.titel.length + ' tegn)');
 console.log('ZUSTAND:', t.zustand);
 console.log('BESKRIVELSE:\n' + t.beskrivelse);
 assert.strictEqual(t.titel, 'LEGO Castle 1732 Crossbow Cart (1994) Vintage komplett');
-assert.ok(t.zustand.startsWith('Zustand 7/10 – guter, altersgerechter Zustand. Komplett, alle Teile vorhanden. Kein Original-Karton (OVP), Anleitung liegt bei.'));
+assert.strictEqual(t.zustand, 'Zustand 7/10 – guter, altersgerechter Zustand. Komplett. Anleitung liegt bei.');
+assert.ok(!t.beskrivelse.includes('Original-Karton') && !t.beskrivelse.includes('Teile') && t.beskrivelse.includes('* Komplett\n* Anleitung liegt bei'));
 assert.ok(t.beskrivelse.includes('* Aus der Castle-Reihe (Dragon Masters), 1994'));
 assert.ok(t.beskrivelse.includes('---') && t.beskrivelse.includes('* Condition: 7/10 — good condition for its age'));
 
@@ -19,7 +20,12 @@ assert.ok(t.beskrivelse.includes('---') && t.beskrivelse.includes('* Condition: 
 const f = listingTekst_({ setnr: '10271', navn: 'Fiat 500 (Bright Light Yello Edition)', tema: 'Creator', undertema: 'Creator Expert', aar: '2020',
   ovp: true, komplet: false, vejledning: true, stand: 9, noteDE: 'Es fehlt 1 Rad', noteEN: '1 wheel missing', aarNu: 2026 });
 assert.strictEqual(f.titel, 'LEGO Creator 10271 Fiat 500 (Bright Light Yello Edition) (2020) OVP');
-assert.ok(f.zustand.includes('Nicht komplett.') && f.zustand.includes('Hinweis: Es fehlt 1 Rad'));
+assert.strictEqual(f.zustand, 'Zustand 9/10 – sehr gut. Mit Original-Karton (OVP), Anleitung liegt bei. Hinweis: Es fehlt 1 Rad');
+assert.ok(!/komplett|Nicht|ohne/i.test(f.beskrivelse.split('---')[0].replace('LEGO-Angebote', '')), 'intet negativt');
+// Uden OVP, uden vejledning, ikke komplet: ingen af de linjer
+const n = listingTekst_({ setnr: '6766', navn: 'Rapid River Village', tema: 'Western', undertema: 'Indians', aar: '1997', ovp: false, komplet: false, vejledning: false, stand: 8, noteDE: 'Es fehlt eine Schlange', noteEN: 'Missing a snake', aarNu: 2026 });
+assert.strictEqual(n.zustand, 'Zustand 8/10 – sehr guter gebrauchter Zustand. Hinweis: Es fehlt eine Schlange');
+assert.ok(!/OVP|Original box|Anleitung|instructions|Complete|Komplett/.test(n.beskrivelse.replace(/LEGO-Angebote|listings/g, '')), n.beskrivelse);
 assert.ok(f.beskrivelse.includes('* Note: 1 wheel missing'));
 
 // Kendt DB-fejl: år i undertema-kolonnen; BrickLink-variant 7236-2 vises som 7236
