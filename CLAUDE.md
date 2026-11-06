@@ -6,6 +6,11 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
 ## Arbejdsregler (fra Thomas)
 - Alle spørgsmål samlet FØR der bygges. Ikke gæt-og-flag bagefter.
 - Skeln mellem planlagt, bygget og testet. Påstå ikke, at noget virker, før det er testet.
+- **Samme fremgangsmåde hver gang.** Ny maskinrumskode gives ALTID via linket
+  https://raw.githubusercontent.com/CTSDK/cts-app/main/apps-script/Code.gs med de faste trin: (1) åbn linket, (2) Ctrl+F5 og tjek
+  versionsnummeret, (3) Ctrl+A → Ctrl+C → Apps Script → Ctrl+A → Ctrl+V → Ctrl+S, (4) Implementer → Administrer implementeringer →
+  blyanten → Ny version → Implementer, (5) evt. test i regnearket. Send ikke filer i stedet. Skal noget gøres anderledes:
+  forklar først hvorfor og vent på Thomas' ja.
 - Ingen data, nøgler eller regnearksfiler i repository'et (.gitignore udelukker *.xlsx, *.csv, cts-import*.json m.m.).
 
 ## Arkitektur
