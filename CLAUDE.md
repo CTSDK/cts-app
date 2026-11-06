@@ -28,7 +28,7 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
 ## Status (06-11-2026)
 - **Testet og virker:** nyt køb (3 sider), købsprisfordeling, klargøring med live-kamera + fri beskæring, Lager, offline-tilstand,
   import af hele Excel-projektmappen (Kontrol-fanen: 5232/5232 tal = Excel). Sheets er nu det rigtige regneark; Excel er arkiv.
-- **Bygget, ikke testet hos Thomas (maskinrum 1.4.1; listings testet i rigtigt ark med 260830 06-11, øvrigt kun i simulering):** Registrér salg; ret køb (tilføj/ret/fjern sæt,
+- **Bygget, ikke testet hos Thomas (maskinrum 1.4.6. LISTINGS TESTET i rigtigt ark med 260830 06-11 – Thomas har godkendt teksten. Øvrigt kun i simulering):** Registrér salg; ret køb (tilføj/ret/fjern sæt,
   åbent/lukket, 250000 altid åben); listings (Listet-kolonne W, Google Doc "<batch> Listings", tekstgenerator testet i tests/listing.test.js).
   Thomas skal opdatere koden til 1.4.0, lave ny version og godkende Google Docs-adgang (CTS → Lav listings for et køb).
 - **Næste:** (1) undersøg Google Drive/Sheets-forbindelsen (se nedenfor), (2) test Registrér salg med første rigtige salg,
@@ -61,5 +61,6 @@ Connectors Google Drive + Google Sheets (CTS-kontoen) virker. Regneark-id for **
 - ✓ Læse faner (Sheets get_values), ✓ oprette/slette faner og skrive celler (Sheets update_*).
 - ✓ Søge, omdøbe og flytte filer i Drive (Drive search_files / update_file med title/parentId). Mappe `_Ikke matchet`: `10hAXFRmL3Jr6PgoJzOMXHB5j2fSTi6LR`.
 - ✗ Apps Script-koden kan IKKE opdateres via connectoren (bundet script er ikke en Drive-fil) – Thomas kopierer stadig koden ind.
+- Flag-emojis vises forkert (ð©ðª), når Claude læser Docs via connectoren – de er rigtige i selve dokumentet (tjekket af Thomas).
 - Fotos kan i princippet hentes (download_file_content), men som base64 ~1 MB pr. foto – brug kun ved enkelte fotos.
 - Rør ikke data uden aftale; test i midlertidige faner.
