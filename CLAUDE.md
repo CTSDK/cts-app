@@ -29,6 +29,22 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
   (3) fase 2: listingtekster (Titel "LEGO {Tema} {Setnr} {Navn} ({År}) Vintage OVP", Zustandsbeschreibung, Beschreibung DE/EN).
   Kendt datafejl: i DB står årstal i Subtheme-kolonnen for bl.a. 41711/41714.
 
+## Beslutninger 06-11-2026 (Thomas)
+- **Pause fra eBay**, indtil alt er rigtigt. Rækkefølge: (1) ret/tilføj/fjern sæt i køb, (2) listings, (3) statustælling + rettelse bagud.
+- **Købspriser er dynamiske** – der låses IKKE priser (heller ikke ved salg). Tages op igen, når CTS får CVR-nummer.
+- **Forslag 2:** et køb er *åbent*, indtil alle sæt er klargjort eller solgt; mens det er åbent kan sæt tilføjes, rettes og fjernes.
+  Lukket køb kan genåbnes med bekræftelse.
+- **Batch 250000** (privat/familiens LEGO, pris 0, Skattepligt Nej) er ALTID åben – der tilføjes sæt løbende i flere måneder.
+- **Listings:** én Google Doc pr. køb ("<batch> Listings" i CTS/Lager/<batch>/), sættene under hinanden; titel, Zustandsbeschreibung,
+  Beschreibung DE + "---" + EN. Kun fakta, ingen AI. Noter (dansk) oversættes automatisk med Google Oversæt (LanguageApp);
+  "Sort: …"-koder og [tekst i firkantede parenteser] udelades. Antal dele/figurer udelades.
+  Titel: `LEGO {Tema} {Setnr} {Navn} ({År}) [Vintage hvis ≥20 år] [OVP hvis æske] [komplett hvis komplet]` – aldrig "ohne OVP"/"unvollständig".
+  Stand-vendinger: 10 neuwertig, 9 sehr gut, 8 sehr guter gebrauchter Zustand, 7 guter, altersgerechter Zustand,
+  6 gebrauchter Zustand mit leichten Spuren, 5 deutliche Gebrauchsspuren, 1–4 starke Gebrauchsspuren.
+  Thomas' faste tekst (DE/EN, CoolRunner/Homerunner/Bring-forsendelse) står i samtalen 06-11 – spørg Thomas om den igen, hvis den mangler.
+- **Statustælling:** gamle salg er nogle gange registreret med forrige sæts SKU. Plan: optælling i appen → liste over afvigelser →
+  Claude retter Salg-fanen via Sheets-forbindelsen efter Thomas' godkendelse.
+
 ## Google-forbindelse (testet 06-11-2026)
 Connectors Google Drive + Google Sheets (CTS-kontoen) virker. Regneark-id for **cts-app**: `1cCBaGigDN0c5UK3iIKL8GDtNKwNqVHq-PnuEclieGvw`.
 - ✓ Læse faner (Sheets get_values), ✓ oprette/slette faner og skrive celler (Sheets update_*).
