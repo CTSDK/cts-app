@@ -11,6 +11,9 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
   versionsnummeret, (3) Ctrl+A → Ctrl+C → Apps Script → Ctrl+A → Ctrl+V → Ctrl+S, (4) Implementer → Administrer implementeringer →
   blyanten → Ny version → Implementer, (5) evt. test i regnearket. Send ikke filer i stedet. Skal noget gøres anderledes:
   forklar først hvorfor og vent på Thomas' ja.
+- **Aldrig fakta fra hukommelsen i data** (fx sætnavn/tema/år i DB). Kun det Thomas giver (fx Rebrickable-skærmbillede)
+  eller et opslag, hvor kilden vises. Uoverensstemmelse (fx 31000 vs. 31100) → spørg FØR der skrives.
+  Før der skrives i arket: vis præcis hvad, og vent på Thomas' ja. (Fejl 06-11: 31100 skrevet som "Sushi Animals" fra hukommelsen – rigtigt er Sports Car.)
 - Ingen data, nøgler eller regnearksfiler i repository'et (.gitignore udelukker *.xlsx, *.csv, cts-import*.json m.m.).
 
 ## Arkitektur
