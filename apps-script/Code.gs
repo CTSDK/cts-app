@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.4.3';
+var VERSION = '1.4.4';
 
 // ---------- Faner ----------
 var FANE = {
@@ -1279,12 +1279,12 @@ function listingTekst_(i) {
     i.vejledning ? 'Anleitung vorhanden.' : '', i.noteDE ? 'Hinweis: ' + i.noteDE : ''].filter(Boolean).join(' ');
   var zEN = [sn ? sn[1] + ', see photos and description.' : 'See photos and description.', i.komplet ? 'Complete.' : '', ovpEN ? ovpEN + '.' : '',
     i.vejledning ? 'Instructions included.' : '', i.noteEN ? 'Note: ' + i.noteEN : ''].filter(Boolean).join(' ');
-  var zustand = FLAG_DE + ' ' + zDE + ' ' + FLAG_EN + ' ' + zEN;
+  var zustand = FLAG_DE + ' ' + zDE + '\n\n' + FLAG_EN + ' ' + zEN;
   var serieDE = tema ? '* Aus der ' + tema + '-Reihe' + (under ? ' (' + under + ')' : '') + (aar ? ', ' + aar : '') : (aar ? '* Erscheinungsjahr ' + aar : '');
   var serieEN = tema ? '* From the ' + tema + ' line' + (under ? ' (' + under + ')' : '') + (aar ? ', ' + aar : '') : (aar ? '* Released ' + aar : '');
   var navnLinje = ['LEGO', tema, nr, i.navn].filter(Boolean).join(' ');
   // null = linjen udelades; '' = bevidst tom linje
-  var de = [TEKST.introDE, '', navnLinje, '', serieDE || null, i.komplet ? '* Komplett' : null, ovpDE ? '* ' + ovpDE : null, i.vejledning ? '* Anleitung vorhanden' : null, stand ? '* Zustand: ' + stand + '/10 – ' + vDE : null, i.noteDE ? '* Hinweis: ' + i.noteDE : null, '* ' + TEKST.fragtDE];
+  var de = ['>>> English description below <<<', '', TEKST.introDE, '', navnLinje, '', serieDE || null, i.komplet ? '* Komplett' : null, ovpDE ? '* ' + ovpDE : null, i.vejledning ? '* Anleitung vorhanden' : null, stand ? '* Zustand: ' + stand + '/10 – ' + vDE : null, i.noteDE ? '* Hinweis: ' + i.noteDE : null, '* ' + TEKST.fragtDE];
   var en = [TEKST.introEN, '', navnLinje, '', serieEN || null, i.komplet ? '* Complete' : null, ovpEN ? '* ' + ovpEN : null, i.vejledning ? '* Instructions included' : null, stand ? '* Condition: ' + stand + '/10 — ' + vEN : null, i.noteEN ? '* Note: ' + i.noteEN : null, '* ' + TEKST.fragtEN];
   var rens = function (l) { return l.filter(function (x) { return x !== null; }); };
   return { titel: titel, zustand: zustand, beskrivelse: rens(de).join('\n') + '\n\n---\n\n' + rens(en).join('\n'), navnLinje: navnLinje };

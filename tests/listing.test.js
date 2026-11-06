@@ -11,26 +11,27 @@ console.log('TITEL:', t.titel, '(' + t.titel.length + ' tegn)');
 console.log('ZUSTAND:', t.zustand);
 console.log('BESKRIVELSE:\n' + t.beskrivelse);
 assert.strictEqual(t.titel, 'LEGO Castle 1732 Crossbow Cart (1994) Vintage komplett');
-assert.strictEqual(t.zustand, '🇩🇪 Gut (G), siehe Fotos und Beschreibung. Komplett. Anleitung vorhanden. 🇬🇧 Good (G), see photos and description. Complete. Instructions included.');
+assert.strictEqual(t.zustand, '🇩🇪 Gut (G), siehe Fotos und Beschreibung. Komplett. Anleitung vorhanden.\n\n🇬🇧 Good (G), see photos and description. Complete. Instructions included.');
 assert.ok(!t.beskrivelse.includes('OVP') && !t.beskrivelse.includes('Teile') && t.beskrivelse.includes('* Komplett\n* Anleitung vorhanden'));
 assert.ok(t.beskrivelse.includes('* Aus der Castle-Reihe (Dragon Masters), 1994'));
+assert.ok(t.beskrivelse.startsWith('>>> English description below <<<\n\nSchauen Sie'));
 assert.ok(t.beskrivelse.includes('---') && t.beskrivelse.includes('* Condition: 7/10 — good condition for its age'));
 
 // Nyt sæt med OVP, ikke Vintage (2020), ikke komplet, med note
 const f = listingTekst_({ setnr: '10271', navn: 'Fiat 500 (Bright Light Yello Edition)', tema: 'Creator', undertema: 'Creator Expert', aar: '2020',
   ovp: true, komplet: false, vejledning: true, stand: 9, noteDE: 'Es fehlt 1 Rad', noteEN: '1 wheel missing', aarNu: 2026 });
 assert.strictEqual(f.titel, 'LEGO Creator 10271 Fiat 500 (Bright Light Yello Edition) (2020) OVP');
-assert.strictEqual(f.zustand, '🇩🇪 Sehr gut (SG), siehe Fotos und Beschreibung. Original-Verpackung (OVP) vorhanden. Anleitung vorhanden. Hinweis: Es fehlt 1 Rad 🇬🇧 Very good (SG), see photos and description. Original box (OVP) included. Instructions included. Note: 1 wheel missing');
+assert.strictEqual(f.zustand, '🇩🇪 Sehr gut (SG), siehe Fotos und Beschreibung. Original-Verpackung (OVP) vorhanden. Anleitung vorhanden. Hinweis: Es fehlt 1 Rad\n\n🇬🇧 Very good (SG), see photos and description. Original box (OVP) included. Instructions included. Note: 1 wheel missing');
 assert.ok(!/komplett|Nicht|ohne/i.test(f.beskrivelse.split('---')[0].replace('LEGO-Angebote', '')), 'intet negativt');
 // Uden OVP, uden vejledning, ikke komplet: ingen af de linjer
 const n = listingTekst_({ setnr: '6766', navn: 'Rapid River Village', tema: 'Western', undertema: 'Indians', aar: '1997', ovp: false, komplet: false, vejledning: false, stand: 8, noteDE: 'Es fehlt eine Schlange', noteEN: 'Missing a snake', aarNu: 2026 });
-assert.strictEqual(n.zustand, '🇩🇪 Sehr gut (SG), siehe Fotos und Beschreibung. Hinweis: Es fehlt eine Schlange 🇬🇧 Very good (SG), see photos and description. Note: Missing a snake');
+assert.strictEqual(n.zustand, '🇩🇪 Sehr gut (SG), siehe Fotos und Beschreibung. Hinweis: Es fehlt eine Schlange\n\n🇬🇧 Very good (SG), see photos and description. Note: Missing a snake');
 assert.ok(!/OVP|Original box|Anleitung|nstructions|Complete|Komplett/.test(n.beskrivelse.replace(/LEGO-Angebote|listings/g, '')), n.beskrivelse);
 // Thomas' eksempel: OVP med æske-note, vejledning, mangler
 const a = listingTekst_({ setnr: '6520', navn: 'Arctic', tema: 'Town', aar: '1993', ovp: true, komplet: false, vejledning: true, stand: 8,
   aeskeDE: 'Karton abgenutzt, Riss auf der Vorderseite', aeskeEN: 'worn, tear on front',
   noteDE: '1× Arktis-Figur mit grüner Mütze (arc009) fehlt', noteEN: '1× Arctic green cap minifigure (arc009) missing', aarNu: 2026 });
-assert.strictEqual(a.zustand, '🇩🇪 Sehr gut (SG), siehe Fotos und Beschreibung. Original-Verpackung (OVP) vorhanden (Karton abgenutzt, Riss auf der Vorderseite). Anleitung vorhanden. Hinweis: 1× Arktis-Figur mit grüner Mütze (arc009) fehlt 🇬🇧 Very good (SG), see photos and description. Original box (OVP) included (worn, tear on front). Instructions included. Note: 1× Arctic green cap minifigure (arc009) missing');
+assert.strictEqual(a.zustand, '🇩🇪 Sehr gut (SG), siehe Fotos und Beschreibung. Original-Verpackung (OVP) vorhanden (Karton abgenutzt, Riss auf der Vorderseite). Anleitung vorhanden. Hinweis: 1× Arktis-Figur mit grüner Mütze (arc009) fehlt\n\n🇬🇧 Very good (SG), see photos and description. Original box (OVP) included (worn, tear on front). Instructions included. Note: 1× Arctic green cap minifigure (arc009) missing');
 // Noten deles: Æske-del og resten
 assert.deepStrictEqual(delNote_('Sort: 00. Æske: slidt, flænge på forsiden. Mangler 1 isøkse [intern]'), { aeske: 'slidt, flænge på forsiden', rest: 'Mangler 1 isøkse' });
 assert.deepStrictEqual(delNote_('Mangler 1 hjul'), { aeske: '', rest: 'Mangler 1 hjul' });
