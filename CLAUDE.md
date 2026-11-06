@@ -29,10 +29,10 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
   (3) fase 2: listingtekster (Titel "LEGO {Tema} {Setnr} {Navn} ({År}) Vintage OVP", Zustandsbeschreibung, Beschreibung DE/EN).
   Kendt datafejl: i DB står årstal i Subtheme-kolonnen for bl.a. 41711/41714.
 
-## Første opgave i ny session: test Google-forbindelsen
-Thomas har forbundet Google Drive og Google Sheets (CTS-kontoen) som connectors på claude.ai. Undersøg præcist og rapportér kort:
-1. Kan du læse fanen Indkøb i regnearket **cts-app**? (læs fx række 2–5)
-2. Kan du skrive i regnearket? (test kun i en ny midlertidig fane, slet den bagefter – rør ikke data)
-3. Kan du liste, flytte og omdøbe filer i Drive (fx i `CTS/Import-fotos/_Ikke matchet`)? Test uden at ændre noget, eller med én fil, som du sætter tilbage.
-4. Kan du opdatere Apps Script-koden direkte (så Thomas slipper for at kopiere)? Hvis ikke via connector: foreslå Apps Script API med en nøgle.
-Skeln tydeligt mellem hvad der virker, hvad der ikke gør, og hvad der ikke er afprøvet.
+## Google-forbindelse (testet 06-11-2026)
+Connectors Google Drive + Google Sheets (CTS-kontoen) virker. Regneark-id for **cts-app**: `1cCBaGigDN0c5UK3iIKL8GDtNKwNqVHq-PnuEclieGvw`.
+- ✓ Læse faner (Sheets get_values), ✓ oprette/slette faner og skrive celler (Sheets update_*).
+- ✓ Søge, omdøbe og flytte filer i Drive (Drive search_files / update_file med title/parentId). Mappe `_Ikke matchet`: `10hAXFRmL3Jr6PgoJzOMXHB5j2fSTi6LR`.
+- ✗ Apps Script-koden kan IKKE opdateres via connectoren (bundet script er ikke en Drive-fil) – Thomas kopierer stadig koden ind.
+- Fotos kan i princippet hentes (download_file_content), men som base64 ~1 MB pr. foto – brug kun ved enkelte fotos.
+- Rør ikke data uden aftale; test i midlertidige faner.
