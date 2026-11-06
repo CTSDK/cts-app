@@ -39,7 +39,7 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
   (URL/nøgle + udbakke) – tjek 'Alt er sendt' først.
 - Fotos: forbliver 1600 px / JPG 85 % (Thomas 06-11: kun en tanke). Forslag hvis nødvendigt: 2400 px / 90 % + bed om 4K fra live-kamera.
 - Rettet (v13): "Ikke forbundet" blev hængende på Hjem efter indtastning af adresse/nøgle (test: tests/forbindelse.js).
-  Geninstallation på iPhone 06-11: forbundet til 1.5.0, logo vises.
+  Geninstallation på iPhone 06-11: forbundet til 1.5.0; logo på Hjem, i overskrifter og nyt app-ikon TESTET på iPhone.
 - Rettet: efter "Ret" hoppede appen til forkert sæt (valgte efter indeks).
 - DB: tilføjet 30343, 30577, 31100 (fra Thomas' Rebrickable-skærmbilleder). 6 tomme rækker i Indkøb (261015/260916) slettet efter aftale.
 - 261028 har nu 7 sæt (Tilføj sæt testet i rigtigt ark, sum 600 ✓). Ret/Fjern endnu ikke testet i rigtigt ark.
