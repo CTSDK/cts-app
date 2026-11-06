@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.4.2';
+var VERSION = '1.4.3';
 
 // ---------- Faner ----------
 var FANE = {
@@ -1223,6 +1223,9 @@ var STAND_DE = { 10: 'neuwertig', 9: 'sehr gut', 8: 'sehr guter gebrauchter Zust
   6: 'gebrauchter Zustand mit leichten Spuren', 5: 'deutliche Gebrauchsspuren' };
 var STAND_EN = { 10: 'like new', 9: 'very good', 8: 'very good used condition', 7: 'good condition for its age',
   6: 'used condition with light wear', 5: 'clear signs of use' };
+// Flag som tegnkoder, så de ikke ødelægges ved kopiering af koden
+var FLAG_DE = '\uD83C\uDDE9\uD83C\uDDEA', FLAG_EN = '\uD83C\uDDEC\uD83C\uDDE7';
+
 // Kort standbetegnelse til standbeskrivelsen (uden tal)
 function standNavn_(stand) {
   var n = Number(stand) || 0;
@@ -1276,7 +1279,7 @@ function listingTekst_(i) {
     i.vejledning ? 'Anleitung vorhanden.' : '', i.noteDE ? 'Hinweis: ' + i.noteDE : ''].filter(Boolean).join(' ');
   var zEN = [sn ? sn[1] + ', see photos and description.' : 'See photos and description.', i.komplet ? 'Complete.' : '', ovpEN ? ovpEN + '.' : '',
     i.vejledning ? 'Instructions included.' : '', i.noteEN ? 'Note: ' + i.noteEN : ''].filter(Boolean).join(' ');
-  var zustand = '🇩🇪 ' + zDE + ' 🇬🇧 ' + zEN;
+  var zustand = FLAG_DE + ' ' + zDE + ' ' + FLAG_EN + ' ' + zEN;
   var serieDE = tema ? '* Aus der ' + tema + '-Reihe' + (under ? ' (' + under + ')' : '') + (aar ? ', ' + aar : '') : (aar ? '* Erscheinungsjahr ' + aar : '');
   var serieEN = tema ? '* From the ' + tema + ' line' + (under ? ' (' + under + ')' : '') + (aar ? ', ' + aar : '') : (aar ? '* Released ' + aar : '');
   var navnLinje = ['LEGO', tema, nr, i.navn].filter(Boolean).join(' ');

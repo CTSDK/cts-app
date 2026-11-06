@@ -2,7 +2,7 @@
 const fs = require('fs'), assert = require('assert');
 const kode = fs.readFileSync(__dirname + '/../apps-script/Code.gs', 'utf8');
 const hent = (start, slut) => { const a = kode.indexOf(start); const b = kode.indexOf(slut, a); return kode.slice(a, b); };
-eval(hent('var STAND_DE', '// Deler noten') + hent('function delNote_', 'function dbOpslag_'));
+eval(hent('// Flag som tegnkoder', 'var STAND_DE') + hent('var STAND_DE', '// Deler noten') + hent('function delNote_', 'function dbOpslag_'));
 
 // Thomas' eksempel: 1732 Crossbow Cart, 1994, uden OVP, med vejledning, komplet, stand 7
 const t = listingTekst_({ setnr: '1732', navn: 'Crossbow Cart', tema: 'Castle', undertema: 'Dragon Masters', aar: '1994',
