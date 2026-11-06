@@ -11,6 +11,12 @@
   function toast(t) { var el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { el.hidden = true; }, 3000); }
   function iDag() { var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
 
+  // Lille logo foran overskriften på alle sider undtagen Hjem
+  document.querySelectorAll('.top h2').forEach(function (h) {
+    var i = document.createElement('img'); i.src = 'icons/logo-ikon.png'; i.alt = ''; i.className = 'top-logo';
+    h.parentNode.insertBefore(i, h);
+  });
+
   // ================= Navigation =================
   var aktiv = 'forside';
   function gaa(navn) {

@@ -20,7 +20,8 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .indhold { flex: 1; padding: 12px 16px 24px; display: flex; flex-direction: column; gap: 12px; }
 
 /* Forside */
-.forside-top { padding: 36px 20px 8px; display: flex; flex-direction: column; gap: 10px; }
+.forside-top { padding: 28px 20px 4px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.segl { width: 168px; height: 168px; }
 .streg { width: 44px; height: 6px; border-radius: 3px; background: var(--gul); }
 h1 { margin: 0; font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; }
 .status { font-size: 13px; color: var(--daempet); }
@@ -217,3 +218,4 @@ body.laast { overflow: hidden; }
 .top-titel { padding-left: 8px; }
 .find-boks { display: flex; flex-direction: column; gap: 4px; }
 .find-boks .link { padding: 6px 4px; min-height: 36px; }
+.top-logo { width: 30px; height: 30px; flex: none; }

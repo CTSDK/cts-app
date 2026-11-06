@@ -34,6 +34,9 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
 - Menubjælke i bunden (Hjem · Nyt køb · Lager · Salg · Mere); "Mere" = udbakke + indstillinger. Cache v9.
 - Lager: temafelt (tema fra lokal DB-kopi, antal pr. tema, søgning finder tema; ingen undertema endnu – Thomas). Solgte sæt vises ikke i Lager (Thomas 06-11). Store køb (>12 sæt):
   søgefelt i klargøring i stedet for alle knapper, 'Vis alle'. Test: tests/stortkoeb.js. Cache v10.
+- Logo (Drive-mappe Logo, zip med 4 SVG; skrift Cormorant/EB Garamond) tegnet som PNG i icons/: logo-segl.png (Hjem), logo-ikon.png
+  (lille foran overskrifter), app-ikon = invers ikon på navy. Cache v12. Hjemmeskærms-app: sletning af ikonet sletter appens lager
+  (URL/nøgle + udbakke) – tjek 'Alt er sendt' først.
 - Rettet: efter "Ret" hoppede appen til forkert sæt (valgte efter indeks).
 - DB: tilføjet 30343, 30577, 31100 (fra Thomas' Rebrickable-skærmbilleder). 6 tomme rækker i Indkøb (261015/260916) slettet efter aftale.
 - 261028 har nu 7 sæt (Tilføj sæt testet i rigtigt ark, sum 600 ✓). Ret/Fjern endnu ikke testet i rigtigt ark.
