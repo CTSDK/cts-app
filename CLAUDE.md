@@ -23,8 +23,9 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
 ## Status (06-11-2026)
 - **Testet og virker:** nyt køb (3 sider), købsprisfordeling, klargøring med live-kamera + fri beskæring, Lager, offline-tilstand,
   import af hele Excel-projektmappen (Kontrol-fanen: 5232/5232 tal = Excel). Sheets er nu det rigtige regneark; Excel er arkiv.
-- **Bygget, ikke testet hos Thomas:** Registrér salg (app + `registrerSalg` i maskinrum 1.3.0). Thomas skal opdatere koden til 1.3.0
-  og lave ny version, før appen kan gemme salg.
+- **Bygget, ikke testet hos Thomas (maskinrum 1.4.0, kun testet i simulering):** Registrér salg; ret køb (tilføj/ret/fjern sæt,
+  åbent/lukket, 250000 altid åben); listings (Listet-kolonne W, Google Doc "<batch> Listings", tekstgenerator testet i tests/listing.test.js).
+  Thomas skal opdatere koden til 1.4.0, lave ny version og godkende Google Docs-adgang (CTS → Lav listings for et køb).
 - **Næste:** (1) undersøg Google Drive/Sheets-forbindelsen (se nedenfor), (2) test Registrér salg med første rigtige salg,
   (3) fase 2: listingtekster (Titel "LEGO {Tema} {Setnr} {Navn} ({År}) Vintage OVP", Zustandsbeschreibung, Beschreibung DE/EN).
   Kendt datafejl: i DB står årstal i Subtheme-kolonnen for bl.a. 41711/41714.
