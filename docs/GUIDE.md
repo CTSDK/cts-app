@@ -114,6 +114,19 @@ Adressen forbliver den samme, så du skal ikke ændre noget i appen.
 
 ---
 
+## Tilføj et sæt til DB
+
+Står der **"Sæt findes ikke i DB"** under et sætnummer (i Nyt køb eller under **+ Tilføj sæt**), så tryk **Tilføj til DB** lige ved siden af.
+
+1. Skriv **Navn**, **Tema** og **År**, fx fra Rebrickable. Undertema kan udelades. Navne på engelsk som i resten af DB.
+2. Mens du skriver tema, foreslår appen de temaer, der allerede findes – vælg et af dem, så der ikke opstår "Pirat" og "Pirates".
+3. Tryk **Gem i DB**. Navnet står med det samme under sætnummeret.
+
+- "31100-1" fra Rebrickable gemmes som **31100**. Andre endelser (fx 7236-2) bevares.
+- Virker også uden net – sættet sendes til Sheets, når der er net.
+- I DB-fanen står der *"Tilføjet i appen <dato>"* i kolonne F ved sæt, der er lagt ind fra appen.
+- Findes nummeret allerede i DB, afvises det. Rettelser af eksisterende sæt i DB kommer senere.
+
 ## Menubjælken i bunden
 
 Nederst i appen er der altid fem faner: **Hjem · Nyt køb · Lager · Salg · Mere**. Under **Mere** ligger *Venter på at blive sendt* og *Indstillinger*. Den fane, du er på, er blå.

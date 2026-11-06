@@ -17,6 +17,33 @@
     h.parentNode.insertBefore(i, h);
   });
 
+  // ================= Tilføj sæt til DB =================
+  var dbNy = null;
+  function dbKnap(nr, efter) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'link db-knap'; b.textContent = 'Tilføj til DB';
+    b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); aabnDbNy(nr, efter); });
+    return b;
+  }
+  function aabnDbNy(nr, efter) {
+    dbNy = { nr: Data.dbNummer(nr), efter: efter };
+    $('dbny-nr').textContent = dbNy.nr;
+    ['dbny-navn', 'dbny-tema', 'dbny-undertema', 'dbny-aar'].forEach(function (id) { $(id).value = ''; });
+    $('dbny-temaer').innerHTML = Data.temaer().map(function (t) { return '<option value="' + esc(t) + '">'; }).join('');
+    $('dbny-fejl').hidden = true;
+    $('dbny').hidden = false; $('dbny-navn').focus();
+  }
+  $('dbny-annuller').addEventListener('click', function () { $('dbny').hidden = true; dbNy = null; });
+  $('dbny-gem').addEventListener('click', async function () {
+    if (!dbNy) return;
+    var f = $('dbny-fejl'); f.hidden = true;
+    try {
+      var o = await Data.tilfoejDb({ setnr: dbNy.nr, navn: $('dbny-navn').value, tema: $('dbny-tema').value, undertema: $('dbny-undertema').value, aar: $('dbny-aar').value });
+      var efter = dbNy.efter; $('dbny').hidden = true; dbNy = null;
+      toast(o.navn + ' er tilføjet til DB' + (Data.status().online ? '' : ' – sendes, når der er net'));
+      if (efter) efter(o);
+    } catch (e) { f.textContent = e.message; f.hidden = false; }
+  });
+
   // ================= Navigation =================
   var aktiv = 'forside';
   function gaa(navn) {
@@ -159,6 +186,7 @@
     if (ln.opslag.fejl) { el.textContent = 'Opslag fejlede: ' + ln.opslag.fejl; el.className = 'navn ikke'; return; }
     el.textContent = ln.opslag.fundet ? ln.opslag.navn + (ln.opslag.aar ? ' (' + ln.opslag.aar + ')' : '') : 'Sæt findes ikke i DB';
     el.className = 'navn ' + (ln.opslag.fundet ? 'fundet' : 'ikke');
+    if (!ln.opslag.fundet) el.appendChild(dbKnap(ln.setnr, function () { slaaOp(ln); }));
   }
   async function slaaOp(ln) {
     var nr = ln.setnr; if (!nr) return;
@@ -475,6 +503,7 @@
     var o = nr ? (Data.harDb() ? Data.slaaOp(nr) : null) : null;
     $(prefix + '-navn').textContent = !nr ? '' : !o ? 'Sæt-databasen er ikke hentet endnu' : o.fundet ? o.navn + (o.aar ? ' (' + o.aar + ')' : '') : 'Sæt findes ikke i DB';
     $(prefix + '-navn').className = 'lille ' + (o && o.fundet ? 'ok-tekst' : '');
+    if (o && !o.fundet) $(prefix + '-navn').appendChild(dbKnap(nr, function () { slaaOpFelt(prefix, cb); }));
     if (cb) cb(o);
   }
   $('k3-find').addEventListener('input', tegnVaelger);
@@ -774,7 +803,7 @@
   });
 
   // ================= Udbakke =================
-  var TYPENAVN = { opretBatch: 'Nyt køb', gemKlargoering: 'Klargøring', uploadFoto: 'Foto', registrerSalg: 'Salg', saetListet: 'Listet' };
+  var TYPENAVN = { tilfoejDb: 'Nyt sæt i DB', opretBatch: 'Nyt køb', gemKlargoering: 'Klargøring', uploadFoto: 'Foto', registrerSalg: 'Salg', saetListet: 'Listet' };
   function tegnUdbakke() {
     var c = $('u-liste'); c.innerHTML = '';
     var p = Data.poster();
@@ -782,7 +811,8 @@
     p.forEach(function (x) {
       var d = document.createElement('div'); d.className = 'post';
       var hvad = x.type === 'opretBatch' ? 'Batch ' + x.data.dato + ' · ' + x.data.saet.length + ' sæt · ' + B.kr(x.data.pris) + ' kr'
-        : x.type === 'registrerSalg' ? x.data.koeber + ' · ' + x.data.varer.map(function (v) { return v.sku; }).join(', ') : x.data.sku;
+        : x.type === 'registrerSalg' ? x.data.koeber + ' · ' + x.data.varer.map(function (v) { return v.sku; }).join(', ')
+        : x.type === 'tilfoejDb' ? x.data.setnr + ' ' + x.data.navn : x.data.sku;
       d.innerHTML = '<div class="post-top"><span class="navn">' + TYPENAVN[x.type] + '</span><span class="mono">' + esc(hvad) + '</span></div>' +
         '<div class="lille">' + (x.status === 'fejl' ? '<span class="ikke-off">Fejlede:</span> ' + esc(x.fejl) : x.status === 'sender' ? 'Sender …' : 'Venter på net') + '</div>';
       if (x.status === 'fejl') {

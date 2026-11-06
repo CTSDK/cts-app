@@ -28,8 +28,8 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
   Erfaringer: skriv formler mens arket er på `en_US` (`medEngelsk_`), SUMIFS udvider ikke i ARRAYFORMULA (brug MAP+SUMIFS),
   LET-navne må ikke ligne celler (fx `s25`), tekst som "7236-2" skal skrives med apostrof (`tekst_`).
 
-## NÆSTE OPGAVE: "Tilføj til DB" fra appen (aftalt med Thomas 06-11 – alle 7 punkter godkendt, BYG DET)
-Thomas starter en ny samtale og skriver "byg Tilføj til DB". Spørgsmålene er besvaret – byg direkte, test, og giv så kodetrinene.
+## "Tilføj til DB" fra appen – BYGGET 06-11 (maskinrum 1.6.0, cache v14), testet i simulering (tests/tilfoejdb.js), IKKE testet hos Thomas endnu
+Handling tilfoejDb (Code.gs tilfoejDb_), udbakke-type tilfoejDb, Data.tilfoejDb/temaer/dbNummer, formular #dbny. Aftalte punkter:
 1. Knap "Tilføj til DB" når et sætnummer giver "Sæt findes ikke": både i Nyt køb side 1 (linjerne) og i "+ Tilføj sæt" i klargøring.
 2. Felter: Navn, Tema, År påkrævet; Undertema valgfrit. Engelske navne som i DB (Thomas taster fra Rebrickable).
 3. Tema: fri tekst med forslag fra eksisterende temaer i DB (datalist), så der ikke opstår "Pirat"/"Pirates"-varianter.
@@ -40,7 +40,7 @@ Thomas starter en ny samtale og skriver "byg Tilføj til DB". Spørgsmålene er 
 Kræver ny maskinrumsversion (1.6.0) → faste kodetrin. Husk mock (js/api.js), e2e-test og GUIDE.md.
 
 ## Arbejdsform (Thomas 06-11)
-Én samtale pr. opgave; CLAUDE.md er den fælles hukommelse. Ingen hjælpe-agenter til små skridt; foreslå dem kun ved store,
+VI BLIVER I SAMME SAMTALE (Thomas: nye samtaler er for bøvlet – repo var ikke med). CLAUDE.md er den fælles hukommelse. Ingen hjælpe-agenter til små skridt; foreslå dem kun ved store,
 opdelelige opgaver (fx statustælling). Slå præcist op i Sheets (små områder/jq), ikke hele faner.
 
 ## Status 1.5.0 (06-11-2026, bygget – ikke testet hos Thomas)

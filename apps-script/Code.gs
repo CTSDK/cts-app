@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.5.0';
+var VERSION = '1.6.0';
 
 // ---------- Faner ----------
 var FANE = {
@@ -1124,7 +1124,8 @@ var HANDLINGER = {
   retSaet: function (d) { return medLaas_(function () { return retSaet_(d); }); },
   fjernSaet: function (d) { return medLaas_(function () { return fjernSaet_(d); }); },
   saetListet: function (d) { return medLaas_(function () { return saetListet_(d); }); },
-  lavListings: function (d) { return medLaas_(function () { return lavListings_(d); }); }
+  lavListings: function (d) { return medLaas_(function () { return lavListings_(d); }); },
+  tilfoejDb: function (d) { return medLaas_(function () { return tilfoejDb_(d); }); }
 };
 
 // ======================================================================
@@ -1498,6 +1499,38 @@ function hentAlt_() {
   var kurs = {};
   ['SALG25', 'SALG26'].forEach(function (k) { var sh = SpreadsheetApp.getActive().getSheetByName(FANE[k]); if (sh) kurs['20' + k.slice(4)] = Number(sh.getRange('R2').getValue()) || 7.46; });
   return { db: dbRaekker, salg: salg, lager: hentLager_(), log: logRaekker, kurs: kurs };
+}
+
+// ---------- Tilføj et sæt til DB fra appen ----------
+// Sætnummer som på Rebrickable: "31100-1" gemmes som 31100; andre endelser ("7236-2") bevares.
+function dbNummer_(nr) { return String(nr == null ? '' : nr).trim().replace(/-1$/, ''); }
+function tilfoejDb_(d) {
+  var nr = dbNummer_(d.setnr), navn = String(d.navn || '').trim(), tema = String(d.tema || '').trim();
+  var undertema = String(d.undertema || '').trim(), aar = String(d.aar || '').trim();
+  if (!nr) throw fejl_('Sætnummer mangler.');
+  if (!navn) throw fejl_('Navn mangler.');
+  if (!tema) throw fejl_('Tema mangler.');
+  if (!/^(19[4-9]\d|20\d\d)$/.test(aar)) throw fejl_('År skal være et årstal, fx 1992.');
+  var db = ark_(FANE.DB);
+  var start = Number(PropertiesService.getScriptProperties().getProperty('DB_START')) || findDbStart_(db) || 3;
+  var sidste = db.getLastRow(), n = sidste - start + 1;
+  var v = n > 0 ? db.getRange(start, 1, n, 2).getDisplayValues() : [];
+  for (var i = 0; i < v.length; i++) {
+    if (v[i][0] === nr || v[i][0] === nr + '-1') {
+      // Samme sæt sendt igen fra udbakken (genforsøg) → ok; ellers findes det allerede
+      if (v[i][1] === navn) return { setnr: nr, navn: navn, tema: tema, undertema: undertema, aar: aar, gentaget: true };
+      throw fejl_('Sæt ' + nr + ' findes allerede i DB som "' + v[i][1] + '".');
+    }
+  }
+  var hoved = db.getRange(start - 1, 6);
+  if (!hoved.getValue()) hoved.setValue('Tilføjet').setFontWeight('bold');
+  var r = sidste + 1;
+  if (r > db.getMaxRows()) db.insertRowsAfter(db.getMaxRows(), 1);
+  var dato = Utilities.formatDate(new Date(), SpreadsheetApp.getActive().getSpreadsheetTimeZone(), 'dd-MM-yyyy');
+  var txt = function (x) { return /^[=+\-@]/.test(x) ? "'" + x : x; }; // tekst må aldrig blive til en formel
+  db.getRange(r, 1, 1, 6).setValues([[/^\d+$/.test(nr) ? Number(nr) : tekst_(nr), txt(navn), txt(tema), txt(undertema), Number(aar), 'Tilføjet i appen ' + dato]]);
+  SpreadsheetApp.flush();
+  return { setnr: nr, navn: navn, tema: tema, undertema: undertema, aar: aar, gentaget: false };
 }
 
 function slaaOp_(setnr) {

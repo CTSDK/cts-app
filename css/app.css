@@ -219,3 +219,9 @@ body.laast { overflow: hidden; }
 .find-boks { display: flex; flex-direction: column; gap: 4px; }
 .find-boks .link { padding: 6px 4px; min-height: 36px; }
 .top-logo { width: 30px; height: 30px; flex: none; }
+/* Tilføj sæt til DB */
+.dbny { position: fixed; inset: 0; z-index: 15; background: rgba(28,28,26,.45); display: flex; align-items: flex-end; justify-content: center; }
+.dbny-panel { background: var(--bg); width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; border-radius: 18px 18px 0 0;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 8px; }
+.dbny-panel h2 { margin: 0; font-size: 20px; }
+.db-knap { margin-left: 8px; padding: 2px 4px; min-height: 0; font-size: 13px; display: inline; }

@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/app.css?v=13">
+<link rel="stylesheet" href="css/app.css?v=14">
 </head>
 <body>
 <div id="testbanner" class="banner" hidden></div>
@@ -293,14 +293,33 @@
   <button type="button" data-gaa="mere" data-fane="mere"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg><span>Mere</span></button>
 </nav>
 
+<!-- ============ TILFØJ SÆT TIL DB ============ -->
+<div id="dbny" class="dbny" role="dialog" aria-modal="true" aria-labelledby="dbny-titel" hidden>
+  <div class="dbny-panel">
+    <h2 id="dbny-titel">Tilføj sæt til DB</h2>
+    <p class="hjaelp">Sætnummer <b class="mono" id="dbny-nr"></b>. Skriv navn, tema og år, fx fra Rebrickable. Navne på engelsk som i resten af DB.</p>
+    <label for="dbny-navn">Navn</label>
+    <input id="dbny-navn" autocomplete="off" placeholder="Fx Sports Car">
+    <label for="dbny-tema">Tema</label>
+    <input id="dbny-tema" list="dbny-temaer" autocomplete="off" placeholder="Fx Creator">
+    <datalist id="dbny-temaer"></datalist>
+    <label for="dbny-undertema">Undertema (kan udelades)</label>
+    <input id="dbny-undertema" autocomplete="off" placeholder="Fx Creator 3-in-1">
+    <label for="dbny-aar">År</label>
+    <input id="dbny-aar" inputmode="numeric" autocomplete="off" placeholder="Fx 2020" maxlength="4">
+    <div id="dbny-fejl" class="besked fejl" role="alert" hidden></div>
+    <div class="knapper"><button type="button" class="knap" id="dbny-annuller">Annullér</button><button type="button" class="knap knap-primaer" id="dbny-gem">Gem i DB</button></div>
+  </div>
+</div>
+
 <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="js/beregn.js?v=13"></script>
-<script src="js/api.js?v=13"></script>
-<script src="js/lokal.js?v=13"></script>
-<script src="js/data.js?v=13"></script>
-<script src="js/foto.js?v=13"></script>
-<script src="js/beskaer.js?v=13"></script>
-<script src="js/app.js?v=13"></script>
+<script src="js/beregn.js?v=14"></script>
+<script src="js/api.js?v=14"></script>
+<script src="js/lokal.js?v=14"></script>
+<script src="js/data.js?v=14"></script>
+<script src="js/foto.js?v=14"></script>
+<script src="js/beskaer.js?v=14"></script>
+<script src="js/app.js?v=14"></script>
 </body>
 </html>

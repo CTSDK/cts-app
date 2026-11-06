@@ -81,8 +81,17 @@
     }
     var H = {
       ping: function () { return { version: 'mock', ark: 'Simuleret testark', tilstand: 'test' }; },
+      tilfoejDb: function (d) {
+        var s = laes(), nr = String(d.setnr || '').trim().replace(/-1$/, '');
+        s.db = s.db || {};
+        var gl = DB[nr] || s.db[nr];
+        if (gl) { if (gl[0] === d.navn) return { setnr: nr, navn: d.navn, tema: d.tema, undertema: d.undertema || '', aar: d.aar, gentaget: true }; throw srv('Sæt ' + nr + ' findes allerede i DB som "' + gl[0] + '".'); }
+        s.db[nr] = [d.navn, d.tema, d.undertema || '', String(d.aar)];
+        skriv(s); return { setnr: nr, navn: d.navn, tema: d.tema, undertema: d.undertema || '', aar: String(d.aar), gentaget: false };
+      },
       slaaOp: function (d) {
-        var nr = String(d.setnr || '').trim(); var r = DB[nr] || DB[nr + '-1'];
+        var ekstra = laes().db || {};
+        var nr = String(d.setnr || '').trim(); var r = DB[nr] || DB[nr + '-1'] || ekstra[nr] || ekstra[nr.replace(/-1$/, '')];
         return { setnr: nr, fundet: !!r, navn: r ? r[0] : 'Sæt findes ikke', tema: r ? r[1] : '', undertema: r ? r[2] : '', aar: r ? r[3] : '', salg: SALG[nr] || null };
       },
       opretBatch: function (d) {
@@ -191,7 +200,7 @@
       hentAlt: function () {
         var s = laes(); genberegn(s);
         return {
-          db: Object.keys(DB).map(function (k) { return [k].concat(DB[k]); }),
+          db: Object.keys(DB).map(function (k) { return [k].concat(DB[k]); }).concat(Object.keys(s.db || {}).map(function (k) { return [k].concat(s.db[k]); })),
           salg: Object.keys(SALG).map(function (k) { var x = SALG[k]; return [k, x.gns, x.antal, x.hoejeste, x.laveste]; }),
           lager: s.ind.map(function (r) { var c = Object.assign({}, r); delete c.antalFotos; return c; }),
           log: s.log.map(function (l) { return [l.dato, l.pris]; }),

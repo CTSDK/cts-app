@@ -82,11 +82,40 @@
   function harDb() { return !!kopi.db; }
   function slaaOp(nr) {
     nr = String(nr || '').trim();
-    var r = kopi.db && (kopi.db[nr] || kopi.db[nr + '-1']);
+    var r = kopi.db && (kopi.db[nr] || kopi.db[nr + '-1'] || kopi.db[nr.replace(/-1$/, '')]);
     return {
       setnr: nr, fundet: !!r, navn: r ? r[0] : 'Sæt findes ikke', tema: r ? r[1] : '', undertema: r ? r[2] : '', aar: r ? r[3] : '',
       salg: kopi.salg[nr] || null
     };
+  }
+
+  // ---------------- Tilføj sæt til DB (virker også uden net) ----------------
+  function dbNummer(nr) { return String(nr == null ? '' : nr).trim().replace(/-1$/, ''); }
+  function temaer() {
+    var t = {}; Object.keys(kopi.db || {}).forEach(function (k) { var x = kopi.db[k][1]; if (x) t[x] = 1; });
+    return Object.keys(t).sort(function (a, b) { return a.localeCompare(b); });
+  }
+  // Sæt i udbakken lægges ind i den lokale DB-kopi (også efter en ny kopi fra Sheets)
+  function anvendDb() {
+    udbakke.forEach(function (p) {
+      if (p.type !== 'tilfoejDb') return;
+      var d = p.data; if (kopi.db && !kopi.db[d.setnr]) kopi.db[d.setnr] = [d.navn, d.tema, d.undertema || '', d.aar];
+    });
+  }
+  async function tilfoejDb(d) {
+    var nr = dbNummer(d.setnr), navn = String(d.navn || '').trim(), tema = String(d.tema || '').trim(), aar = String(d.aar || '').trim();
+    if (!nr) throw new Error('Sætnummer mangler.');
+    if (!navn) throw new Error('Skriv sættets navn.');
+    if (!tema) throw new Error('Skriv et tema.');
+    if (!/^(19[4-9]\d|20\d\d)$/.test(aar)) throw new Error('År skal være et årstal, fx 1992.');
+    if (!kopi.db) throw new Error('Sæt-databasen er ikke hentet til telefonen endnu. Åbn appen med net én gang.');
+    var fandtes = kopi.db[nr] || kopi.db[nr + '-1'];
+    if (fandtes) throw new Error('Sæt ' + nr + ' findes allerede i DB som "' + fandtes[0] + '".');
+    var data = { setnr: nr, navn: navn, tema: tema, undertema: String(d.undertema || '').trim(), aar: aar };
+    kopi.db[nr] = [data.navn, data.tema, data.undertema, data.aar];
+    await Lokal.saet('db', kopi.db);
+    await tilfoej('tilfoejDb', data, { setnr: nr });
+    return slaaOp(nr);
   }
 
   // ---------------- Udbakke ----------------
@@ -162,6 +191,8 @@
       (svar.saet || []).forEach(erstat);
       await Lokal.saet('lager', kopi.lager);
       haendelse('salgGemt', { antal: (svar.raekker || []).length, fortjeneste: svar.fortjenesteOrdre });
+    } else if (p.type === 'tilfoejDb') {
+      if (kopi.db) { kopi.db[svar.setnr] = [svar.navn, svar.tema, svar.undertema || '', svar.aar]; await Lokal.saet('db', kopi.db); }
     } else if (p.type === 'uploadFoto') {
       var r = kopi.lager.find(function (x) { return x.sku === p.data.sku; });
       if (r) { r.antalFotos = svar.antalFotos; r.fotos = true; }
@@ -197,6 +228,7 @@
       var gl = {}; kopi.lager.forEach(function (r) { gl[r.sku] = r.antalFotos; });
       (d.lager || []).forEach(function (r) { if (r.antalFotos === undefined) r.antalFotos = gl[r.sku] || (r.fotos ? 1 : 0); });
       kopi = { db: db, salg: salg, lager: d.lager || [], log: log, hentet: Date.now(), kurs: d.kurs || {} };
+      anvendDb();
       await Promise.all([Lokal.saet('db', db), Lokal.saet('salg', salg), Lokal.saet('lager', kopi.lager), Lokal.saet('log', log), Lokal.saet('hentet', kopi.hentet), Lokal.saet('kurs', kopi.kurs)]);
       status.online = true;
       return true;
@@ -247,7 +279,7 @@
 
   rod.Data = {
     start: start, paa: function (fn) { lyttere.push(fn); }, paaHaendelse: function (fn) { haendelser.push(fn); },
-    lager: lager, batch: batch, batchFindes: batchFindes, harDb: harDb, slaaOp: slaaOp,
+    lager: lager, batch: batch, batchFindes: batchFindes, harDb: harDb, slaaOp: slaaOp, tilfoejDb: tilfoejDb, temaer: temaer, dbNummer: dbNummer,
     tilfoej: tilfoej, venter: venter, fejlede: fejlede, poster: poster, proevIgen: proevIgen, slet: slet, koer: koer,
     hentAlt: hentAlt, opdaterFotos: opdaterFotos, status: function () { return status; },
     retKoeb: retKoeb, koebStatus: koebStatus, lavListings: lavListings,
