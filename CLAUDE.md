@@ -42,6 +42,7 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
   Geninstallation på iPhone 06-11: forbundet til 1.5.0; logo på Hjem, i overskrifter og nyt app-ikon TESTET på iPhone.
 - Rettet: efter "Ret" hoppede appen til forkert sæt (valgte efter indeks).
 - DB: tilføjet 30343, 30577, 31100 (fra Thomas' Rebrickable-skærmbilleder). 6 tomme rækker i Indkøb (261015/260916) slettet efter aftale.
+- Registrér salg TESTET med rigtigt salg 06-11 (251009-6041 Armor Shop, Salg 2026 række 4; tal kontrolleret). Tom række 5 i Salg 2026 (fra import?) ikke rørt.
 - 261028 har nu 7 sæt (Tilføj sæt testet i rigtigt ark, sum 600 ✓). Ret/Fjern endnu ikke testet i rigtigt ark.
 
 ## Status (06-11-2026)
