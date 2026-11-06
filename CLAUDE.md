@@ -28,6 +28,21 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
   Erfaringer: skriv formler mens arket er på `en_US` (`medEngelsk_`), SUMIFS udvider ikke i ARRAYFORMULA (brug MAP+SUMIFS),
   LET-navne må ikke ligne celler (fx `s25`), tekst som "7236-2" skal skrives med apostrof (`tekst_`).
 
+## NÆSTE OPGAVE: "Tilføj til DB" fra appen (aftalt med Thomas 06-11 – alle 7 punkter godkendt, BYG DET)
+Thomas starter en ny samtale og skriver "byg Tilføj til DB". Spørgsmålene er besvaret – byg direkte, test, og giv så kodetrinene.
+1. Knap "Tilføj til DB" når et sætnummer giver "Sæt findes ikke": både i Nyt køb side 1 (linjerne) og i "+ Tilføj sæt" i klargøring.
+2. Felter: Navn, Tema, År påkrævet; Undertema valgfrit. Engelske navne som i DB (Thomas taster fra Rebrickable).
+3. Tema: fri tekst med forslag fra eksisterende temaer i DB (datalist), så der ikke opstår "Pirat"/"Pirates"-varianter.
+4. Sætnummer: fjern automatisk "-1" (Rebrickable "31100-1" → 31100); bevar andre endelser ("7236-2"). Afvis hvis nummeret allerede findes.
+5. Virker offline: ny udbakke-type (fx tilfoejDb), opslaget i den lokale DB-kopi opdateres med det samme.
+6. Ny kolonne F i DB: "Tilføjet i appen dd-mm-åååå" (kun for rækker fra appen). Skriv setnr som tal/tekst_ som ellers.
+7. Rette eksisterende DB-rækker (fx årstalsfejlen 41711/41714): IKKE nu – separat opgave senere.
+Kræver ny maskinrumsversion (1.6.0) → faste kodetrin. Husk mock (js/api.js), e2e-test og GUIDE.md.
+
+## Arbejdsform (Thomas 06-11)
+Én samtale pr. opgave; CLAUDE.md er den fælles hukommelse. Ingen hjælpe-agenter til små skridt; foreslå dem kun ved store,
+opdelelige opgaver (fx statustælling). Slå præcist op i Sheets (små områder/jq), ikke hele faner.
+
 ## Status 1.5.0 (06-11-2026, bygget – ikke testet hos Thomas)
 - Nummerorden: `sorterKoeb_` flytter hele rækker (moveRows) efter sætnummer ved opretBatch/tilfoejSaet/retSaet; menu "Sortér alle køb i nummerorden".
   App: `Beregn.saetOrden` sorterer Lager/køb (tal, endelse, nyeste køb). Test: tests/sortering.test.js.
