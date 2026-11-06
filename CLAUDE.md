@@ -28,7 +28,7 @@ forklar trin i almindeligt dansk, ét trin ad gangen, med præcise klik. Korte, 
   Erfaringer: skriv formler mens arket er på `en_US` (`medEngelsk_`), SUMIFS udvider ikke i ARRAYFORMULA (brug MAP+SUMIFS),
   LET-navne må ikke ligne celler (fx `s25`), tekst som "7236-2" skal skrives med apostrof (`tekst_`).
 
-## "Tilføj til DB" fra appen – BYGGET 06-11 (maskinrum 1.6.0, cache v14), testet i simulering (tests/tilfoejdb.js), IKKE testet hos Thomas endnu
+## "Tilføj til DB" fra appen – BYGGET 06-11 (maskinrum 1.6.0, cache v14), TESTET på iPhone 06-11 (10367 Balrog Book Nook i DB række 2464; testkøb 261106 slettet efter aftale)
 Handling tilfoejDb (Code.gs tilfoejDb_), udbakke-type tilfoejDb, Data.tilfoejDb/temaer/dbNummer, formular #dbny. Aftalte punkter:
 1. Knap "Tilføj til DB" når et sætnummer giver "Sæt findes ikke": både i Nyt køb side 1 (linjerne) og i "+ Tilføj sæt" i klargøring.
 2. Felter: Navn, Tema, År påkrævet; Undertema valgfrit. Engelske navne som i DB (Thomas taster fra Rebrickable).
@@ -58,7 +58,7 @@ opdelelige opgaver (fx statustælling). Slå præcist op i Sheets (små områder
 - Rettet: efter "Ret" hoppede appen til forkert sæt (valgte efter indeks).
 - DB: tilføjet 30343, 30577, 31100 (fra Thomas' Rebrickable-skærmbilleder). 6 tomme rækker i Indkøb (261015/260916) slettet efter aftale.
 - Registrér salg TESTET med rigtigt salg 06-11 (251009-6041 Armor Shop, Salg 2026 række 4; tal kontrolleret). Tom række 5 i Salg 2026 (fra import?) ikke rørt.
-- 261028 har nu 7 sæt (Tilføj sæt testet i rigtigt ark, sum 600 ✓). Ret/Fjern endnu ikke testet i rigtigt ark.
+- 261028 har nu 7 sæt (Tilføj sæt + Ret TESTET i rigtigt ark, sum 600 ✓). Fjern endnu ikke testet i rigtigt ark.
 
 ## Status (06-11-2026)
 - **Testet og virker:** nyt køb (3 sider), købsprisfordeling, klargøring med live-kamera + fri beskæring, Lager, offline-tilstand,
