@@ -35,3 +35,9 @@ kunne trækkes fra – bygges til, når vi kommer dertil.
   CoolRunner-mailen indeholder ordrenr, dato, sporingsnr, pris ekskl./inkl. moms. GLS-eksempel mangler. Gamle bilag (lavet af den gamle Claude) skal kopieres til Drive, så navngivning/numre kan tjekkes.
 - **Månedlig:** eBays salgsrapport i Indbakke → afstemning mod registrerede salg (fanen eBay-afstemning findes).
 - Eksempelbilag ligger i `CTS/`: "eBay 20-15256-09193.pdf" og "Coolrunner 000110671492.pdf" (begge billed-PDF'er).
+
+## Forslag: dobbelttjek af årets fragtmails og opbevaring (ikke besluttet)
+- Thomas videresender alle årets CoolRunner/GLS-mails til CTS-Gmailen. Maskinrummet (eller en hjælpe-agent) læser dem og laver en liste:
+  sporingsnr, dato, beløb → matches mod Salg 2026 (udgift fragt). Resultat: liste over salg uden fragtbilag, beløb der ikke passer, og fragt uden salg.
+- **Opbevaring:** selve mailen bliver i Gmail med etiketten **CTS/Bilag behandlet**; kvitteringen gemmes som PDF i `Bilag/<år>/Fragt` med fast filnavn
+  og bilagsnr. Intet gemmes to steder ud over det.

@@ -44,13 +44,15 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
 ## Næste (pr. 07-11-2026)
-1. **Thomas:** sæt maskinrum **1.7.0** ind (faste trin) og kør CTS → Kopiér noter til Drive (og hver nat). Tillad "ekstern tjeneste". → så er Drive-kopien af noterne testet.
-2. **Thomas:** kopiér den gamle bilagsmappe (lavet af den gamle Claude, sandsynligvis i OneDrive) til Google Drive, fx CTS/Økonomi/Gamle bilag → Claude tjekker bilagsnumre og navngivning.
-3. **Thomas:** gem et eksempel på en GLS-mail/faktura (eller videresend til CTS-Gmailen).
-4. **Claude:** læs den videresendte CoolRunner-mail i CTS-Gmailen (send læsning af bilag/mails til en hjælper) → byg "Bilag → forslag til salg" (plan i okonomi.md).
+1. **Gamle bilag (Thomas):** lægger den gamle bilagsmappe (lavet af den gamle Claude) i en **midlertidig** Drive-mappe, fx `CTS/Økonomi/Gamle bilag (midlertidig)`.
+   Claude (via hjælper) gennemgår og fortæller hvad der er → Thomas beslutter, hvad der bruges → resten slettes. Intet rod må blive liggende.
+2. **GLS (Thomas):** videresender en GLS-mail til CTS-Gmailen.
+3. **Claude:** læs den videresendte CoolRunner-mail (tråd 1a1b5f1995767b0a) → byg "Bilag → forslag til salg" (plan i okonomi.md).
+4. **Årets fragtmails (senere):** Thomas videresender alle årets CoolRunner/GLS-mails → dobbelttjek mod Salg 2026 (se okonomi.md).
 5. Bagefter: Økonomi og Retro Design, ét område ad gangen.
 
 ## Status pr. 07-11-2026
 - ✅ Testet på iPhone: Hjem = områdevalg (Lego · Retro Design · Økonomi); Lego → alt det hidtidige. (App v15.)
 - ✅ Noter delt op (hovednote + lego/retro/okonomi + vejledning docs/SAADAN.md). Afslut-rutine: `.claude/commands/afslut.md`.
-- 🔨 Bygget, ikke testet: maskinrum 1.7.0 (automatisk kopi af noter til Drive).
+- ✅ Testet: maskinrum 1.7.0 – noterne kopieres til Drive CTS/Noter (kørt af Thomas 07-11, natlig kopi slået til).
+- ✅ Gmail-forbindelse til CTS-kontoen virker.

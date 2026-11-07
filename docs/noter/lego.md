@@ -1,6 +1,6 @@
 # Område: Lego (CTS-appen + regnearket cts-app)
 
-Status pr. 07-11-2026 (maskinrum 1.7.0 bygget; hos Thomas kører 1.6.0 indtil han sætter 1.7.0 ind). Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
+Status pr. 07-11-2026 (maskinrum 1.7.0 kører hos Thomas). Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
 
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
