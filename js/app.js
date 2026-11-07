@@ -405,7 +405,16 @@
     $('k3-start').textContent = koerer ? 'Stop kamera' : 'Start kamera';
     $('k3-tag').disabled = !koerer;
     $('k3-kamera-tom').hidden = koerer;
+    visKameraInfo();
   }
+  // Viser den opløsning, iPhonen faktisk giver live-kameraet (til test af fotokvalitet)
+  function visKameraInfo() {
+    var v = $('k3-video');
+    $('k3-kamerainfo').textContent = Foto.kameraKoerer() && v.videoWidth
+      ? 'Kamera: ' + v.videoWidth + ' × ' + v.videoHeight + ' px' : '';
+  }
+  $('k3-video').addEventListener('loadedmetadata', visKameraInfo);
+  $('k3-video').addEventListener('resize', visKameraInfo);
   $('k3-start').addEventListener('click', async function () {
     var f = $('k3-kamerafejl'); f.textContent = '';
     if (Foto.kameraKoerer()) { Foto.stopKamera($('k3-video')); kameraUi(); return; }

@@ -2,8 +2,8 @@
 (function (rod) {
   'use strict';
 
-  var MAKS_SIDE = 1600;   // længste side i pixels
-  var KVALITET = 0.85;    // JPG-kvalitet
+  var MAKS_SIDE = 3000;   // længste side i pixels (Thomas 07-11: 3000 px / 92 %)
+  var KVALITET = 0.92;    // JPG-kvalitet
 
   // ---------- Live-kamera ----------
   var stroem = null;
@@ -16,7 +16,7 @@
     try {
       stroem = await navigator.mediaDevices.getUserMedia({
         audio: false,
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1440 } }
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 4032 }, height: { ideal: 3024 } }
       });
     } catch (e) { e.trin = 'tilladelse'; throw e; }
     video.setAttribute('playsinline', '');
@@ -34,7 +34,7 @@
 
   function kameraKoerer() { return !!(stroem && stroem.active); }
 
-  var MAKS_KILDE = 3000; // råbillede før beskæring (holder hukommelsen nede på iPhone)
+  var MAKS_KILDE = 4032; // råbillede før beskæring (holder hukommelsen nede på iPhone)
 
   function tilLaerred(kilde, b, h, maks) {
     var s = Math.min(1, maks / Math.max(b, h));
@@ -70,7 +70,7 @@
     });
   }
 
-  // Beskær råbilledet til {x,y,w,h} og lav færdig JPG (længste side maks. 1600 px)
+  // Beskær råbilledet til {x,y,w,h} og lav færdig JPG (længste side maks. 3000 px)
   function beskaerTilJpg(raa, r) {
     r = r || { x: 0, y: 0, w: raa.width, h: raa.height };
     var c = document.createElement('canvas');

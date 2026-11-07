@@ -5,7 +5,7 @@ Status pr. 07-11-2026 (maskinrum 1.7.0 kører hos Thomas). Beskriver hvordan det
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
   Hjemmeskærms-app på iPhone (iOS 27.2). Offline: service worker (`sw.js`), lokal kopi + udbakke i IndexedDB (`js/lokal.js`, `js/data.js`).
-  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v15).
+  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v16).
 - **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **1.7.0**).
   Webapp "Udfør som: Mig", adgang "Alle"; alle kald kræver API-nøgle (Script Properties).
 - **Faste kodetrin (altid sådan):** (1) åbn https://raw.githubusercontent.com/CTSDK/cts-app/main/apps-script/Code.gs, (2) Ctrl+Shift+R og tjek versionen,
@@ -47,7 +47,7 @@ Registrér salg (rigtigt salg 251009-6041) · Tilføj sæt og Ret i et køb · T
 - **Åbent/lukket køb:** åbent indtil alle sæt er klar eller solgt; åbent køb kan tilføjes/rettes/fjernes; lukket kan genåbnes med bekræftelse.
 - **Batch 250000** (privat/familiens LEGO, pris 0, Skattepligt Nej) er altid åben; ingen værdi kræves.
 - **Nummerorden** efter sætnummer i køb og Lager. **Solgte sæt vises ikke i Lager.**
-- **Fotos:** 1600 px / JPG 85 %. Forslag hvis nødvendigt: 2400 px / 90 % + 4K fra live-kamera.
+- **Fotos:** 3000 px / JPG 92 % (v16, 07-11); live-kameraet beder om 4032×3024 og viser den faktiske opløsning under billedet. **Ikke testet på iPhone endnu.**
 - **DB:** ukendte sæt tilføjes fra appen ("Tilføj til DB"; "-1" fjernes; tema-forslag). Rettelse af eksisterende DB-rækker: senere opgave.
 - **Ingen opslag hos BrickLink/eBay** – al data fra egne databaser (Rebrickable-skærmbilleder fra Thomas er ok som kilde).
 - **Pause fra eBay**, indtil alt er rigtigt.
