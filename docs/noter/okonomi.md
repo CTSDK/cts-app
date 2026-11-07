@@ -30,7 +30,8 @@ kunne trækkes fra – bygges til, når vi kommer dertil.
 - **Kobling:** fragtfaktura ↔ salg via **sporingsnummeret** (står både i eBay-ordren og hos CoolRunner, fx JJD149990200062288889).
 - **eBay:** salgsmailen indeholder ingen data → Thomas gemmer ordresiden ("Einzelheiten zum Kauf" i Verkäufer-Cockpit) som PDF.
   Den indeholder ordrenr, salgsdato, SKU, varepris, fragt, gebyr, køber (by, land) og sporingsnr.
-- **Fragt:** CoolRunner og GLS sender mails → Thomas sætter automatisk videresendelse til CTS-Gmailen; maskinrummet læser mailene (GmailApp).
-  CoolRunner-mailen indeholder ordrenr, dato, sporingsnr, pris ekskl./inkl. moms. GLS-eksempel mangler.
+- **Fragt:** CoolRunner og GLS sender mails til Thomas' private mail → han videresender (senere automatisk) til CTS-Gmailen; maskinrummet læser mailene (GmailApp).
+  Claude har også Gmail-forbindelse til CTS-kontoen (07-11). Første videresendte CoolRunner-mail ligger der (ikke læst endnu).
+  CoolRunner-mailen indeholder ordrenr, dato, sporingsnr, pris ekskl./inkl. moms. GLS-eksempel mangler. Gamle bilag (lavet af den gamle Claude) skal kopieres til Drive, så navngivning/numre kan tjekkes.
 - **Månedlig:** eBays salgsrapport i Indbakke → afstemning mod registrerede salg (fanen eBay-afstemning findes).
 - Eksempelbilag ligger i `CTS/`: "eBay 20-15256-09193.pdf" og "Coolrunner 000110671492.pdf" (begge billed-PDF'er).

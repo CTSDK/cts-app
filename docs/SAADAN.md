@@ -36,7 +36,7 @@ Skriv **"afslut"**. Så:
 ## 6. Hvis samtalen en dag er væk
 Start en ny i Claude-appen → **Code** → **Ny session** → vælg repository **CTSDK/cts-app** (vigtigt – ellers kender Claude ikke projektet)
 → skriv: *"Læs CLAUDE.md og fortsæt."*
-Det samme gælder, når en ny forbindelse (fx Gmail) er tilføjet: forbindelser læses kun, når en samtale starter.
+En ny forbindelse (fx Gmail) kan kræve en ny samtale – men Gmail dukkede op i den samme samtale 07-11, så prøv altid først at skrive her.
 
 ## 7. Noterne
 - **CTS.md** – hovednoten: firma, regler, arbejdsform, områder.

@@ -37,13 +37,20 @@ Store, opdelelige opgaver kan sendes til hjælpe-agenter (de læser samme noter)
 Connectors Google Drive + Google Sheets virker. Regneark **cts-app**: `1cCBaGigDN0c5UK3iIKL8GDtNKwNqVHq-PnuEclieGvw`.
 Drive-mappe **CTS/Noter** (læse-kopi af noterne): id `1dCTDB4xGkJTLc7bL156aiNAGqDjHkxJ0`. Maskinrummet (1.7.0, `synkNoter`) henter noterne fra GitHub
 hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gennem samtalen (koster hukommelse).
-- **Gmail:** ingen forbindelse endnu. Thomas tilføjer Gmail (CTS-kontoen) på claude.ai/customize/connectors – virker først i en NY samtale.
+- **Gmail (CTS-kontoen ctsdanmark@gmail.com):** ✓ forbundet 07-11 og virker i denne samtale (søgning testet). Kun til CTS – Thomas har givet lov til at Claude læser den.
+  Thomas' private mail er t.clifford.pejtersen@gmail.com – derfra videresender han bilag (fx CoolRunner-mail 07-11, tråd-id 1a1b5f1995767b0a, ikke læst endnu).
 - ✓ Læse/skrive celler, oprette/slette faner og rækker. ✓ Søge, oprette, omdøbe, flytte filer i Drive.
 - ✗ Apps Script-koden kan ikke opdateres via forbindelsen – Thomas kopierer koden ind.
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
-## Næste (rækkefølge aftalt 07-11-2026)
-1. ✅ Noterne delt op (denne fil + docs/noter/).
-2. ✅ Bygget (v15, testet i simulering, ikke på iPhone endnu): Hjem = **områdevalg** (Lego · Retro Design · Økonomi). Lego → alt det nuværende. Retro/Økonomi "kommer senere".
-3. Bilag/fakturaer → forslag til salg i appen: plan godkendt i hovedtræk 07-11 (se okonomi.md). Afventer: bilagsnummer-afklaring, GLS-eksempel.
-4. Bagefter: Økonomi og Retro Design, ét område ad gangen.
+## Næste (pr. 07-11-2026)
+1. **Thomas:** sæt maskinrum **1.7.0** ind (faste trin) og kør CTS → Kopiér noter til Drive (og hver nat). Tillad "ekstern tjeneste". → så er Drive-kopien af noterne testet.
+2. **Thomas:** kopiér den gamle bilagsmappe (lavet af den gamle Claude, sandsynligvis i OneDrive) til Google Drive, fx CTS/Økonomi/Gamle bilag → Claude tjekker bilagsnumre og navngivning.
+3. **Thomas:** gem et eksempel på en GLS-mail/faktura (eller videresend til CTS-Gmailen).
+4. **Claude:** læs den videresendte CoolRunner-mail i CTS-Gmailen (send læsning af bilag/mails til en hjælper) → byg "Bilag → forslag til salg" (plan i okonomi.md).
+5. Bagefter: Økonomi og Retro Design, ét område ad gangen.
+
+## Status pr. 07-11-2026
+- ✅ Testet på iPhone: Hjem = områdevalg (Lego · Retro Design · Økonomi); Lego → alt det hidtidige. (App v15.)
+- ✅ Noter delt op (hovednote + lego/retro/okonomi + vejledning docs/SAADAN.md). Afslut-rutine: `.claude/commands/afslut.md`.
+- 🔨 Bygget, ikke testet: maskinrum 1.7.0 (automatisk kopi af noter til Drive).

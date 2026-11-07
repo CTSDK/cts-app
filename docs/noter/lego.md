@@ -1,6 +1,6 @@
 # Område: Lego (CTS-appen + regnearket cts-app)
 
-Status pr. 07-11-2026. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
+Status pr. 07-11-2026 (maskinrum 1.7.0 bygget; hos Thomas kører 1.6.0 indtil han sætter 1.7.0 ind). Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
 
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
@@ -32,7 +32,7 @@ Status pr. 07-11-2026. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUID
 - Også: Lager, Udgifter 2025/26, Skat 2025/26, DB Salgspriser, Kontoplan, eBay-afstemning, Kontrol, Foto-import, Ikke matchet.
 
 ## App-struktur
-Hjem = områdevalg (Lego · Retro Design · Økonomi). Lego-forsiden (`#v-forside`): Nyt køb, Lager, Registrér salg, Databaser (senere).
+Hjem = områdevalg (Lego · Retro Design · Økonomi) – testet på iPhone 07-11. Lego-forsiden (`#v-forside`): Nyt køb, Lager, Registrér salg, Databaser (senere).
 Menubjælken: Hjem (områdevalg) · Nyt køb · Lager · Salg · Mere.
 
 ## Funktioner – testet hos Thomas
