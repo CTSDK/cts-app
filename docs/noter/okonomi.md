@@ -32,7 +32,7 @@ kunne trækkes fra – bygges til, når vi kommer dertil.
 - Hver måned: eBays månedsoversigt ("<Mon> 2026 statement.pdf") gemmes i `CTS/Økonomi/Bilag/<år>/eBay-rapporter` og afstemmes mod Salg-fanen.
 - Afstemning sep+okt 2026 (07-11): alt passer undtagen **3 manglende salg** (eBay-ordre 01-15293-04134 sæt 6695, 17-15260-01184 sæt 6929,
   08-15271-75175 sæt 6806/6678/6017/6630/6532) – Thomas lægger PDF'erne op. Ordrenr skrevet i kolonne O for Feucht, Frederiksberg, Bovolone, Münster.
-- Delvise refusioner står nogle gange netto uden kolonne J – Thomas: lad det være.
+- Delvise refusioner = som regel fragt refunderet, når kunden har købt flere sæt i flere omgange. Står nogle gange netto uden kolonne J – Thomas: lad det være.
 - Filerne "Sep/Oct 2026 statement.pdf" ligger i `CTS/` indtil Bilag-mapperne oprettes.
 
 ## Bilag → forslag til salg (plan, godkendt i hovedtræk af Thomas 07-11 – IKKE bygget)
