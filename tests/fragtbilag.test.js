@@ -47,3 +47,7 @@ assert.deepStrictEqual(Array.from(direkte.map(b => b.navn)), ['GLS 4246792 faktu
 console.log('fragtbilag (direkte GLS-PDF): OK');
 assert.strictEqual(ctx.fragtInfo_('GLS\nOrdrenummer: 2800305\nKøbsdato: 03/25/2025').dato, '250325');
 console.log('fragtbilag (amerikansk dato): OK');
+assert.strictEqual(ctx.flettBilagsnr_('B052, B054', 'B148'), 'B052, B054, B148');
+assert.strictEqual(ctx.flettBilagsnr_('', 'B134'), 'B134');
+assert.strictEqual(ctx.flettBilagsnr_('B157', 'B157'), 'B157');
+console.log('bilagsplan (flet numre): OK');

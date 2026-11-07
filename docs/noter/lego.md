@@ -1,12 +1,12 @@
 # Område: Lego (CTS-appen + regnearket cts-app)
 
-Status pr. 07-11-2026 (maskinrum 1.8.0 kører hos Thomas). Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
+Status pr. 07-11-2026 (maskinrum 1.8.0 kører hos Thomas; 1.9.0 klar). Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
 
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
   Hjemmeskærms-app på iPhone (iOS 27.2). Offline: service worker (`sw.js`), lokal kopi + udbakke i IndexedDB (`js/lokal.js`, `js/data.js`).
   Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v16).
-- **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **1.8.0**).
+- **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **1.9.0**).
   Webapp "Udfør som: Mig", adgang "Alle"; alle kald kræver API-nøgle (Script Properties).
 - **Faste kodetrin (altid sådan):** (1) åbn https://raw.githubusercontent.com/CTSDK/cts-app/main/apps-script/Code.gs, (2) Ctrl+Shift+R og tjek versionen,
   (3) Ctrl+A → Ctrl+C → Apps Script → Ctrl+A → Ctrl+V → Ctrl+S, (4) Implementer → Administrer implementeringer → blyanten → Ny version → Implementer,

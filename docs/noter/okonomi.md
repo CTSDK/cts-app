@@ -64,7 +64,11 @@ kunne trækkes fra – bygges til, når vi kommer dertil.
 - Returfragt (pakke ikke afhentet, sendt retur for CTS' regning) lægges til det oprindelige salgs Udgift Fragt i samme år; ellers i Udgifter (konto 3030).
   Gjort 07-11: Bielefeld 06-08-2026 F = 67,81 + 125 + 125 = 317,81; Brünzow-retur 07-02-2026 (175 kr) = Udgifter 2026 række 18 (bilagsnr mangler).
 
-## Forslag: dobbelttjek af årets fragtmails og opbevaring (ikke besluttet)
+## Maskinrum 1.9.0: "Udfør bilagsplan" (bygget 07-11, ikke testet hos Thomas)
+- Store opgaver (omdøb/flyt filer + bilagsnr i celler) laves sådan: Claude skriver planen i fanen **Bilagsplan** (A Bilagsnr, B Fil-id, C Nyt filnavn,
+  D Mappe-id, E Celle fx "Salg 2026!P111", F Status) med ét kald → Thomas kører **CTS → Udfør bilagsplan** én gang. Ingen godkendelse pr. fil.
+- Rækker med tom status udføres; numre flettes ind i cellen (bevarer eksisterende, sorteret). Kan køres igen.
+ og opbevaring (ikke besluttet)
 - Thomas videresender alle årets CoolRunner/GLS-mails til CTS-Gmailen. Maskinrummet (eller en hjælpe-agent) læser dem og laver en liste:
   sporingsnr, dato, beløb → matches mod Salg 2026 (udgift fragt). Resultat: liste over salg uden fragtbilag, beløb der ikke passer, og fragt uden salg.
 - **Opbevaring:** selve mailen bliver i Gmail med etiketten **CTS/Bilag behandlet**; kvitteringen gemmes som PDF i `Bilag/<år>/Fragt` med fast filnavn

@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.8.1';
+var VERSION = '1.9.0';
 
 // ---------- Faner ----------
 var FANE = {
@@ -68,6 +68,7 @@ function onOpen() {
     .addItem('Kopiér noter til Drive (og hver nat)', 'synkNoterMenu')
     .addSeparator()
     .addItem('Gem fragtbilag fra Gmail', 'gemFragtbilagMenu')
+    .addItem('Udfør bilagsplan', 'udfoerBilagsplanMenu')
     .addToUi();
 }
 
@@ -281,6 +282,59 @@ function htmlTilTekst_(h) {
     .replace(/[ \t]+/g, ' ');
 }
 function htmlEsc_(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+// ---------- Bilagsplan: Claude skriver planen i fanen "Bilagsplan", Thomas kører den med ét klik ----------
+// Kolonner (række 1 = overskrift): A Bilagsnr, B Fil-id, C Nyt filnavn, D Mappe-id, E Celle (fx "Salg 2026!P111"), F Status.
+// Rækker med tom status udføres: filen omdøbes og flyttes, og bilagsnr føjes til cellen (eksisterende numre bevares, sorteret).
+// Status sættes til "OK <dato>" eller "FEJL: …". Kan køres igen uden at gøre noget to gange.
+var BILAGSPLAN = 'Bilagsplan';
+
+function udfoerBilagsplanMenu() {
+  var r = udfoerBilagsplan();
+  SpreadsheetApp.getUi().alert('Bilagsplan', 'Udført: ' + r.ok + '\nFejl: ' + r.fejl.length + (r.mere ? '\n\nDer er mere – kør igen.' : '') +
+    (r.fejl.length ? '\n\n' + r.fejl.slice(0, 10).join('\n') : ''), SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+function udfoerBilagsplan() {
+  var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(BILAGSPLAN);
+  if (!sh) throw new Error('Fanen "' + BILAGSPLAN + '" findes ikke.');
+  var n = sh.getLastRow() - 1, res = { ok: 0, fejl: [], mere: false }, start = Date.now();
+  if (n < 1) return res;
+  var data = sh.getRange(2, 1, n, 6).getDisplayValues(), mapper = {};
+  for (var i = 0; i < data.length; i++) {
+    var r = data[i], nr = r[0].trim();
+    if (!nr || r[5]) continue;
+    if (Date.now() - start > 4.5 * 60 * 1000) { res.mere = true; break; }
+    try {
+      if (r[1]) {
+        var f = DriveApp.getFileById(r[1].trim());
+        if (r[2] && f.getName() !== r[2].trim()) f.setName(r[2].trim());
+        if (r[3]) { var id = r[3].trim(); mapper[id] = mapper[id] || DriveApp.getFolderById(id); f.moveTo(mapper[id]); }
+      }
+      if (r[4]) tilfoejBilagsnr_(ss, r[4].trim(), nr);
+      sh.getRange(i + 2, 6).setValue('OK ' + Utilities.formatDate(new Date(), 'Europe/Copenhagen', 'dd-MM-yyyy HH:mm'));
+      res.ok++;
+    } catch (e) {
+      sh.getRange(i + 2, 6).setValue('FEJL: ' + e.message); res.fejl.push(nr + ': ' + e.message);
+    }
+  }
+  return res;
+}
+
+// "Salg 2026!P111" + "B148" → "B052, B054, B148" (ingen dubletter, sorteret)
+function tilfoejBilagsnr_(ss, celle, nr) {
+  var m = celle.match(/^'?(.+?)'?!([A-Z]+\d+)$/);
+  if (!m) throw new Error('Ukendt celle ' + celle);
+  var sh = ss.getSheetByName(m[1]);
+  if (!sh) throw new Error('Fanen ' + m[1] + ' findes ikke');
+  var c = sh.getRange(m[2]);
+  c.setValue(flettBilagsnr_(String(c.getDisplayValue()), nr));
+}
+function flettBilagsnr_(gl, nr) {
+  var alle = (gl + ',' + nr).split(/[,;\s]+/).map(function (x) { return x.trim().toUpperCase(); }).filter(function (x) { return /^B\d+$/.test(x); });
+  var set = {}; alle.forEach(function (x) { set[x] = true; });
+  return Object.keys(set).sort(function (a, b) { return Number(a.slice(1)) - Number(b.slice(1)); }).join(', ');
+}
 
 function visNoegle() {
   SpreadsheetApp.getUi().alert('API-nøgle',
