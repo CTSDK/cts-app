@@ -16,8 +16,8 @@ CTS er ikke momsregistreret endnu → hele beløbet inkl. moms er udgiften (fx f
 kunne trækkes fra – bygges til, når vi kommer dertil.
 
 ## Bilagsnumre (fundet i regnearket 07-11)
-- Format **B001, B002 …**. Én fortløbende serie pr. år, fælles for salg og udgifter. 2026-serien starter med B001 (01-07-2026).
-  (B028 står med dato 27-06-2026 – sandsynligvis en tastefejl for 27-07; ikke rørt.)
+- Format **B001, B002 …**, fælles serie for salg og udgifter. Udgifter 2025 bruger B006–B019; Udgifter 2026 bruger B001–B127
+  (B001 = 01-07-2026, B028 = 27-06-2026). Det er **uafklaret**, om serien starter forfra pr. kalenderår eller pr. regnskabsår – spørg Thomas/revisor.
 - Hvert salg har typisk to bilag i Salg-fanen kolonne P: eBay-ordren + fragtfakturaen, fx "B125, B130".
 - Højeste brugte nummer i 2026: **B131** → næste er **B132** (salget 251009-6041 fra 06-11 har endnu intet bilagsnr).
 - Udgifter: bilagsnr i Udgifter-fanen kolonne A.
