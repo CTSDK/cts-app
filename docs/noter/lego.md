@@ -5,7 +5,7 @@ Status pr. 07-11-2026. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUID
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
   Hjemmeskærms-app på iPhone (iOS 27.2). Offline: service worker (`sw.js`), lokal kopi + udbakke i IndexedDB (`js/lokal.js`, `js/data.js`).
-  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v14).
+  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v15).
 - **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **1.6.0**).
   Webapp "Udfør som: Mig", adgang "Alle"; alle kald kræver API-nøgle (Script Properties).
 - **Faste kodetrin (altid sådan):** (1) åbn https://raw.githubusercontent.com/CTSDK/cts-app/main/apps-script/Code.gs, (2) Ctrl+Shift+R og tjek versionen,
@@ -30,6 +30,10 @@ Status pr. 07-11-2026. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUID
 - **Indkøbslog:** A dato, B pris, C skattepligt, D noter, E–L formler, M mappe-id.
 - **Salg 2025/2026:** data fra række 4. **DB:** A Lego number, B navn, C tema, D undertema, E år, F "Tilføjet i appen <dato>". Header række 2.
 - Også: Lager, Udgifter 2025/26, Skat 2025/26, DB Salgspriser, Kontoplan, eBay-afstemning, Kontrol, Foto-import, Ikke matchet.
+
+## App-struktur
+Hjem = områdevalg (Lego · Retro Design · Økonomi). Lego-forsiden (`#v-forside`): Nyt køb, Lager, Registrér salg, Databaser (senere).
+Menubjælken: Hjem (områdevalg) · Nyt køb · Lager · Salg · Mere.
 
 ## Funktioner – testet hos Thomas
 Nyt køb (3 sider) + købsprisfordeling · klargøring med live-kamera + fri beskæring · Lager med søgning, tema-felt, filtre, nummerorden,

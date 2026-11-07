@@ -127,6 +127,10 @@ Står der **"Sæt findes ikke i DB"** under et sætnummer (i Nyt køb eller unde
 - I DB-fanen står der *"Tilføjet i appen <dato>"* i kolonne F ved sæt, der er lagt ind fra appen.
 - Findes nummeret allerede i DB, afvises det. Rettelser af eksisterende sæt i DB kommer senere.
 
+## Hjem: vælg område
+
+Når appen åbner, vælger du, hvad du skal arbejde med: **Lego**, **Retro Design** eller **Økonomi**. Lego fører til alt det, appen kunne før. Retro Design og Økonomi kommer senere.
+
 ## Menubjælken i bunden
 
 Nederst i appen er der altid fem faner: **Hjem · Nyt køb · Lager · Salg · Mere**. Under **Mere** ligger *Venter på at blive sendt* og *Indstillinger*. Den fane, du er på, er blå.

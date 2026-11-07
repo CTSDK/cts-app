@@ -13,19 +13,39 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/app.css?v=14">
+<link rel="stylesheet" href="css/app.css?v=15">
 </head>
 <body>
 <div id="testbanner" class="banner" hidden></div>
 <button id="netbar" class="netbar" type="button" hidden></button>
 
-<!-- ============ FORSIDE ============ -->
-<section id="v-forside" class="visning">
+<!-- ============ HJEM: VÆLG OMRÅDE ============ -->
+<section id="v-hjem" class="visning">
   <header class="forside-top">
     <img class="segl" src="icons/logo-segl.png" width="600" height="600" alt="">
     <h1 class="skjult">Copenhagen Treasures &amp; Services</h1>
     <div id="forbindelse" class="status">Tjekker forbindelse …</div>
   </header>
+  <p class="omraade-spm">Hvad skal du arbejde med?</p>
+  <nav class="menu">
+    <button class="kort kort-primaer" data-gaa="forside">
+      <span class="ikon ikon-gul"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14v10H5zM8 9V6h3v3M13 9V6h3v3"/></svg></span>
+      <span class="kort-tekst"><b>Lego</b><small>Køb, klargøring, lager og salg</small></span>
+    </button>
+    <button class="kort" disabled>
+      <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+      <span class="kort-tekst"><b>Retro Design</b><small>Kommer senere</small></span>
+    </button>
+    <button class="kort" disabled>
+      <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V10M10 19V5M16 19v-6M22 19H2"/></svg></span>
+      <span class="kort-tekst"><b>Økonomi</b><small>Kommer senere</small></span>
+    </button>
+  </nav>
+</section>
+
+<!-- ============ LEGO ============ -->
+<section id="v-forside" class="visning" hidden>
+  <header class="top"><button class="tilbage" data-gaa="hjem" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Lego</h2></header>
   <nav class="menu">
     <button class="kort kort-primaer" data-gaa="koeb1">
       <span class="ikon ikon-gul"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
@@ -40,18 +60,10 @@
       <span class="kort-tekst"><b>Registrér salg</b><small>Ordre, fragt, gebyr</small></span>
     </button>
     <button class="kort" disabled>
-      <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V10M10 19V5M16 19v-6M22 19H2"/></svg></span>
-      <span class="kort-tekst"><b>Økonomi</b><small>Kommer i fase 3</small></span>
-    </button>
-    <button class="kort" disabled>
       <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span>
-      <span class="kort-tekst"><b>Databaser</b><small>Kommer i fase 3</small></span>
+      <span class="kort-tekst"><b>Databaser</b><small>Kommer senere</small></span>
     </button>
   </nav>
-  <div class="forside-links">
-    <button class="link" data-gaa="udbakke">Venter på at blive sendt</button>
-    <button class="link" data-gaa="indstillinger">Indstillinger</button>
-  </div>
 </section>
 
 <!-- ============ UDBAKKE ============ -->
@@ -286,7 +298,7 @@
 
 <!-- ============ MENUBJÆLKE ============ -->
 <nav id="fanebar" class="fanebar" aria-label="Hovedmenu">
-  <button type="button" data-gaa="forside" data-fane="forside"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9h-6v-6H9v6H3z"/></svg><span>Hjem</span></button>
+  <button type="button" data-gaa="hjem" data-fane="hjem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9h-6v-6H9v6H3z"/></svg><span>Hjem</span></button>
   <button type="button" data-gaa="koeb1" data-fane="koeb1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Nyt køb</span></button>
   <button type="button" data-gaa="lager" data-fane="lager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7"/></svg><span>Lager</span></button>
   <button type="button" data-gaa="salg" data-fane="salg"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v12H4zM8 7V5h8v2"/></svg><span>Salg</span></button>
@@ -314,12 +326,12 @@
 
 <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="js/beregn.js?v=14"></script>
-<script src="js/api.js?v=14"></script>
-<script src="js/lokal.js?v=14"></script>
-<script src="js/data.js?v=14"></script>
-<script src="js/foto.js?v=14"></script>
-<script src="js/beskaer.js?v=14"></script>
-<script src="js/app.js?v=14"></script>
+<script src="js/beregn.js?v=15"></script>
+<script src="js/api.js?v=15"></script>
+<script src="js/lokal.js?v=15"></script>
+<script src="js/data.js?v=15"></script>
+<script src="js/foto.js?v=15"></script>
+<script src="js/beskaer.js?v=15"></script>
+<script src="js/app.js?v=15"></script>
 </body>
 </html>

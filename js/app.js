@@ -45,15 +45,15 @@
   });
 
   // ================= Navigation =================
-  var aktiv = 'forside';
+  var aktiv = 'hjem';
   function gaa(navn) {
     if (aktiv === 'koeb3' && navn !== 'koeb3') { Foto.stopKamera($('k3-video')); kameraUi(); }
     document.querySelectorAll('.visning').forEach(function (v) { v.hidden = v.id !== 'v-' + navn; });
     aktiv = navn;
-    var fane = { koeb2: 'koeb1', koeb3: k3 && k3.fra === 'lager' ? 'lager' : 'koeb1', indstillinger: 'mere', udbakke: 'mere' }[navn] || navn;
+    var fane = { forside: 'hjem', koeb2: 'koeb1', koeb3: k3 && k3.fra === 'lager' ? 'lager' : 'koeb1', indstillinger: 'mere', udbakke: 'mere' }[navn] || navn;
     document.querySelectorAll('[data-fane]').forEach(function (b) { b.classList.toggle('til', b.getAttribute('data-fane') === fane); });
     window.scrollTo(0, 0);
-    if (navn === 'forside') tjekForbindelse();
+    if (navn === 'hjem') tjekForbindelse();
     if (navn === 'indstillinger') visIndstillinger();
     if (navn === 'koeb1') visKoeb1();
     if (navn === 'koeb2') visKoeb2();
@@ -843,6 +843,6 @@
   });
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () { /* ignorer */ });
   Data.start();
-  gaa('forside');
+  gaa('hjem');
   window.CTS = { gaa: gaa }; // til test
 })();

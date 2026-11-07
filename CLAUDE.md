@@ -38,6 +38,6 @@ Drive-mappe **CTS/Noter** (kopi af noterne): id `1dCTDB4xGkJTLc7bL156aiNAGqDjHkx
 
 ## Næste (rækkefølge aftalt 07-11-2026)
 1. ✅ Noterne delt op (denne fil + docs/noter/).
-2. Appen: Hjem bliver **områdevalg** (Lego · Retro Design · Økonomi). Lego → alt det nuværende. Retro/Økonomi "kommer senere".
+2. ✅ Bygget (v15, testet i simulering, ikke på iPhone endnu): Hjem = **områdevalg** (Lego · Retro Design · Økonomi). Lego → alt det nuværende. Retro/Økonomi "kommer senere".
 3. Diskutér: fakturaer/eBay-mails → salg registreres automatisk (se okonomi.md og lego.md).
 4. Bagefter: Økonomi og Retro Design, ét område ad gangen.

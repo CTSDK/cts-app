@@ -20,7 +20,7 @@ const URL = process.argv[2] || 'http://localhost:8765/';
   await page.fill('#ind-noegle', 'x'.repeat(40));
   await page.click('#ind-gem');
   await page.waitForFunction(() => document.getElementById('ind-status').textContent.includes('Forbundet'));
-  await page.click('.fanebar [data-fane="forside"]');
+  await page.click('.fanebar [data-fane="hjem"]');
   await page.waitForFunction(() => document.getElementById('forbindelse').textContent.includes('✓ Forbundet'), null, { timeout: 10000 });
   console.log('Hjem:', await page.textContent('#forbindelse'));
   assert.deepStrictEqual(fejl, []);
