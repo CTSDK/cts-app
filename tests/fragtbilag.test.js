@@ -45,3 +45,5 @@ console.log('fragtbilag: alle tests OK');
 const direkte = ctx.fragtBilag_({ emne: 'x', tekst: 'Hej', html: '', pdf: [{ navn: 'Faktura 21803097 - ordre 4246792.pdf', blob: {} }, { navn: 'andet.pdf', blob: {} }] });
 assert.deepStrictEqual(Array.from(direkte.map(b => b.navn)), ['GLS 4246792 faktura 21803097.pdf']);
 console.log('fragtbilag (direkte GLS-PDF): OK');
+assert.strictEqual(ctx.fragtInfo_('GLS\nOrdrenummer: 2800305\nKøbsdato: 03/25/2025').dato, '250325');
+console.log('fragtbilag (amerikansk dato): OK');

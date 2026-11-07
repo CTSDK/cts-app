@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.8.0';
+var VERSION = '1.8.1';
 
 // ---------- Faner ----------
 var FANE = {
@@ -117,6 +117,12 @@ function gemFragtbilagMenu() {
 }
 
 function gemFragtbilag() {
+  var laas = LockService.getScriptLock();   // to kørsler på samme tid gav dubletter (07-11)
+  if (!laas.tryLock(1000)) throw new Error('Gem fragtbilag kører allerede. Vent, til den er færdig.');
+  try { return gemFragtbilagIndre_(); } finally { laas.releaseLock(); }
+}
+
+function gemFragtbilagIndre_() {
   var start = Date.now(), mappe = DriveApp.getFolderById(BILAG_INDBAKKE);
   var etiket = GmailApp.getUserLabelByName(BILAG_ETIKET) || GmailApp.createLabel(BILAG_ETIKET);
   var findes = {}, it = mappe.getFiles();
@@ -205,6 +211,7 @@ function fragtInfo_(tekst) {
     m = tekst.match(/(?:Ordrenummer:?|ordre)\s*(\d{6,})/i);
     if (!m) return null;
     var k = tekst.match(/Købsdato:?\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/i) || tekst.match(/(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})/);
+    if (k && Number(k[2]) > 12) k = [k[0], k[2], k[1], k[3]];   // amerikansk dato (MM/DD/ÅÅÅÅ)
     var f = tekst.match(/(?:faktura|kreditnota)\s*(?:nr\.?\s*)?(\d{6,})/i);
     return { firma: kredit ? 'GLS kreditnota' : 'GLS', ordre: m[1], dato: k ? k[3].slice(2) + to(k[2]) + to(k[1]) : '', faktura: f ? f[1] : '' };
   }
