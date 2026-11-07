@@ -25,7 +25,7 @@ kunne trækkes fra – bygges til, når vi kommer dertil.
 ## Gammel bilagsmappe (Drive: "Gammelt CTS Regnskab - Skal slettes efter brug")
 - Gennemgået 07-11. Ca. 160 rigtige bilag (2025/2026), 14 afregningsbilag + skabelon, Bilagsjournal 2025/2026.csv (nøgle bilagsnr ↔ fil, med sporings-/ordrenr),
   kørselsregnskaber, 2025-perioderapporter. Regler stod i Bilagssystem.md (fx ét bilag = én PDF, gem i 5 år, køb fra private kræver afregningsbilag).
-- **Thomas' ja 07-11:** bilag, afregningsbilag og journaler flyttes til `CTS/Økonomi/Bilag/2025|2026` (gamle filnavne beholdes); resten slettes. **Ikke gjort endnu.**
+- **Gjort 07-11:** bilag, afregningsbilag og journaler flyttet til `CTS/Økonomi/Bilag/2025|2026` (gamle filnavne beholdt); resten i papirkurven.
 
 ## Månedlig dobbelttjek mod eBay (besluttet 07-11)
 - Thomas lægger **hvert salg op som PDF** (eBay-ordreside) → salget registreres med SKU (vigtigt for lageret).
@@ -33,7 +33,7 @@ kunne trækkes fra – bygges til, når vi kommer dertil.
 - Afstemning sep+okt 2026 (07-11): alt passer undtagen **3 manglende salg** (eBay-ordre 01-15293-04134 sæt 6695, 17-15260-01184 sæt 6929,
   08-15271-75175 sæt 6806/6678/6017/6630/6532) – Thomas lægger PDF'erne op. Ordrenr skrevet i kolonne O for Feucht, Frederiksberg, Bovolone, Münster.
 - Delvise refusioner = som regel fragt refunderet, når kunden har købt flere sæt i flere omgange. Står nogle gange netto uden kolonne J – Thomas: lad det være.
-- Filerne "Sep/Oct 2026 statement.pdf" ligger i `CTS/` indtil Bilag-mapperne oprettes.
+- "Sep/Oct 2026 statement.pdf" ligger i `Bilag/2026/eBay-rapporter`. eBay-ordre-PDF'erne ligger i Indbakke.
 
 ## Bilag → forslag til salg (plan, godkendt i hovedtræk af Thomas 07-11 – IKKE bygget)
 - **Salg 2026 får ny kolonne Q "Sporingsnr"** (ja 07-11). Fragtbilag = PDF af mailen. Første omgang: fragtmails + eBay-PDF (GLS senere).
@@ -49,6 +49,18 @@ kunne trækkes fra – bygges til, når vi kommer dertil.
   CoolRunner-mailen (læst 07-11) har dato, ordrenr, sporingsnr, pris ekskl./inkl. moms – ingen PDF vedhæftet. GLS-eksempel mangler.
 - **Månedlig:** eBays salgsrapport i Indbakke → afstemning mod registrerede salg (fanen eBay-afstemning findes).
 - Eksempelbilag ligger i `CTS/`: "eBay 20-15256-09193.pdf" og "Coolrunner 000110671492.pdf" (begge billed-PDF'er).
+
+## Maskinrum 1.8.0: "Gem fragtbilag fra Gmail" (bygget og testet her 07-11 – IKKE testet hos Thomas)
+- Menu CTS → **Gem fragtbilag fra Gmail**. Læser CTS-Gmailens mails med CoolRunner/GLS (også mails vedhæftet som .eml) uden etiketten
+  *CTS/Bilag behandlet* → gemmer i `CTS/Økonomi/Bilag/Indbakke` (id 17xqS57VoqpSHcmY0AuKGmouoCnRiR-t7) → sætter etiketten. Sletter intet, giver ingen bilagsnr.
+- CoolRunner: mailen gemmes som PDF (`CoolRunner <ordrenr> <ÅÅMMDD>.pdf`); vedhæftede PDF'er er pakkelabels og gemmes ikke.
+- GLS: faktura-PDF gemmes (`GLS <ordre> faktura <nr>.pdf`), ellers mailen (`GLS <ordre> <ÅÅMMDD>.pdf`). Kreditnota: `GLS kreditnota …`.
+- Testet på den rigtige CoolRunner-mail (lokalt): 68 kvitteringer → 67 unikke (én dublet). GLS-mailen kunne ikke hentes her – testes hos Thomas.
+- Efter kørsel: Claude lægger dubletter af eksisterende bilag (41 kendte) i papirkurven og laver forslag til bilagsnr.
+- Mappe-id'er: Økonomi 1zD9CwVndzrYoBWv_ykZ7FaGm724hiuO0, Bilag 12LuML_4mGi_0ssTv9X0HN9sxqe09OZoD, 2025 1tAEpFv5WH62PRmJEO4n_kpGLFBl1Olou, 2026 1PaUb_K1AwHbSDeC3A9VNOauzqLzJhoZR
+  (hvert år: Salg, Fragt, Udgifter, eBay-rapporter, Afregningsbilag). Bilagsjournal 2026.csv peger stadig på gamle stier.
+- Salgsdato = datoen kunden betalte (derfor kan fragtlabel være købt før salgsdatoen, fx Rüsselsheim 11-05/15-05).
+- Returfragt (pakke ikke afhentet, sendt retur for CTS' regning) lægges til det oprindelige salgs Udgift Fragt: GLS Brünzow 07-02, Bielefeld 08-09 og 12-10 (forslag på vej).
 
 ## Forslag: dobbelttjek af årets fragtmails og opbevaring (ikke besluttet)
 - Thomas videresender alle årets CoolRunner/GLS-mails til CTS-Gmailen. Maskinrummet (eller en hjælpe-agent) læser dem og laver en liste:

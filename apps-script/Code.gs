@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.7.0';
+var VERSION = '1.8.0';
 
 // ---------- Faner ----------
 var FANE = {
@@ -66,6 +66,8 @@ function onOpen() {
     .addItem('Lav ny API-nøgle', 'nyNoegle')
     .addSeparator()
     .addItem('Kopiér noter til Drive (og hver nat)', 'synkNoterMenu')
+    .addSeparator()
+    .addItem('Gem fragtbilag fra Gmail', 'gemFragtbilagMenu')
     .addToUi();
 }
 
@@ -95,6 +97,183 @@ function synkNoterMenu() {
   if (!findes) ScriptApp.newTrigger('synkNoter').timeBased().everyDays(1).atHour(3).create();
   ui.alert('Noter', synkNoter().join('\n') + '\n\nNoterne kopieres nu også automatisk hver nat ved 3-tiden.', ui.ButtonSet.OK);
 }
+
+// ---------- Fragtbilag: CTS-Gmail → Drive CTS/Økonomi/Bilag/Indbakke ----------
+// Læser mails, som Thomas har videresendt fra CoolRunner og GLS (også mails vedhæftet som .eml).
+// CoolRunner: kvitteringen er selve mailen → gemmes som PDF (vedhæftede PDF'er er pakkelabels og gemmes ikke).
+// GLS: vedhæftede faktura-PDF'er gemmes; uden faktura gemmes mailen (ordrebekræftelse) som PDF.
+// Filnavn: "<Firma> <ordrenr> [faktura <nr>] <ÅÅMMDD>.pdf". Findes navnet allerede i Indbakke, springes det over.
+// Færdige tråde får etiketten "CTS/Bilag behandlet". Intet slettes, og der gives ikke bilagsnumre.
+var BILAG_INDBAKKE = '17xqS57VoqpSHcmY0AuKGmouoCnRiR-t7';
+var BILAG_ETIKET = 'CTS/Bilag behandlet';
+var FRAGT_SOEG = '(coolrunner OR gls) -label:cts-bilag-behandlet';
+
+function gemFragtbilagMenu() {
+  var r = gemFragtbilag();
+  SpreadsheetApp.getUi().alert('Fragtbilag fra Gmail',
+    'Gemt i Indbakke: ' + r.gemt.length + '\nFandtes allerede: ' + r.findes + '\nIkke genkendt: ' + r.ukendt.length +
+    '\nTråde færdige: ' + r.traade + (r.mere ? '\n\nDer er mere – kør igen.' : '') +
+    (r.ukendt.length ? '\n\nIkke genkendt:\n' + r.ukendt.slice(0, 15).join('\n') : ''), SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+function gemFragtbilag() {
+  var start = Date.now(), mappe = DriveApp.getFolderById(BILAG_INDBAKKE);
+  var etiket = GmailApp.getUserLabelByName(BILAG_ETIKET) || GmailApp.createLabel(BILAG_ETIKET);
+  var findes = {}, it = mappe.getFiles();
+  while (it.hasNext()) findes[it.next().getName()] = true;
+  var res = { gemt: [], findes: 0, ukendt: [], traade: 0, mere: false };
+  var traade = GmailApp.search(FRAGT_SOEG, 0, 20);
+  for (var t = 0; t < traade.length; t++) {
+    if (Date.now() - start > 4.5 * 60 * 1000) { res.mere = true; break; }
+    traade[t].getMessages().forEach(function (m) {
+      fragtMails_(m).forEach(function (mail) {
+        var bilag = fragtBilag_(mail);
+        if (!bilag.length) { if (mail.vigtig) res.ukendt.push(mail.emne || '(uden emne)'); return; }
+        bilag.forEach(function (b) {
+          var gls = b.navn.match(/^(GLS \d+) \d{6}\.pdf$/);   // GLS-mail uden faktura: spring over, hvis fakturaen findes
+          if (findes[b.navn] || (gls && Object.keys(findes).some(function (n) { return n.indexOf(gls[1] + ' faktura ') === 0; }))) { res.findes++; return; }
+          mappe.createFile(b.blob.setName(b.navn)); findes[b.navn] = true; res.gemt.push(b.navn);
+        });
+      });
+    });
+    traade[t].addLabel(etiket); res.traade++;
+  }
+  if (traade.length === 20 && !res.mere) res.mere = true;
+  return res;
+}
+
+// En Gmail-besked → liste af "mails": selve beskeden + hver vedhæftet .eml (rekursivt). Læses fra rå-mailen.
+function fragtMails_(m) {
+  var ud = emlMails_(m.getRawContent());
+  ud[0].vigtig = false;   // selve videresendelsen er ofte bare en "indpakning"
+  return ud;
+}
+
+function emlMails_(raa) {
+  var del = mimeParse_(raa), ud = [], mail = { emne: mimeOrd_(del.hoved.subject || ''), html: '', tekst: '', pdf: [], vigtig: true };
+  ud.push(mail);
+  (function gaa(d) {
+    var ct = (d.hoved['content-type'] || 'text/plain').toLowerCase();
+    if (d.dele) { d.dele.forEach(gaa); return; }
+    if (ct.indexOf('message/rfc822') === 0) { ud = ud.concat(emlMails_(d.krop)); return; }
+    var navn = mimeFilnavn_(d.hoved);
+    if (ct.indexOf('application/pdf') === 0 || /\.pdf$/i.test(navn)) {
+      mail.pdf.push({ navn: navn, blob: Utilities.newBlob(Utilities.base64Decode(d.krop.replace(/\s+/g, '')), 'application/pdf', navn || 'bilag.pdf') });
+    } else if (ct.indexOf('text/html') === 0 && !mail.html) mail.html = mimeTekst_(d);
+    else if (ct.indexOf('text/plain') === 0 && !mail.tekst && !navn) mail.tekst = mimeTekst_(d);
+  })(del);
+  return ud;
+}
+
+// Hvilke bilag giver en mail? Tom liste = ikke en fragtkvittering.
+function fragtBilag_(mail) {
+  var info = fragtInfo_(mail.tekst || htmlTilTekst_(mail.html));
+  if (!info) {   // fx GLS-fakturaer vedhæftet direkte: "Faktura 21803097 - ordre 4246792.pdf"
+    return mail.pdf.map(function (p) {
+      var m = String(p.navn).match(/(faktura|kreditnota)\s*(\d{6,})\D+?ordre\s*(\d{6,})/i);
+      return m ? { navn: (/kredit/i.test(m[1]) ? 'GLS kreditnota ' : 'GLS ') + m[3] + ' faktura ' + m[2] + '.pdf', blob: p.blob } : null;
+    }).filter(Boolean);
+  }
+  if (info.firma === 'GLS' && mail.pdf.length) {
+    return mail.pdf.filter(function (p) { return !/label/i.test(p.navn); }).map(function (p, i, alle) {
+      var nr = info.faktura || (String(p.navn).match(/(\d{7,})/) || [])[1];
+      return { navn: fragtNavn_(info, nr) + (alle.length > 1 && !nr ? ' (' + (i + 1) + ')' : '') + '.pdf', blob: p.blob };
+    });
+  }
+  var html = '<html><head><meta charset="utf-8"></head><body><p style="font:11px Arial;color:#666">Gemt af CTS maskinrum ' +
+    Utilities.formatDate(new Date(), 'Europe/Copenhagen', 'dd-MM-yyyy') + ' – mail: ' + htmlEsc_(mail.emne) + '</p>' +
+    (mail.html || '<pre>' + htmlEsc_(mail.tekst) + '</pre>') + '</body></html>';
+  return [{ navn: fragtNavn_(info, info.faktura) + '.pdf', blob: Utilities.newBlob(html, 'text/html', 'mail.html').getAs('application/pdf') }];
+}
+
+function fragtNavn_(info, faktura) {
+  // GLS med fakturanr: uden dato, så faktura-PDF og mail om samme faktura får samme navn (ingen dubletter)
+  if (faktura) return info.firma + ' ' + info.ordre + ' faktura ' + faktura;
+  return info.firma + ' ' + info.ordre + (info.dato ? ' ' + info.dato : '');
+}
+
+// Udtræk firma, ordrenr, dato (ÅÅMMDD) og evt. fakturanr af mailteksten
+function fragtInfo_(tekst) {
+  tekst = String(tekst || '');
+  var to = function (n) { return ('0' + n).slice(-2); }, m;
+  if (/coolrunner/i.test(tekst) && (m = tekst.match(/Ordrenumm?b?er:?\s*(\d{9,})/i))) {
+    var d = tekst.match(/Dato:?\s*(\d{1,2})\/(\d{1,2})-(\d{4})/);
+    return { firma: 'CoolRunner', ordre: m[1], dato: d ? d[3].slice(2) + to(d[2]) + to(d[1]) : '', faktura: '' };
+  }
+  if (/\bGLS\b/.test(tekst)) {
+    var kredit = /kreditnota/i.test(tekst);
+    m = tekst.match(/(?:Ordrenummer:?|ordre)\s*(\d{6,})/i);
+    if (!m) return null;
+    var k = tekst.match(/Købsdato:?\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/i) || tekst.match(/(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})/);
+    var f = tekst.match(/(?:faktura|kreditnota)\s*(?:nr\.?\s*)?(\d{6,})/i);
+    return { firma: kredit ? 'GLS kreditnota' : 'GLS', ordre: m[1], dato: k ? k[3].slice(2) + to(k[2]) + to(k[1]) : '', faktura: f ? f[1] : '' };
+  }
+  return null;
+}
+
+// ---- lille MIME-læser (kun det, der skal bruges her) ----
+function mimeParse_(raa) {
+  raa = String(raa).replace(/\r\n/g, '\n');
+  var i = raa.indexOf('\n\n'), hovedTekst = i < 0 ? raa : raa.slice(0, i), krop = i < 0 ? '' : raa.slice(i + 2);
+  var hoved = {};
+  hovedTekst.replace(/\n[ \t]+/g, ' ').split('\n').forEach(function (l) {
+    var j = l.indexOf(':'); if (j > 0) { var n = l.slice(0, j).trim().toLowerCase(); if (!(n in hoved)) hoved[n] = l.slice(j + 1).trim(); }
+  });
+  var ct = hoved['content-type'] || '', b = ct.match(/boundary="?([^";]+)"?/i);
+  if (/^multipart\//i.test(ct) && b) {
+    var dele = [], stykker = krop.split('--' + b[1]);
+    for (var k = 1; k < stykker.length; k++) {
+      var st = stykker[k];
+      if (/^--/.test(st)) break;
+      dele.push(mimeParse_(st.replace(/^[ \t]*\n/, '')));
+    }
+    return { hoved: hoved, dele: dele };
+  }
+  return { hoved: hoved, krop: krop };
+}
+
+function mimeTekst_(d) {
+  var enc = String(d.hoved['content-transfer-encoding'] || '').toLowerCase();
+  var cs = ((d.hoved['content-type'] || '').match(/charset="?([^";]+)"?/i) || [])[1] || 'UTF-8', bytes;
+  if (enc === 'base64') bytes = Utilities.base64Decode(d.krop.replace(/\s+/g, ''));
+  else if (enc === 'quoted-printable') bytes = qpBytes_(d.krop);
+  else return d.krop;
+  return Utilities.newBlob(bytes).getDataAsString(cs);
+}
+
+function qpBytes_(s) {
+  s = s.replace(/=\n/g, '');
+  var ud = [];
+  for (var i = 0; i < s.length; i++) {
+    var c = s.charAt(i);
+    if (c === '=' && /^[0-9A-Fa-f]{2}$/.test(s.substr(i + 1, 2))) { ud.push(parseInt(s.substr(i + 1, 2), 16)); i += 2; }
+    else {
+      var kode = s.charCodeAt(i);
+      if (kode < 128) ud.push(kode); else Utilities.newBlob(c).getBytes().forEach(function (x) { ud.push(x & 255); });
+    }
+  }
+  return ud.map(function (x) { return x > 127 ? x - 256 : x; });
+}
+
+function mimeFilnavn_(h) {
+  var s = (h['content-disposition'] || '') + ';' + (h['content-type'] || '');
+  var m = s.match(/(?:file)?name\*?="?([^";]+)"?/i);
+  return m ? mimeOrd_(m[1]) : '';
+}
+
+function mimeOrd_(s) {
+  return String(s).replace(/=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g, function (_, cs, typ, data) {
+    var bytes = /b/i.test(typ) ? Utilities.base64Decode(data) : qpBytes_(data.replace(/_/g, ' '));
+    return Utilities.newBlob(bytes).getDataAsString(cs);
+  }).replace(/\?=\s+=\?/g, '');
+}
+
+function htmlTilTekst_(h) {
+  return String(h || '').replace(/<(style|script)[\s\S]*?<\/\1>/gi, ' ').replace(/<br\s*\/?>|<\/(p|div|tr|td|th|li)>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/[ \t]+/g, ' ');
+}
+function htmlEsc_(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
 function visNoegle() {
   SpreadsheetApp.getUi().alert('API-nøgle',
