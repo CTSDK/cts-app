@@ -30,8 +30,8 @@ kunne trækkes fra – bygges til, når vi kommer dertil.
 ## Månedlig dobbelttjek mod eBay (besluttet 07-11)
 - Thomas lægger **hvert salg op som PDF** (eBay-ordreside) → salget registreres med SKU (vigtigt for lageret).
 - Hver måned: eBays månedsoversigt ("<Mon> 2026 statement.pdf") gemmes i `CTS/Økonomi/Bilag/<år>/eBay-rapporter` og afstemmes mod Salg-fanen.
-- Afstemning sep+okt 2026 (07-11): alt passer undtagen **3 manglende salg** (eBay-ordre 01-15293-04134 sæt 6695, 17-15260-01184 sæt 6929,
-  08-15271-75175 sæt 6806/6678/6017/6630/6532) – Thomas lægger PDF'erne op. Ordrenr skrevet i kolonne O for Feucht, Frederiksberg, Bovolone, Münster.
+- Afstemning sep+okt 2026 (07-11): 3 manglende salg er nu skrevet i Salg 2026 række 5–11 (Bernstadt, Zagreb, Amöneburg) ud fra eBay-PDF'erne.
+  **Tjek senere:** 250000-6678-a og 250000-6630-a er valgt (eBay-SKU var 251009-6678 / 250000-6630). Bilagsnr mangler for alle salg efter 03-09.
 - Delvise refusioner = som regel fragt refunderet, når kunden har købt flere sæt i flere omgange. Står nogle gange netto uden kolonne J – Thomas: lad det være.
 - "Sep/Oct 2026 statement.pdf" ligger i `Bilag/2026/eBay-rapporter`. eBay-ordre-PDF'erne ligger i Indbakke.
 
@@ -60,7 +60,8 @@ kunne trækkes fra – bygges til, når vi kommer dertil.
 - Mappe-id'er: Økonomi 1zD9CwVndzrYoBWv_ykZ7FaGm724hiuO0, Bilag 12LuML_4mGi_0ssTv9X0HN9sxqe09OZoD, 2025 1tAEpFv5WH62PRmJEO4n_kpGLFBl1Olou, 2026 1PaUb_K1AwHbSDeC3A9VNOauzqLzJhoZR
   (hvert år: Salg, Fragt, Udgifter, eBay-rapporter, Afregningsbilag). Bilagsjournal 2026.csv peger stadig på gamle stier.
 - Salgsdato = datoen kunden betalte (derfor kan fragtlabel være købt før salgsdatoen, fx Rüsselsheim 11-05/15-05).
-- Returfragt (pakke ikke afhentet, sendt retur for CTS' regning) lægges til det oprindelige salgs Udgift Fragt: GLS Brünzow 07-02, Bielefeld 08-09 og 12-10 (forslag på vej).
+- Returfragt (pakke ikke afhentet, sendt retur for CTS' regning) lægges til det oprindelige salgs Udgift Fragt i samme år; ellers i Udgifter (konto 3030).
+  Gjort 07-11: Bielefeld 06-08-2026 F = 67,81 + 125 + 125 = 317,81; Brünzow-retur 07-02-2026 (175 kr) = Udgifter 2026 række 18 (bilagsnr mangler).
 
 ## Forslag: dobbelttjek af årets fragtmails og opbevaring (ikke besluttet)
 - Thomas videresender alle årets CoolRunner/GLS-mails til CTS-Gmailen. Maskinrummet (eller en hjælpe-agent) læser dem og laver en liste:
