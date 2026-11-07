@@ -17,8 +17,9 @@ kunne trækkes fra – bygges til, når vi kommer dertil.
 
 ## Bilagsnumre (besluttet af Thomas 07-11)
 - Format **B001, B002 …**, **én serie pr. år, starter forfra** (som den gamle Claudes system). Fælles serie for salg, fragt, udgifter, varekøb.
-- 2025: B001–B019. 2026: B001–B133 brugt (gammel journal: B132 = varekøb fra privat 06-09, B133 = kørsel 06-09, ikke bogført)
-  → **næste er B134**. Kalenderår eller regnskabsår: uafklaret (spørg revisor).
+- 2025: B001–B028 brugt (B020–B028 = fragtbilag givet 07-11; fragt fra før 07-07-2025 er privat → `Bilag/2025/Privat før CTS`, intet nr). 2026: B001–B133 brugt (gammel journal: B132 = varekøb fra privat 06-09, B133 = kørsel 06-09, ikke bogført)
+  → **næste 2026 er B134** (forslag B134–B162 til 29 bilag i Indbakke venter på Thomas' ja; CSV lå i Claudes midlertidige mappe).
+  Feucht 07-10: eBay-PDF siger SKU 260217-6083-2, arket -1 – Thomas tjekker. Kalenderår eller regnskabsår: uafklaret (spørg revisor).
 - Hvert salg har typisk to bilag i Salg-fanen kolonne P: eBay-ordren + fragtfakturaen, fx "B125, B130". Udgifter: bilagsnr i kolonne A.
 - Sidste salg med bilagsnr: 03-09-2026. Salgene 27-09 → 09-10 har intet bilagsnr endnu.
 
