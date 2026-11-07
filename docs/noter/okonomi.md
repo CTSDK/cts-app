@@ -50,7 +50,7 @@ kunne trækkes fra – bygges til, når vi kommer dertil.
 - **Månedlig:** eBays salgsrapport i Indbakke → afstemning mod registrerede salg (fanen eBay-afstemning findes).
 - Eksempelbilag ligger i `CTS/`: "eBay 20-15256-09193.pdf" og "Coolrunner 000110671492.pdf" (begge billed-PDF'er).
 
-## Maskinrum 1.8.0: "Gem fragtbilag fra Gmail" (bygget og testet her 07-11 – IKKE testet hos Thomas)
+## Maskinrum 1.8.0: "Gem fragtbilag fra Gmail" (✅ testet hos Thomas 07-11: 106 gemt, 38 fandtes, 7 ikke genkendt)
 - Menu CTS → **Gem fragtbilag fra Gmail**. Læser CTS-Gmailens mails med CoolRunner/GLS (også mails vedhæftet som .eml) uden etiketten
   *CTS/Bilag behandlet* → gemmer i `CTS/Økonomi/Bilag/Indbakke` (id 17xqS57VoqpSHcmY0AuKGmouoCnRiR-t7) → sætter etiketten. Sletter intet, giver ingen bilagsnr.
 - CoolRunner: mailen gemmes som PDF (`CoolRunner <ordrenr> <ÅÅMMDD>.pdf`); vedhæftede PDF'er er pakkelabels og gemmes ikke.
