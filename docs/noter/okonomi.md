@@ -18,7 +18,8 @@ kunne trækkes fra – bygges til, når vi kommer dertil.
 ## Bilagsnumre (besluttet af Thomas 07-11)
 - Format **B001, B002 …**, **én serie pr. år, starter forfra** (som den gamle Claudes system). Fælles serie for salg, fragt, udgifter, varekøb.
 - 2025: B001–B028 brugt (B020–B028 = fragtbilag givet 07-11; fragt fra før 07-07-2025 er privat → `Bilag/2025/Privat før CTS`, intet nr). 2026: B001–B133 brugt (gammel journal: B132 = varekøb fra privat 06-09, B133 = kørsel 06-09, ikke bogført)
-  → **næste 2026 er B134** (forslag B134–B162 til 29 bilag i Indbakke venter på Thomas' ja; CSV lå i Claudes midlertidige mappe).
+  2026: B134–B162 givet 07-11 via Bilagsplan (✅ kørt af Thomas). B163–B165 (eBay Münster/Bovolone/Frederiksberg) står i Bilagsplan, venter på kørsel.
+  → **næste 2026 er B166**.
   Feucht 07-10: eBay-PDF siger SKU 260217-6083-2, arket -1 – Thomas tjekker. Kalenderår eller regnskabsår: uafklaret (spørg revisor).
 - Hvert salg har typisk to bilag i Salg-fanen kolonne P: eBay-ordren + fragtfakturaen, fx "B125, B130". Udgifter: bilagsnr i kolonne A.
 - Sidste salg med bilagsnr: 03-09-2026. Salgene 27-09 → 09-10 har intet bilagsnr endnu.
@@ -64,7 +65,7 @@ kunne trækkes fra – bygges til, når vi kommer dertil.
 - Returfragt (pakke ikke afhentet, sendt retur for CTS' regning) lægges til det oprindelige salgs Udgift Fragt i samme år; ellers i Udgifter (konto 3030).
   Gjort 07-11: Bielefeld 06-08-2026 F = 67,81 + 125 + 125 = 317,81; Brünzow-retur 07-02-2026 (175 kr) = Udgifter 2026 række 18 (bilagsnr mangler).
 
-## Maskinrum 1.9.0: "Udfør bilagsplan" (bygget 07-11, ikke testet hos Thomas)
+## Maskinrum 1.9.0: "Udfør bilagsplan" (✅ testet hos Thomas 07-11: 29 bilag)
 - Store opgaver (omdøb/flyt filer + bilagsnr i celler) laves sådan: Claude skriver planen i fanen **Bilagsplan** (A Bilagsnr, B Fil-id, C Nyt filnavn,
   D Mappe-id, E Celle fx "Salg 2026!P111", F Status) med ét kald → Thomas kører **CTS → Udfør bilagsplan** én gang. Ingen godkendelse pr. fil.
 - Rækker med tom status udføres; numre flettes ind i cellen (bevarer eksisterende, sorteret). Kan køres igen.
