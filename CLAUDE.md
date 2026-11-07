@@ -46,15 +46,14 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
 ## Næste (pr. 07-11-2026)
-1. **Gamle bilag (Thomas):** lægger den gamle bilagsmappe (lavet af den gamle Claude) i en **midlertidig** Drive-mappe, fx `CTS/Økonomi/Gamle bilag (midlertidig)`.
-   Claude (via hjælper) gennemgår og fortæller hvad der er → Thomas beslutter, hvad der bruges → resten slettes. Intet rod må blive liggende.
-2. **GLS (Thomas):** videresender en GLS-mail til CTS-Gmailen.
-3. **Claude:** læs den videresendte CoolRunner-mail (tråd 1a1b5f1995767b0a) → byg "Bilag → forslag til salg" (plan i okonomi.md).
-4. **Årets fragtmails (senere):** Thomas videresender alle årets CoolRunner/GLS-mails → dobbelttjek mod Salg 2026 (se okonomi.md).
-5. Bagefter: Økonomi og Retro Design, ét område ad gangen.
+1. **Thomas tjekker:** Feucht-SKU (6083-1/-2, 6846), Amöneburg 6678-a/6630-a, 2 manglende San Martino-kvitteringer (se okonomi.md "Åbne punkter").
+2. **Løbende:** nye salg → eBay-PDF i `Bilag/Indbakke`; fragtmails videresendes → CTS → Gem fragtbilag → Claude laver Bilagsplan → Thomas kører den.
+3. **Byg (Økonomi):** "Bilag → forslag i appen" + kolonne Q Sporingsnr i Salg 2026 (plan i okonomi.md).
+4. Bagefter: fælles økonomi-ark og Retro Design, ét område ad gangen.
 
 ## Status pr. 07-11-2026
-- ✅ Testet på iPhone: Hjem = områdevalg (Lego · Retro Design · Økonomi); Lego → alt det hidtidige. (App v15.)
-- ✅ Noter delt op (hovednote + lego/retro/okonomi + vejledning docs/SAADAN.md). Afslut-rutine: `.claude/commands/afslut.md`.
-- ✅ Testet: maskinrum 1.7.0 – noterne kopieres til Drive CTS/Noter (kørt af Thomas 07-11, natlig kopi slået til).
-- ✅ Gmail-forbindelse til CTS-kontoen virker.
+- ✅ App v16 på iPhone: fotos 3000 px / 92 % (Thomas: kvaliteten er fin). Fotos af køb 261028 slettet – tages om.
+- ✅ Maskinrum 1.9.0 hos Thomas: Gem fragtbilag fra Gmail (1.8) + Udfør bilagsplan (1.9). 1.8.1-rettelserne er med i 1.9.0.
+- ✅ Bilag samlet i `CTS/Økonomi/Bilag`; gammel bilagsmappe tømt. Alle salg 2026 har bilagsnr (næste B166; 2025 næste B029).
+- ✅ eBay sep+okt afstemt; 3 manglende salg skrevet i Salg 2026.
+- ✅ Noter kopieres til Drive CTS/Noter hver nat. Gmail-forbindelse til CTS-kontoen virker.

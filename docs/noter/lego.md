@@ -1,6 +1,6 @@
 # Område: Lego (CTS-appen + regnearket cts-app)
 
-Status pr. 07-11-2026 (maskinrum 1.9.0 kører hos Thomas). Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
+Status pr. 07-11-2026 (maskinrum 1.9.0 og app v16 kører hos Thomas). Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
 
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
@@ -64,7 +64,8 @@ Kun fakta, ingen AI. Noter oversættes med Google Oversæt; "Sort: …" og [teks
 - Vejledning/Komplet er false for alle importerede sæt – Thomas krydser af ved gennemgang.
 
 ## Kendte forhold / næste i Lego
-- Tom række 5 i Salg 2026 (sandsynligvis fra importen) – ikke rørt; spørg før sletning.
+- Tom række 12 i Salg 2026 (var række 5; sandsynligvis fra importen) – ikke rørt; spørg før sletning.
+- Køb 261028: fotos slettet 07-11 (for lav opløsning) – Thomas tager dem om med v16.
 - DB-fejl: årstal står i undertema-kolonnen for bl.a. 41711/41714.
 - **Statustælling** (senere): optælling i appen → liste over afvigelser (gamle salg med forkert SKU) → Claude retter Salg-fanen efter Thomas' ja.
 - **Idé (diskuteres):** salg registreres automatisk ud fra eBay-mails/fakturaer – se okonomi.md.
