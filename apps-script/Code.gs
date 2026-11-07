@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.6.0';
+var VERSION = '1.7.0';
 
 // ---------- Faner ----------
 var FANE = {
@@ -64,7 +64,36 @@ function onOpen() {
     .addItem('Opdatér formler (bevarer data)', 'opdaterFormler')
     .addItem('Tjek opsætning', 'tjekOpsaetning')
     .addItem('Lav ny API-nøgle', 'nyNoegle')
+    .addSeparator()
+    .addItem('Kopiér noter til Drive (og hver nat)', 'synkNoterMenu')
     .addToUi();
+}
+
+// ---------- Noter: kopi fra GitHub til Drive-mappen CTS/Noter ----------
+// Hovednoten og områdenoterne hentes fra GitHub og skrives i CTS/Noter (backup, og så Thomas kan læse dem).
+var NOTER_MAPPE = '1dCTDB4xGkJTLc7bL156aiNAGqDjHkxJ0';
+var NOTER_KILDE = 'https://raw.githubusercontent.com/CTSDK/cts-app/main/';
+var NOTER = [['CLAUDE.md', 'CTS.md'], ['docs/noter/lego.md', 'lego.md'], ['docs/noter/retro.md', 'retro.md'],
+  ['docs/noter/okonomi.md', 'okonomi.md'], ['docs/SAADAN.md', 'Sådan arbejder du med Claude.md']];
+function synkNoter() {
+  var mappe = DriveApp.getFolderById(NOTER_MAPPE), res = [];
+  NOTER.forEach(function (n) {
+    var svar = UrlFetchApp.fetch(NOTER_KILDE + n[0] + '?t=' + Date.now(), { muteHttpExceptions: true });
+    if (svar.getResponseCode() !== 200) { res.push(n[1] + ': ikke fundet (' + svar.getResponseCode() + ')'); return; }
+    var tekst = svar.getContentText('UTF-8'), it = mappe.getFilesByName(n[1]);
+    if (it.hasNext()) {
+      var f = it.next();
+      while (it.hasNext()) it.next().setTrashed(true);            // ingen dubletter
+      if (f.getBlob().getDataAsString('UTF-8') !== tekst) { f.setContent(tekst); res.push(n[1] + ': opdateret'); } else res.push(n[1] + ': uændret');
+    } else { mappe.createFile(n[1], tekst, 'text/markdown'); res.push(n[1] + ': oprettet'); }
+  });
+  return res;
+}
+function synkNoterMenu() {
+  var ui = SpreadsheetApp.getUi();
+  var findes = ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'synkNoter'; });
+  if (!findes) ScriptApp.newTrigger('synkNoter').timeBased().everyDays(1).atHour(3).create();
+  ui.alert('Noter', synkNoter().join('\n') + '\n\nNoterne kopieres nu også automatisk hver nat ved 3-tiden.', ui.ButtonSet.OK);
 }
 
 function visNoegle() {
