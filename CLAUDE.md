@@ -24,9 +24,12 @@ Store, opdelelige opgaver kan sendes til hjælpe-agenter (de læser samme noter)
 
 ## Arbejdsform
 - **Vi bliver i samme samtale.** Thomas skal ikke starte nye samtaler eller flytte noget.
-- **Afslutning af hver opgave/dag (fast):** opdatér hovednoten og områdets note med det, der er aftalt, bygget og testet.
-  Slet forældet historik – noterne beskriver kun, hvordan det ER nu, og hvad der er NÆSTE.
-  Læg noterne i GitHub **og** kopier dem til Google Drive `CTS/Noter/` (backup + Thomas kan læse dem). Sig til Thomas, når det er gjort.
+- **Start:** Thomas skriver bare, hvad dagen handler om. Claude læser denne note + områdets note og går i gang.
+- **Uddeling (sparer hukommelse):** opgaver der kræver meget læsning – store opslag i Sheets, PDF'er/billeder, gennemgang af kode,
+  undersøgelser – sendes til en hjælpe-agent med hovednoten + områdets note, og kun resultatet kommer tilbage.
+  Små skridt og dialog med Thomas laves direkte.
+- **Afslut:** Thomas skriver **"afslut"** → fast rutine i `.claude/commands/afslut.md` (noter opdateres, GitHub + Drive, kort opsummering).
+- Noterne beskriver kun, hvordan det ER nu, og hvad der er NÆSTE – forældet historik slettes ved hver afslutning.
 - Slå præcist op i Sheets (små områder), ikke hele faner.
 
 ## Google-forbindelse (CTS-kontoen)
@@ -39,5 +42,5 @@ Drive-mappe **CTS/Noter** (kopi af noterne): id `1dCTDB4xGkJTLc7bL156aiNAGqDjHkx
 ## Næste (rækkefølge aftalt 07-11-2026)
 1. ✅ Noterne delt op (denne fil + docs/noter/).
 2. ✅ Bygget (v15, testet i simulering, ikke på iPhone endnu): Hjem = **områdevalg** (Lego · Retro Design · Økonomi). Lego → alt det nuværende. Retro/Økonomi "kommer senere".
-3. Diskutér: fakturaer/eBay-mails → salg registreres automatisk (se okonomi.md og lego.md).
+3. Bilag/fakturaer → forslag til salg i appen: plan godkendt i hovedtræk 07-11 (se okonomi.md). Afventer: bilagsnummer-afklaring, GLS-eksempel.
 4. Bagefter: Økonomi og Retro Design, ét område ad gangen.

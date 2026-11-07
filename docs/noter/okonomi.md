@@ -11,9 +11,26 @@ Status pr. 07-11-2026: **planlagt, ikke bygget.**
 - CTS er ét firma (CVR-nummer kommer) → én samlet skatteopgørelse.
 - Udgifter/Skat flyttes på sigt fra Lego-regnearket op i et fælles økonomi-ark. Separat opgave – aftales først.
 
-## Idé: fakturaer og eBay-salg registreres automatisk (diskuteres med Thomas)
-Mål: Thomas skal ikke taste salg og fragtfakturaer manuelt. Muligheder (se samtalen 07-11):
-1. Maskinrummet læser selv mails i CTS-Gmailen (eBay-salgsmails, fragtfakturaer) og laver **forslag**, som Thomas godkender i appen.
-2. Skærmbillede/foto i appen → tekst læses (Google Drive OCR, gratis) → forslag som Thomas godkender.
-3. eBay's månedlige transaktionsrapport (CSV) til gebyrer.
-Afventer Thomas' svar på spørgsmålene før der bygges.
+## Moms
+CTS er ikke momsregistreret endnu → hele beløbet inkl. moms er udgiften (fx fragt 144,63 kr). Når CTS bliver momsregistreret, skal købsmoms
+kunne trækkes fra – bygges til, når vi kommer dertil.
+
+## Bilagsnumre (fundet i regnearket 07-11)
+- Format **B001, B002 …**. Én fortløbende serie pr. år, fælles for salg og udgifter. 2026-serien starter med B001 (01-07-2026).
+  (B028 står med dato 27-06-2026 – sandsynligvis en tastefejl for 27-07; ikke rørt.)
+- Hvert salg har typisk to bilag i Salg-fanen kolonne P: eBay-ordren + fragtfakturaen, fx "B125, B130".
+- Højeste brugte nummer i 2026: **B131** → næste er **B132** (salget 251009-6041 fra 06-11 har endnu intet bilagsnr).
+- Udgifter: bilagsnr i Udgifter-fanen kolonne A.
+
+## Bilag → forslag til salg (plan, godkendt i hovedtræk af Thomas 07-11 – IKKE bygget)
+- **Mapper:** `CTS/Økonomi/Bilag/Indbakke` (alt nyt lander her) og `CTS/Økonomi/Bilag/<år>/Salg | Fragt | Udgifter | eBay-rapporter`.
+- **Filnavne:** `B132 251009 eBay 20-15256-09193 251009-6041.pdf`, `B133 251012 Fragt CoolRunner 000110671492 20-15256-09193.pdf`.
+- **Forløb:** maskinrummet tjekker Indbakke hver dag → læser bilaget (billed-PDF via Google Drive OCR, mails som tekst) → **forslag i appen**,
+  som Thomas godkender eller retter → salget registreres, bilaget omdøbes, flyttes og bilagsnr skrives i Salg kolonne P.
+- **Kobling:** fragtfaktura ↔ salg via **sporingsnummeret** (står både i eBay-ordren og hos CoolRunner, fx JJD149990200062288889).
+- **eBay:** salgsmailen indeholder ingen data → Thomas gemmer ordresiden ("Einzelheiten zum Kauf" i Verkäufer-Cockpit) som PDF.
+  Den indeholder ordrenr, salgsdato, SKU, varepris, fragt, gebyr, køber (by, land) og sporingsnr.
+- **Fragt:** CoolRunner og GLS sender mails → Thomas sætter automatisk videresendelse til CTS-Gmailen; maskinrummet læser mailene (GmailApp).
+  CoolRunner-mailen indeholder ordrenr, dato, sporingsnr, pris ekskl./inkl. moms. GLS-eksempel mangler.
+- **Månedlig:** eBays salgsrapport i Indbakke → afstemning mod registrerede salg (fanen eBay-afstemning findes).
+- Eksempelbilag ligger i `CTS/`: "eBay 20-15256-09193.pdf" og "Coolrunner 000110671492.pdf" (begge billed-PDF'er).
