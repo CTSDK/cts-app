@@ -47,7 +47,7 @@ Registrér salg (rigtigt salg 251009-6041) · Tilføj sæt og Ret i et køb · T
 - **Åbent/lukket køb:** åbent indtil alle sæt er klar eller solgt; åbent køb kan tilføjes/rettes/fjernes; lukket kan genåbnes med bekræftelse.
 - **Batch 250000** (privat/familiens LEGO, pris 0, Skattepligt Nej) er altid åben; ingen værdi kræves.
 - **Nummerorden** efter sætnummer i køb og Lager. **Solgte sæt vises ikke i Lager.**
-- **Fotos:** 3000 px / JPG 92 % (v16, 07-11); live-kameraet beder om 4032×3024 og viser den faktiske opløsning under billedet. **Ikke testet på iPhone endnu.**
+- **Fotos:** 3000 px / JPG 92 % (v16, 07-11); live-kameraet beder om 4032×3024 og viser den faktiske opløsning under billedet. ✅ Testet 07-11: Thomas synes kvaliteten er fin (opløsningstallet ikke noteret).
 - **DB:** ukendte sæt tilføjes fra appen ("Tilføj til DB"; "-1" fjernes; tema-forslag). Rettelse af eksisterende DB-rækker: senere opgave.
 - **Ingen opslag hos BrickLink/eBay** – al data fra egne databaser (Rebrickable-skærmbilleder fra Thomas er ok som kilde).
 - **Pause fra eBay**, indtil alt er rigtigt.
