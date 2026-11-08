@@ -23,6 +23,8 @@ Store, opdelelige opgaver kan sendes til hjælpe-agenter (de læser samme noter)
 - Ingen data, nøgler eller regnearksfiler i GitHub. Rør ikke data uden aftale.
 - **Én godkendelse pr. opgave:** Claude samler alt (hvad der skrives, flyttes, omdøbes, slettes) i ét samlet forslag → Thomas siger ja én gang →
   hele opgaven udføres uden flere spørgsmål. Spørg ikke igen om dele af en godkendt opgave.
+- **Anbefal kun det, der virker.** Råd om programmer/apps/fremgangsmåder skal være tjekket (kilde vist) – ellers sig tydeligt "ikke tjekket".
+  (08-11: Ctrl+P i Messenger gav ikke hele tråden.)
 - Thomas' ASUS: F5 er lysstyrke – brug **Ctrl+Shift+R** til genindlæsning.
 
 ## Arbejdsform
