@@ -17,5 +17,20 @@ Status pr. 08-11-2026: **afklares med Thomas – intet bygget.**
 > Common, but highly desirable due to its sleek design, this model is a timeless choice for collectors and design enthusiasts alike.
 - Titel = farve + mærke + model + type. Tekst = fast indledning + særlige kendetegn (fx logo) + en sætning om hvor eftertragtet modellen er.
 
-## Skal afklares, før der bygges
-Se samtalen 08-11 (spørgsmål 4–11): oplysninger pr. vare, varenummer, fotos, listings/sprog, fragt, eget regneark, eksisterende varer.
+## Beslutninger (Thomas 08-11)
+- **Eget regneark "CTS Retro"** (Indkøb, Indkøbslog, Lager, Salg). Økonomien samles i CTS Økonomi (Område "Retro Design"). Lego kører for sig selv.
+- **Appen:** Retro-feltet på Hjem får Nyt køb · Lager · Salg – samme måde som Lego.
+- **Køb:** dato, samlet pris, én eller flere ting; prisen deles ligeligt (som Lego).
+- **Felter pr. ting:** type (brødskærer, lampe, møbel, radio/tv-kabinet …), producent, designer, model, farve, særligt kendetegn, stand, udført arbejde, fotos (i appen).
+- **SKU:** `R` + købsdato + mærkekode+model (+ -a/-b/-c ved flere ens i samme køb), fx `R261108-RV294-a`, `R261108-RV191`, `R261108-LAMPE-a`.
+  Mærkekoden (fx RV = Raadvad) vælges første gang mærket oprettes; appen husker den.
+- **Annoncer:** som Lego – overskrift + tilstand + beskrivelse, tysk + engelsk. Raadvad-eksemplet herover er skabelon for beskrivelsen.
+- **Klargøringsudgifter:** (1) småting/forbrug (tape, kasser, skruer, ledning på rulle, olie) = samlet udgift i CTS Økonomi, fordeles ikke;
+  (2) klargøringshold (fx maling til 20 brødskærere) = samlet pris deles ligeligt på tingene i holdet; (3) del til én bestemt ting = lægges direkte på den.
+- **Senere:** møbler og gamle radio/tv-kabinetter (upcycling, maling, olie) – samme model.
+- **eBay:** Thomas opretter/omdøber konti senere: én til Lego (fx "CTS Lego") og én til "CTS Retro". Indtil CVR er salg Thomas' private.
+- Der ligger måske én Raadvad på eBay nu (Thomas tjekker). Ellers starter Retro, når de går rigtigt i gang.
+- **Rækkefølge:** (1) regneark + Nyt køb med fotos, (2) Lager + annoncer, (3) Salg + klargøringshold.
+
+## Skal afklares
+- Stand: skala 1–10 som Lego (forslag) eller tekst.
