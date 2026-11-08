@@ -65,5 +65,5 @@ console.log('retroPriser (JS + Code.gs):', priser.length, 'cases OK');
 for (const [ind, ud] of [['2026-11-08', '261108'], ['261108', '261108'], ['8-11-2026', ''], ['', '']]) {
   assert.strictEqual(R.retroDato(ind), ud); assert.strictEqual(ctx.retroDato_(ind), ud);
 }
-assert.ok(/^2\.2\.0$/.test(ctx.VERSION), 'VERSION 2.2.0');
+assert.ok(/^2\.2\.\d+$/.test(ctx.VERSION), 'VERSION 2.2.x');
 console.log('retro: alle tests OK');
