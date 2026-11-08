@@ -70,3 +70,11 @@ assert.deepStrictEqual(['1010', '2010', '3030', '4050', '9010', ''].map(ctx.bila
 assert.strictEqual(ctx.delBilagsnr_('B052, B054, b148').join(','), 'B052,B054,B148');
 assert.strictEqual(ctx.kr_(1234.5), '1234,50');
 console.log('økonomi-ark (journal/tal/dato/type): OK');
+// MobilePay-PDF lagt ind i mailen (inline) findes via den rå mail
+const raa = ['Subject: Lego køb 261028', 'Content-Type: multipart/mixed; boundary="X"', '', '--X', 'Content-Type: text/plain; charset="utf-8"', '', 'Hilsen Thomas', '--X',
+  'Content-Type: application/pdf; name="4521415852.pdf"', 'Content-Disposition: inline; filename="4521415852.pdf"', 'Content-Transfer-Encoding: base64', '', b64('%PDF-1.4 mp'), '--X--', ''].join('\r\n');
+const mm = ctx.emlMails_(raa);
+assert.strictEqual(mm.flatMap(x => ctx.fragtBilag_(x)).length, 0);
+const fake = { getSubject: () => 'Lego køb 261028', getAttachments: () => [] };
+assert.deepStrictEqual(Array.from(ctx.andreBilag_(fake, mm).map(b => b.navn)), ['Lego køb 261028.pdf']);
+console.log('andre bilag (inline-PDF): OK');

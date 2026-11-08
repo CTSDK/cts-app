@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '2.1.0';
+var VERSION = '2.1.1';
 
 // ---------- Faner ----------
 var FANE = {
@@ -112,7 +112,9 @@ var BILAG_INDBAKKE = '17xqS57VoqpSHcmY0AuKGmouoCnRiR-t7';
 var BILAG_ETIKET = 'CTS/Bilag behandlet';
 // Thomas videresender bilag fra sin private mail. Andre mails med vedhæftninger fra den adresse gemmes også (fx MobilePay-kvitteringer).
 var BILAG_AFSENDER = 't.clifford.pejtersen@gmail.com';
-var FRAGT_SOEG = '(coolrunner OR gls OR from:' + BILAG_AFSENDER + ') -label:cts-bilag-behandlet';
+var FRAGT_SOEG = '(coolrunner OR gls) -label:cts-bilag-behandlet';
+// Thomas' egne bilag findes uden etiket-filter; hvilke beskeder der er gemt, huskes i Script Properties (ANDRE_BILAG_GEMT)
+var ANDRE_SOEG = 'from:' + BILAG_AFSENDER + ' has:attachment newer_than:120d';
 
 function gemFragtbilagMenu() {
   var r = gemFragtbilag();
@@ -150,27 +152,46 @@ function gemFragtbilagIndre_() {
         if (!bilag.length) { if (mail.vigtig) res.ukendt.push(mail.emne || '(uden emne)'); return; }
         bilag.forEach(gem);
       });
-      // Andet bilag fra Thomas (ikke fragt): vedhæftede PDF'er/billeder gemmes med mailens emne som navn
-      if (!fundet && fraAfsender_(m.getFrom())) andreBilag_(m).forEach(gem);
     });
     traade[t].addLabel(etiket); res.traade++;
   }
   if (traade.length === 20 && !res.mere) res.mere = true;
+
+  // Andre bilag fra Thomas (fx MobilePay-kvitteringer): PDF'er/billeder gemmes med mailens emne som navn – én gang pr. besked
+  var p = PropertiesService.getScriptProperties(), gemte = JSON.parse(p.getProperty('ANDRE_BILAG_GEMT') || '[]'), kendt = {};
+  gemte.forEach(function (id) { kendt[id] = true; });
+  GmailApp.search(ANDRE_SOEG, 0, 50).forEach(function (traad) {
+    if (res.mere || Date.now() - start > 5 * 60 * 1000) { res.mere = true; return; }
+    traad.getMessages().forEach(function (m) {
+      if (kendt[m.getId()] || !fraAfsender_(m.getFrom())) return;
+      var mails = fragtMails_(m);
+      kendt[m.getId()] = true; gemte.push(m.getId());   // læses kun én gang
+      if (mails.some(function (x) { return fragtBilag_(x).length; })) return;   // fragt – klares ovenfor
+      andreBilag_(m, mails).forEach(function (b) {
+        if (findes[b.navn]) { res.findes++; return; }
+        mappe.createFile(b.blob.setName(b.navn)); findes[b.navn] = true; res.gemt.push(b.navn);
+      });
+    });
+  });
+  p.setProperty('ANDRE_BILAG_GEMT', JSON.stringify(gemte.slice(-400)));
   return res;
 }
 
 function fraAfsender_(fra) { return String(fra || '').toLowerCase().indexOf(BILAG_AFSENDER) >= 0; }
 
 // "Lego køb 261028" + 4521415852.pdf → "Lego køb 261028.pdf" (flere filer: "… (2).pdf")
-function andreBilag_(m) {
+// PDF'er tages fra den rå mail (så også PDF'er lagt ind i mailen, fx fra iPhone), billeder fra de vedhæftede filer
+function andreBilag_(m, mails) {
   var emne = String(m.getSubject() || 'Bilag').replace(/^(\s*(VS|SV|Fwd?|Re)\s*:\s*)+/i, '').replace(/[\\\/:*?"<>|]+/g, ' ').trim() || 'Bilag';
-  var filer = m.getAttachments({ includeInlineImages: false }).filter(function (a) {
-    return /pdf|image\//i.test(String(a.getContentType() || '')) || /\.(pdf|jpe?g|png|heic)$/i.test(String(a.getName() || ''));
+  var filer = [];
+  (mails || fragtMails_(m)).forEach(function (x) { x.pdf.forEach(function (p) { filer.push({ ext: '.pdf', blob: p.blob }); }); });
+  m.getAttachments({ includeInlineImages: false }).forEach(function (a) {
+    var navn = String(a.getName() || '');
+    if (/image\//i.test(String(a.getContentType() || '')) || /\.(jpe?g|png|heic)$/i.test(navn)) {
+      filer.push({ ext: (navn.match(/\.[A-Za-z0-9]+$/) || ['.jpg'])[0].toLowerCase(), blob: a.copyBlob() });
+    }
   });
-  return filer.map(function (a, i) {
-    var ext = (String(a.getName()).match(/\.[A-Za-z0-9]+$/) || ['.pdf'])[0].toLowerCase();
-    return { navn: andetNavn_(emne, i, filer.length, ext), blob: a.copyBlob() };
-  });
+  return filer.map(function (f, i) { return { navn: andetNavn_(emne, i, filer.length, f.ext), blob: f.blob }; });
 }
 function andetNavn_(emne, i, antal, ext) { return emne + (antal > 1 ? ' (' + (i + 1) + ')' : '') + ext; }
 
