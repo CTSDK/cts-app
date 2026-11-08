@@ -39,13 +39,17 @@ Status pr. 07-11-2026: **bilag og fragt kører** (maskinrum 1.9.0). Fælles øko
 - Delvise refusioner = som regel fragt refunderet ved køb i flere omgange. Står nogle gange netto uden kolonne J – Thomas: lad det være.
 
 ## Åbne punkter (Thomas tjekker)
-- **Feucht 07-10 (Salg 2026 række 13):** eBay-PDF siger SKU 260217-6083-2, arket siger -1. eBay-PDF siger 000000-6846, arket 260906-6846.
-- **Amöneburg 08-10:** 250000-6678-a og 250000-6630-a er valgt (eBay-SKU 251009-6678 / 250000-6630) – tjek om rigtigt.
+- ✅ Afklaret 08-11: Feucht 6083 = 260217-6083-1 (eneste i Indkøb; "-1" er sætnummerets version, ikke a/b). 6846/6881 = 260906 (solgt før de blev gjort klar –
+  det sker: en kunde spørger til et sæt, der lige er kommet hjem). Amöneburg: 6678-a og 6630-a er rigtige (B er på lager).
 - **San Martino jan. 2026:** 3 salg à 169,85 (P167–169), kun 1 CoolRunner-kvittering (B135 på P168 – gæt). 2 kvitteringer mangler (Thomas' private mail?).
 - **CoolRunner-mail 08-09-2026:** pakke ikke hentet 17.–26. aug., på vej retur → der kan komme en returregning.
 - Siltakylä 2025: 3 GLS-ordrer på 3 ens salgsrækker – fordelingen er vilkårlig (private, før CTS).
 
 ## Næste i Økonomi
+- **Økonomi-arket "CTS Økonomi"** (Thomas' ja 08-11 til alle 4 punkter; undersøges, ikke bygget): nyt regneark i `CTS/Økonomi` med fanerne
+  Bilag (én række pr. bilag inkl. gammel journal + nye), Udgifter 2025/2026, Skat 2025/2026, Kontoplan, eBay-afstemning (flyttes fra Lego-arket og fjernes dér
+  efter test), Overblik (henter salgstal fra Lego-arket), Bilagsplan. Lego-arket beholder Indkøb, Indkøbslog, Salg, Lager (priser). Bilagsnr i Salg P bliver stående.
+- MobilePay-kvitteringer for køb 260916, 261015, 261028 ligger i CTS-Gmailen → gemmes med 1.10.0 → bilagsnr (varekøb) i fanen Bilag.
 - **Bilag → forslag i appen** (plan, ikke bygget): maskinrummet læser Indbakke selv og viser forslag i appen, som Thomas godkender.
   Salg 2026 skal have kolonne Q "Sporingsnr" (Thomas' ja 07-11, ikke lavet).
 - Videresendelse fra Thomas' private mail til CTS-Gmailen automatisk (senere).
