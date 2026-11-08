@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '2.1.1';
+var VERSION = '2.2.0';
 
 // ---------- Faner ----------
 var FANE = {
@@ -72,6 +72,8 @@ function onOpen() {
     .addSeparator()
     .addItem('Opret økonomi-ark', 'opretOekonomiMenu')
     .addItem('Afslut flytning til økonomi-ark (sletter gamle faner)', 'afslutFlytningMenu')
+    .addSeparator()
+    .addItem('Opret Retro-ark', 'opretRetroMenu')
     .addToUi();
 }
 
@@ -1816,7 +1818,13 @@ var HANDLINGER = {
   fjernSaet: function (d) { return medLaas_(function () { return fjernSaet_(d); }); },
   saetListet: function (d) { return medLaas_(function () { return saetListet_(d); }); },
   lavListings: function (d) { return medLaas_(function () { return lavListings_(d); }); },
-  tilfoejDb: function (d) { return medLaas_(function () { return tilfoejDb_(d); }); }
+  tilfoejDb: function (d) { return medLaas_(function () { return tilfoejDb_(d); }); },
+  // Retro Design (eget regneark "CTS Retro")
+  retroMaerker: function () { return retroMaerker_(); },
+  retroOpretKoeb: function (d) { return medLaas_(function () { return retroOpretKoeb_(d); }); },
+  retroHentKoeb: function (d) { return retroHentKoeb_(d.dato); },
+  retroGemTing: function (d) { return medLaas_(function () { return retroGemTing_(d); }); },
+  retroUploadFoto: function (d) { return medLaas_(function () { return retroUploadFoto_(d); }); }
 };
 
 // ======================================================================
@@ -2457,4 +2465,370 @@ function uploadFoto_(d) {
   f.ark.getRange(f.r.raekke, K.FOTOS).setValue(true);
   if (!f.r.v[K.FOTOSKU - 1]) f.ark.getRange(f.r.raekke, K.FOTOSKU).setValue(sku);
   return { navn: navn, antalFotos: (t.antal[sku] || 0) + 1, gentaget: false };
+}
+
+// ======================================================================
+//  RETRO DESIGN – eget regneark "CTS Retro" i Drive-mappen CTS/Retro (2.2.0)
+//  Faner: Indkøbslog, Indkøb, Mærker. Fotos: CTS/Retro/Lager/<ÅÅMMDD>/<SKU>.NN.jpg
+//  SKU-regel og prisfordeling er de samme som i appen (js/retro.js) – testes i tests/retro.test.js.
+// ======================================================================
+
+var RETRO_NAVN = 'CTS Retro', RETRO_MAPPE = 'Retro';
+var RF = { LOG: 'Indkøbslog', INDKOEB: 'Indkøb', MAERKER: 'Mærker' };
+// Indkøb: række 1 titel, række 2 overskrift, data fra række 3 (START)
+var RK = { SKU: 1, DATO: 2, TYPE: 3, PRODUCENT: 4, DESIGNER: 5, MODEL: 6, FARVE: 7, KENDETEGN: 8, STAND: 9, ARBEJDE: 10,
+  KOEBSPRIS: 11, FOTOS: 12, KLAR: 13, LAGERSTATUS: 14, NOTER: 15 };
+var RETRO_KOL = 15;
+var RETRO_INDKOEB_KOL = ['SKU', 'Købsdato', 'Type', 'Producent', 'Designer', 'Model', 'Farve', 'Særligt kendetegn', 'Stand (1-10)',
+  'Udført arbejde', 'Købspris (DKK)', 'Fotos', 'Klar', 'Lagerstatus', 'Noter'];
+// Indkøbslog: A dato, B samlet pris, C hvor købt, D antal ting, E noter, F mappe-id (skjult)
+var RL = { DATO: 1, PRIS: 2, HVOR: 3, ANTAL: 4, NOTER: 5, MAPPEID: 6 };
+var RETRO_LOG_KOL = ['Købsdato', 'Samlet pris (DKK)', 'Hvor købt', 'Antal ting', 'Noter', 'MappeID'];
+
+function retro_() {
+  var id = PropertiesService.getScriptProperties().getProperty('RETRO_ID');
+  if (!id) return null;
+  try { var f = DriveApp.getFileById(id); if (f.isTrashed()) return null; return SpreadsheetApp.openById(id); } catch (e) { return null; }
+}
+function retroArk_() {
+  var ss = retro_();
+  if (!ss) throw fejl_('Retro-arket findes ikke endnu. Kør CTS → Opret Retro-ark i regnearket cts-app.');
+  return ss;
+}
+function retroFane_(ss, navn) {
+  var sh = ss.getSheetByName(navn);
+  if (!sh) throw fejl_('Fanen "' + navn + '" findes ikke i ' + RETRO_NAVN + '.');
+  return sh;
+}
+
+function opretRetroMenu() {
+  var ui = SpreadsheetApp.getUi(), r = retro_();
+  if (r) { ui.alert('Retro-arket findes allerede', r.getUrl(), ui.ButtonSet.OK); return; }
+  try {
+    var ss = opretRetro_();
+    ui.alert('Retro-arket er oprettet', ss.getUrl() + '\n\nArket ligger i Drive-mappen CTS/Retro. Fotos gemmes i CTS/Retro/Lager.', ui.ButtonSet.OK);
+  } catch (e) { ui.alert('Oprettelsen stoppede', String(e.message || e) + '\n\nSend et skærmbillede til Claude.', ui.ButtonSet.OK); }
+}
+
+function opretRetro_() {
+  var lego = SpreadsheetApp.getActive();
+  var mappe = underMappe_(mappeForRegneark_(lego), RETRO_MAPPE);   // CTS/Retro (ved siden af cts-app)
+  underMappe_(mappe, 'Lager');
+  var ss = SpreadsheetApp.create(RETRO_NAVN);
+  DriveApp.getFileById(ss.getId()).moveTo(mappe);
+  ss.setSpreadsheetLocale('da_DK');
+  ss.setSpreadsheetTimeZone(lego.getSpreadsheetTimeZone());
+  var forste = ss.getSheets()[0];
+
+  var log = nyFane_(ss, RF.LOG, RETRO_NAVN + ' – Indkøbslog', RETRO_LOG_KOL, 2);
+  log.setColumnWidths(1, 5, 130);
+  log.hideColumns(RL.MAPPEID);
+  var ind = nyFane_(ss, RF.INDKOEB, RETRO_NAVN + ' – Indkøb', RETRO_INDKOEB_KOL, 2);
+  ind.setColumnWidths(1, RETRO_KOL, 120);
+  ind.setColumnWidth(RK.SKU, 170);
+  ind.setFrozenColumns(1);
+  var mk = ss.insertSheet(ss.getSheets().length);
+  mk.setName(RF.MAERKER);
+  mk.getRange(1, 1, 1, 2).setValues([['Producent', 'Kode']]).setBackground(NAVY).setFontColor('#ffffff').setFontWeight('bold');
+  mk.setFrozenRows(1);
+  mk.getRange('A:B').setNumberFormat('@');
+  mk.setColumnWidth(1, 180);
+  ss.deleteSheet(forste);
+  ss.setActiveSheet(ind);
+  PropertiesService.getScriptProperties().setProperty('RETRO_ID', ss.getId());
+  return ss;
+}
+
+// ---------- Rene funktioner (samme som js/retro.js) ----------
+function retroRens_(t) {
+  return String(t == null ? '' : t).toUpperCase()
+    .replace(/Æ/g, 'AE').replace(/Ø/g, 'OE').replace(/Å/g, 'AA')
+    .replace(/[ÄÁÀÂ]/g, 'A').replace(/[ÖÓÒÔ]/g, 'O').replace(/[ÜÚÙÛ]/g, 'U').replace(/[ÉÈÊË]/g, 'E')
+    .replace(/[^A-Z0-9]/g, '');
+}
+function retroDel_(kode, model, type) {
+  var k = retroRens_(kode), m = retroRens_(model);
+  if (m) return k + m;
+  if (k) return k;
+  return retroRens_(type) || 'TING';
+}
+function retroBogstav_(n) {
+  var s = '';
+  while (n > 0) { var r = (n - 1) % 26; s = String.fromCharCode(97 + r) + s; n = Math.floor((n - 1) / 26); }
+  return s;
+}
+function retroBogstavNr_(s) {
+  var n = 0;
+  for (var i = 0; i < s.length; i++) n = n * 26 + (s.charCodeAt(i) - 96);
+  return n;
+}
+function retroSkuFraDel_(dato, del, nr, antalEns) { return 'R' + dato + '-' + del + (antalEns > 1 ? '-' + retroBogstav_(nr) : ''); }
+// "R" + ÅÅMMDD + "-" + del (+ -a/-b/-c, når der er flere ens i købet)
+function retroSku_(datoYYMMDD, kode, model, type, nr, antalEns) { return retroSkuFraDel_(datoYYMMDD, retroDel_(kode, model, type), nr, antalEns); }
+// SKU'er for nye ting + omdøbning af en ting, der stod alene og nu får følgeskab (→ -a)
+function retroPlan_(dato, eksisterende, nyeDele) {
+  var info = {};
+  (eksisterende || []).forEach(function (sku) {
+    var m = /^R\d{6}-([A-Z0-9]+)(?:-([a-z]+))?$/.exec(String(sku));
+    if (!m) return;
+    var i = info[m[1]] = info[m[1]] || { antal: 0, hoejeste: 0, alene: null };
+    i.antal++;
+    if (m[2]) i.hoejeste = Math.max(i.hoejeste, retroBogstavNr_(m[2])); else i.alene = String(sku);
+  });
+  var nyeAntal = {};
+  nyeDele.forEach(function (d) { nyeAntal[d] = (nyeAntal[d] || 0) + 1; });
+  var taeller = {}, omdoeb = [], total = {};
+  Object.keys(nyeAntal).forEach(function (d) {
+    var i = info[d] || { antal: 0, hoejeste: 0, alene: null };
+    total[d] = i.antal + nyeAntal[d];
+    taeller[d] = i.hoejeste;
+    if (total[d] > 1 && i.alene) { taeller[d]++; omdoeb.push([i.alene, retroSkuFraDel_(dato, d, taeller[d], total[d])]); }
+  });
+  var skuer = nyeDele.map(function (d) {
+    if (total[d] > 1) { taeller[d]++; return retroSkuFraDel_(dato, d, taeller[d], total[d]); }
+    return retroSkuFraDel_(dato, d, 1, 1);
+  });
+  return { skuer: skuer, omdoeb: omdoeb };
+}
+// Samlet pris delt ligeligt, 2 decimaler; sidste ting får resten
+function retroPriser_(pris, n) {
+  if (!(n > 0)) return [];
+  var oere = Math.round((Number(pris) || 0) * 100), hver = Math.floor(oere / n), res = [];
+  for (var i = 0; i < n - 1; i++) res.push(hver / 100);
+  res.push((oere - hver * (n - 1)) / 100);
+  return res;
+}
+function retroDato_(s) {
+  s = String(s == null ? '' : s).trim();
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (m) return m[1].slice(2) + m[2] + m[3];
+  return /^\d{6}$/.test(s) ? s : '';
+}
+function retroTekst_(x) { x = String(x == null ? '' : x).trim(); return /^[=+\-@]/.test(x) ? "'" + x : x; }   // aldrig en formel
+
+// ---------- Læsning ----------
+function retroMaerkerLaes_(ss) {
+  var sh = retroFane_(ss, RF.MAERKER), n = sh.getLastRow() - 1, liste = [];
+  if (n > 0) {
+    sh.getRange(2, 1, n, 2).getDisplayValues().forEach(function (r) {
+      if (String(r[0]).trim()) liste.push({ producent: String(r[0]).trim(), kode: String(r[1]).trim().toUpperCase() });
+    });
+  }
+  return { ark: sh, liste: liste };
+}
+function retroMaerker_() { return retroMaerkerLaes_(retroArk_()).liste; }
+
+function retroLaesIndkoeb_(ind) {
+  var n = ind.getLastRow() - START + 1, raekker = [];
+  if (n < 1) return raekker;
+  var v = ind.getRange(START, 1, n, RETRO_KOL).getValues();
+  for (var i = 0; i < v.length; i++) if (v[i][RK.SKU - 1] !== '' && v[i][RK.DATO - 1] !== '') raekker.push({ raekke: START + i, v: v[i] });
+  return raekker;
+}
+function retroLogRaekke_(log, dato) {
+  var n = log.getLastRow() - START + 1;
+  if (n < 1) return null;
+  var v = log.getRange(START, 1, n, RETRO_LOG_KOL.length).getValues();
+  for (var i = 0; i < v.length; i++) if (String(v[i][RL.DATO - 1]) === String(dato)) return { raekke: START + i, v: v[i] };
+  return null;
+}
+function retroTing_(v, antal) {
+  var s = function (x) { return x == null ? '' : String(x); }, sku = s(v[RK.SKU - 1]);
+  return {
+    sku: sku, dato: s(v[RK.DATO - 1]), type: s(v[RK.TYPE - 1]), producent: s(v[RK.PRODUCENT - 1]), designer: s(v[RK.DESIGNER - 1]),
+    model: s(v[RK.MODEL - 1]), farve: s(v[RK.FARVE - 1]), kendetegn: s(v[RK.KENDETEGN - 1]),
+    stand: v[RK.STAND - 1] === '' ? '' : s(v[RK.STAND - 1]), arbejde: s(v[RK.ARBEJDE - 1]),
+    koebspris: Math.round((Number(v[RK.KOEBSPRIS - 1]) || 0) * 100) / 100,
+    fotos: v[RK.FOTOS - 1] === true, klar: v[RK.KLAR - 1] === true, lagerstatus: s(v[RK.LAGERSTATUS - 1]), noter: s(v[RK.NOTER - 1]),
+    antalFotos: (antal && antal[sku]) || 0
+  };
+}
+function retroFindTing_(ss, sku) {
+  var ind = retroFane_(ss, RF.INDKOEB), rk = retroLaesIndkoeb_(ind);
+  for (var i = 0; i < rk.length; i++) if (String(rk[i].v[RK.SKU - 1]) === sku) return { ark: ind, raekke: rk[i].raekke, v: rk[i].v };
+  throw fejl_('SKU ' + sku + ' findes ikke i ' + RETRO_NAVN + ' → Indkøb.');
+}
+
+// Købets fotomappe CTS/Retro/Lager/<ÅÅMMDD>; id gemmes i Indkøbslog (skjult kolonne F)
+function retroKoebMappe_(ss, dato, opret) {
+  var log = retroFane_(ss, RF.LOG), lr = retroLogRaekke_(log, dato);
+  if (lr && lr.v[RL.MAPPEID - 1]) { try { return DriveApp.getFolderById(String(lr.v[RL.MAPPEID - 1])); } catch (e) { /* slettet – find/opret igen */ } }
+  var lager = underMappe_(mappeForRegneark_(ss), 'Lager');
+  var it = lager.getFoldersByName(String(dato));
+  var mappe = it.hasNext() ? it.next() : (opret ? lager.createFolder(String(dato)) : null);
+  if (mappe && lr) log.getRange(lr.raekke, RL.MAPPEID).setValue(mappe.getId());
+  return mappe;
+}
+
+// Fælles foto-gem: <SKU>.NN.jpg i mappen; samme uploadId to gange (genforsøg) gemmes kun én gang
+function gemFoto_(mappe, sku, billede, uploadId) {
+  var t = fotoTaelling_(mappe);
+  uploadId = String(uploadId || '');
+  if (uploadId) {
+    for (var i = 0; i < t.filer.length; i++) {
+      if (t.filer[i].getDescription() === uploadId) return { navn: t.filer[i].getName(), antalFotos: t.antal[sku] || 0, gentaget: true };
+    }
+  }
+  var nr = (t.hoejeste[sku] || 0) + 1;
+  var navn = sku + '.' + pad2_(nr) + '.jpg';
+  var ny = mappe.createFile(Utilities.newBlob(Utilities.base64Decode(String(billede)), 'image/jpeg', navn));
+  if (uploadId) ny.setDescription(uploadId);
+  return { navn: navn, antalFotos: (t.antal[sku] || 0) + 1, gentaget: false };
+}
+
+// ---------- API ----------
+function retroHentKoeb_(datoInd, ss) {
+  ss = ss || retroArk_();
+  var dato = retroDato_(datoInd);
+  if (!dato) throw fejl_('Købsdato mangler eller er forkert.');
+  var lr = retroLogRaekke_(retroFane_(ss, RF.LOG), dato);
+  if (!lr) throw fejl_('Køb ' + dato + ' findes ikke i ' + RETRO_NAVN + '.');
+  var mappe = retroKoebMappe_(ss, dato, false), t = mappe ? fotoTaelling_(mappe) : { antal: {} };
+  var ting = retroLaesIndkoeb_(retroFane_(ss, RF.INDKOEB))
+    .filter(function (r) { return String(r.v[RK.DATO - 1]) === dato; })
+    .map(function (r) { return retroTing_(r.v, t.antal); });
+  return { dato: dato, pris: Number(lr.v[RL.PRIS - 1]) || 0, hvorKoebt: String(lr.v[RL.HVOR - 1] || ''), antal: ting.length,
+    noter: String(lr.v[RL.NOTER - 1] || ''), ting: ting };
+}
+
+// d: {dato:'YYYY-MM-DD', pris, hvorKoebt, noter, ting:[{type, producent, kode, model, antal}], tilfoej, id}
+// Ved tilfoej lægges pris til købets samlede pris, og hele prisen fordeles igen ligeligt på alle ting i købet.
+function retroOpretKoeb_(d) {
+  var ss = retroArk_();
+  var dato = retroDato_(d.dato);
+  if (!dato) throw fejl_('Købsdato mangler eller er forkert.');
+  var tilfoej = d.tilfoej === true, pris = Number(d.pris);
+  if (isNaN(pris) || pris < 0 || (!tilfoej && !(pris > 0))) throw fejl_('Samlet pris skal være over 0.');
+  var linjer = d.ting || [];
+  if (!linjer.length) throw fejl_('Ingen ting i købet.');
+  var log = retroFane_(ss, RF.LOG), ind = retroFane_(ss, RF.INDKOEB);
+  var lr = retroLogRaekke_(log, dato), id = String(d.id || '');
+  // Samme køb sendt igen fra udbakken (genforsøg)? Så svares med købet, som det er.
+  if (lr && id && String(log.getRange(lr.raekke, RL.DATO).getNote()).split(/\s+/).indexOf(id) >= 0) {
+    var gl = retroHentKoeb_(dato, ss); gl.gentaget = true; gl.nye = []; gl.omdoeb = []; return gl;
+  }
+  if (lr && !tilfoej) throw fejl_('Køb ' + dato + ' findes allerede.');
+
+  // Mærker: kendt producent → dens kode; ny producent → kode (2–4 store bogstaver), unik
+  var mk = retroMaerkerLaes_(ss), kendt = {}, kodeEjer = {}, nyeMaerker = [], ting = [];
+  mk.liste.forEach(function (m) { kendt[m.producent.toLowerCase()] = m; kodeEjer[m.kode] = m.producent; });
+  linjer.forEach(function (l, i) {
+    var type = String(l.type || '').trim(), antal = Number(l.antal);
+    if (!type) throw fejl_('Linje ' + (i + 1) + ' mangler type.');
+    if (!(antal >= 1 && antal <= 99 && Math.floor(antal) === antal)) throw fejl_('Linje ' + (i + 1) + ': antal skal være et helt tal fra 1 til 99.');
+    var producent = String(l.producent || '').trim(), kode = String(l.kode || '').trim().toUpperCase(), model = String(l.model || '').trim();
+    if (producent) {
+      var k = kendt[producent.toLowerCase()];
+      if (k) {
+        if (kode && kode !== k.kode) throw fejl_('Producent ' + k.producent + ' har koden ' + k.kode + ' i Mærker (ikke ' + kode + ').');
+        kode = k.kode; producent = k.producent;
+      } else {
+        if (!/^[A-Z]{2,4}$/.test(kode)) throw fejl_('Ny producent ' + producent + ': koden skal være 2–4 store bogstaver.');
+        if (kodeEjer[kode]) throw fejl_('Koden ' + kode + ' bruges allerede af ' + kodeEjer[kode] + '.');
+        var ny = { producent: producent, kode: kode };
+        kendt[producent.toLowerCase()] = ny; kodeEjer[kode] = producent; nyeMaerker.push(ny);
+      }
+    } else kode = '';
+    for (var j = 0; j < antal; j++) ting.push({ type: type, producent: producent, kode: kode, model: model });
+  });
+
+  var eks = retroLaesIndkoeb_(ind).filter(function (r) { return String(r.v[RK.DATO - 1]) === dato; });
+  var plan = retroPlan_(dato, eks.map(function (r) { return String(r.v[RK.SKU - 1]); }),
+    ting.map(function (t) { return retroDel_(t.kode, t.model, t.type); }));
+
+  // Mærker
+  if (nyeMaerker.length) {
+    var mr = mk.ark.getLastRow() + 1;
+    mk.ark.getRange(mr, 1, nyeMaerker.length, 2).setNumberFormat('@')
+      .setValues(nyeMaerker.map(function (m) { return [retroTekst_(m.producent), m.kode]; }));
+  }
+
+  // Indkøbslog
+  var antalIalt = eks.length + ting.length, hvor = String(d.hvorKoebt || '').trim(), noter = String(d.noter || '').trim();
+  var total = lr ? Math.round(((Number(lr.v[RL.PRIS - 1]) || 0) + pris) * 100) / 100 : pris;
+  var logRk;
+  if (lr) {
+    logRk = lr.raekke;
+    log.getRange(logRk, RL.PRIS).setValue(total);
+    log.getRange(logRk, RL.ANTAL).setValue(antalIalt);
+    if (hvor && !lr.v[RL.HVOR - 1]) log.getRange(logRk, RL.HVOR).setValue(retroTekst_(hvor));
+    if (noter) log.getRange(logRk, RL.NOTER).setValue(retroTekst_(lr.v[RL.NOTER - 1] ? lr.v[RL.NOTER - 1] + '; ' + noter : noter));
+  } else {
+    logRk = START;
+    log.insertRowsBefore(START, 1);
+    log.getRange(START, 1, 1, RETRO_LOG_KOL.length).setBackground(null).setFontColor(null).setFontWeight('normal')
+      .setHorizontalAlignment(null).setWrap(false).clearDataValidations();
+    log.getRange(START, RL.HVOR, 1, 1).setNumberFormat('@');
+    log.getRange(START, RL.NOTER, 1, 1).setNumberFormat('@');
+    log.getRange(START, 1, 1, 5).setValues([[Number(dato), pris, retroTekst_(hvor), antalIalt, retroTekst_(noter)]]);
+    log.getRange(START, RL.DATO).setNumberFormat('0');
+    log.getRange(START, RL.PRIS).setNumberFormat('#,##0.00');
+  }
+  if (id) { var c = log.getRange(logRk, RL.DATO); c.setNote(String(c.getNote() || '').trim() ? c.getNote() + ' ' + id : id); }
+
+  // Indkøb: nye rækker øverst (nyt køb) eller efter købets sidste række (tilføjelse)
+  var n = ting.length, foerste;
+  if (eks.length) { var sidste = eks[eks.length - 1].raekke; ind.insertRowsAfter(sidste, n); foerste = sidste + 1; }
+  else { ind.insertRowsBefore(START, n); foerste = START; }
+  var priser = retroPriser_(total, antalIalt);
+  var blok = ind.getRange(foerste, 1, n, RETRO_KOL);
+  blok.setBackground(null).setFontColor(null).setFontWeight('normal').setHorizontalAlignment(null).setWrap(false).clearDataValidations();
+  ind.getRange(foerste, RK.SKU, n, 1).setNumberFormat('@');
+  ind.getRange(foerste, RK.TYPE, n, 6).setNumberFormat('@');      // Type … Særligt kendetegn
+  ind.getRange(foerste, RK.ARBEJDE, n, 1).setNumberFormat('@');
+  ind.getRange(foerste, RK.LAGERSTATUS, n, 2).setNumberFormat('@');
+  blok.setValues(ting.map(function (t, i) {
+    return [plan.skuer[i], Number(dato), retroTekst_(t.type), retroTekst_(t.producent), '', retroTekst_(t.model), '', '', '', '',
+      priser[eks.length + i], false, false, 'På lager', ''];
+  }));
+  ind.getRange(foerste, RK.DATO, n, 1).setNumberFormat('0');
+  ind.getRange(foerste, RK.KOEBSPRIS, n, 1).setNumberFormat('#,##0.00');
+  ind.getRange(foerste, RK.FOTOS, n, 2).setDataValidation(SpreadsheetApp.newDataValidation().requireCheckbox().build());
+  ind.getRange(foerste, RK.STAND, n, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireNumberBetween(1, 10).setAllowInvalid(false).build());
+
+  // Eksisterende ting i købet: ny købspris og evt. nyt SKU (alene → -a); fotos omdøbes med
+  var omdoeb = {}; plan.omdoeb.forEach(function (o) { omdoeb[o[0]] = o[1]; });
+  var mappe = retroKoebMappe_(ss, dato, true);
+  var filer = plan.omdoeb.length ? fotoTaelling_(mappe).filer : [];
+  eks.forEach(function (r, i) {
+    ind.getRange(r.raekke, RK.KOEBSPRIS).setValue(priser[i]);
+    var gl = String(r.v[RK.SKU - 1]), nyt = omdoeb[gl];
+    if (!nyt) return;
+    ind.getRange(r.raekke, RK.SKU).setValue(nyt);
+    filer.forEach(function (f) { var fn = f.getName(); if (fn.indexOf(gl + '.') === 0) f.setName(nyt + fn.substring(gl.length)); });
+  });
+  SpreadsheetApp.flush();
+
+  var res = retroHentKoeb_(dato, ss);
+  res.nye = ting.map(function (t, i) { return { sku: plan.skuer[i], type: t.type, producent: t.producent, model: t.model }; });
+  res.omdoeb = plan.omdoeb;
+  res.gentaget = false;
+  return res;
+}
+
+// d: {sku, designer, farve, kendetegn, stand, arbejde, noter, klar}
+function retroGemTing_(d) {
+  var ss = retroArk_(), sku = String(d.sku || ''), f = retroFindTing_(ss, sku);
+  var stand = d.stand === '' || d.stand === null || d.stand === undefined ? '' : Number(d.stand);
+  if (stand !== '' && !(stand >= 1 && stand <= 10 && Math.floor(stand) === stand)) throw fejl_('Stand skal være 1–10.');
+  f.ark.getRange(f.raekke, RK.DESIGNER, 1, 1).setNumberFormat('@').setValue(retroTekst_(d.designer));
+  f.ark.getRange(f.raekke, RK.FARVE, 1, 2).setNumberFormat('@').setValues([[retroTekst_(d.farve), retroTekst_(d.kendetegn)]]);
+  f.ark.getRange(f.raekke, RK.STAND).setValue(stand);
+  f.ark.getRange(f.raekke, RK.ARBEJDE).setNumberFormat('@').setValue(retroTekst_(d.arbejde));
+  f.ark.getRange(f.raekke, RK.KLAR).setValue(d.klar === true);
+  f.ark.getRange(f.raekke, RK.NOTER).setNumberFormat('@').setValue(retroTekst_(d.noter));
+  SpreadsheetApp.flush();
+  var g = retroFindTing_(ss, sku), mappe = retroKoebMappe_(ss, String(g.v[RK.DATO - 1]), false);
+  return retroTing_(g.v, mappe ? fotoTaelling_(mappe).antal : {});
+}
+
+// d: {sku, billede (base64), uploadId}
+function retroUploadFoto_(d) {
+  var ss = retroArk_(), sku = String(d.sku || '');
+  if (!d.billede) throw fejl_('Intet billede.');
+  var f = retroFindTing_(ss, sku);
+  var mappe = retroKoebMappe_(ss, String(f.v[RK.DATO - 1]), true);
+  var r = gemFoto_(mappe, sku, d.billede, d.uploadId);
+  f.ark.getRange(f.raekke, RK.FOTOS).setValue(true);
+  return r;
 }

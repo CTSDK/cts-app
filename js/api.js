@@ -197,6 +197,86 @@
         return { aar: d.dato.slice(0, 4), raekker: raekker, fortjenesteOrdre: Math.round(raekker.reduce(function (a, r) { return a + r.fortjeneste; }, 0) * 100) / 100,
           saet: s.ind.filter(function (r) { return varer.some(function (v) { return v.sku === r.sku; }); }) };
       },
+      // ----- Retro Design (samme regler som maskinrummet; SKU/pris fra js/retro.js) -----
+      retroMaerker: function () { return retroL(laes()).maerker; },
+      retroOpretKoeb: function (d) {
+        var R = rod.Retro, s = laes(), r = retroL(s);
+        var dato = R.retroDato(d.dato); if (!dato) throw srv('Købsdato mangler eller er forkert.');
+        var tilfoej = d.tilfoej === true, pris = Number(d.pris);
+        if (isNaN(pris) || pris < 0 || (!tilfoej && !(pris > 0))) throw srv('Samlet pris skal være over 0.');
+        if (!(d.ting || []).length) throw srv('Ingen ting i købet.');
+        var log = r.log.find(function (l) { return l.dato === dato; });
+        if (log && d.id && (log.ider || []).indexOf(d.id) >= 0) { var g = H.retroHentKoeb({ dato: dato }); g.gentaget = true; g.nye = []; g.omdoeb = []; return g; }
+        if (log && !tilfoej) throw srv('Køb ' + dato + ' findes allerede.');
+        var kendt = {}, ejer = {}, ting = [];
+        r.maerker.forEach(function (m) { kendt[m.producent.toLowerCase()] = m; ejer[m.kode] = m.producent; });
+        d.ting.forEach(function (l, i) {
+          var type = String(l.type || '').trim(), antal = Number(l.antal);
+          if (!type) throw srv('Linje ' + (i + 1) + ' mangler type.');
+          if (!(antal >= 1 && antal <= 99 && Math.floor(antal) === antal)) throw srv('Linje ' + (i + 1) + ': antal skal være et helt tal fra 1 til 99.');
+          var producent = String(l.producent || '').trim(), kode = String(l.kode || '').trim().toUpperCase(), model = String(l.model || '').trim();
+          if (producent) {
+            var k = kendt[producent.toLowerCase()];
+            if (k) { if (kode && kode !== k.kode) throw srv('Producent ' + k.producent + ' har koden ' + k.kode + ' i Mærker (ikke ' + kode + ').'); kode = k.kode; producent = k.producent; }
+            else {
+              if (!/^[A-Z]{2,4}$/.test(kode)) throw srv('Ny producent ' + producent + ': koden skal være 2–4 store bogstaver.');
+              if (ejer[kode]) throw srv('Koden ' + kode + ' bruges allerede af ' + ejer[kode] + '.');
+              var ny = { producent: producent, kode: kode }; kendt[producent.toLowerCase()] = ny; ejer[kode] = producent; r.maerker.push(ny);
+            }
+          } else kode = '';
+          for (var j = 0; j < antal; j++) ting.push({ type: type, producent: producent, kode: kode, model: model });
+        });
+        var eks = r.ting.filter(function (t) { return t.dato === dato; });
+        var plan = R.retroPlan(dato, eks.map(function (t) { return t.sku; }), ting.map(function (t) { return R.retroDel(t.kode, t.model, t.type); }));
+        if (log) { log.pris = Math.round((log.pris + pris) * 100) / 100; if (!log.hvorKoebt) log.hvorKoebt = d.hvorKoebt || ''; }
+        else { log = { dato: dato, pris: pris, hvorKoebt: d.hvorKoebt || '', noter: d.noter || '', ider: [] }; r.log.unshift(log); }
+        if (d.id) (log.ider = log.ider || []).push(d.id);
+        plan.omdoeb.forEach(function (o) {
+          var t = eks.find(function (x) { return x.sku === o[0]; }); if (t) t.sku = o[1];
+          if (r.fotos[o[0]]) { r.fotos[o[1]] = r.fotos[o[0]].map(function (f) { return Object.assign({}, f, { navn: f.navn.replace(o[0], o[1]) }); }); delete r.fotos[o[0]]; }
+        });
+        var nye = ting.map(function (t, i) {
+          return { sku: plan.skuer[i], dato: dato, type: t.type, producent: t.producent, designer: '', model: t.model, farve: '', kendetegn: '',
+            stand: '', arbejde: '', koebspris: 0, fotos: false, klar: false, lagerstatus: 'På lager', noter: '' };
+        });
+        var sidste = -1; r.ting.forEach(function (t, i) { if (t.dato === dato) sidste = i; });
+        if (sidste < 0) r.ting = nye.concat(r.ting); else r.ting.splice.apply(r.ting, [sidste + 1, 0].concat(nye));
+        var alle = r.ting.filter(function (t) { return t.dato === dato; }), kp = R.retroPriser(log.pris, alle.length);
+        alle.forEach(function (t, i) { t.koebspris = kp[i]; });
+        skriv(s);
+        var res = H.retroHentKoeb({ dato: dato });
+        res.nye = nye.map(function (t) { return { sku: t.sku, type: t.type, producent: t.producent, model: t.model }; });
+        res.omdoeb = plan.omdoeb; res.gentaget = false;
+        return res;
+      },
+      retroHentKoeb: function (d) {
+        var r = retroL(laes()), dato = rod.Retro.retroDato(d.dato);
+        var log = r.log.find(function (l) { return l.dato === dato; });
+        if (!log) throw srv('Køb ' + dato + ' findes ikke i CTS Retro.');
+        var ting = r.ting.filter(function (t) { return t.dato === dato; }).map(function (t) { return Object.assign({}, t, { antalFotos: (r.fotos[t.sku] || []).length }); });
+        return { dato: dato, pris: log.pris, hvorKoebt: log.hvorKoebt, antal: ting.length, noter: log.noter, ting: ting };
+      },
+      retroGemTing: function (d) {
+        var s = laes(), r = retroL(s), t = r.ting.find(function (x) { return x.sku === d.sku; });
+        if (!t) throw srv('SKU ' + d.sku + ' findes ikke i CTS Retro → Indkøb.');
+        var stand = d.stand === '' || d.stand == null ? '' : Number(d.stand);
+        if (stand !== '' && !(stand >= 1 && stand <= 10)) throw srv('Stand skal være 1–10.');
+        ['designer', 'farve', 'kendetegn', 'arbejde', 'noter'].forEach(function (k) { t[k] = String(d[k] || '').trim(); });
+        t.stand = stand === '' ? '' : String(stand); t.klar = d.klar === true;
+        skriv(s); return Object.assign({}, t, { antalFotos: (r.fotos[t.sku] || []).length });
+      },
+      retroUploadFoto: function (d) {
+        var s = laes(), r = retroL(s), t = r.ting.find(function (x) { return x.sku === d.sku; });
+        if (!t) throw srv('SKU ' + d.sku + ' findes ikke i CTS Retro → Indkøb.');
+        if (!d.billede) throw srv('Intet billede.');
+        var liste = r.fotos[d.sku] = r.fotos[d.sku] || [];
+        var gl = liste.find(function (f) { return f.id === d.uploadId; });
+        if (gl) return { navn: gl.navn, antalFotos: liste.length, gentaget: true };
+        var nr = liste.length + 1, navn = d.sku + '.' + (nr < 10 ? '0' + nr : nr) + '.jpg';
+        liste.push({ id: d.uploadId, navn: navn, kb: Math.round(d.billede.length * 0.75 / 1024) });
+        t.fotos = true; skriv(s);
+        return { navn: navn, antalFotos: liste.length, gentaget: false };
+      },
       hentAlt: function () {
         var s = laes(); genberegn(s);
         return {
@@ -209,6 +289,7 @@
       }
     };
     function srv(t) { var e = new Error(t); e.fraServer = true; return e; }
+    function retroL(s) { s.retro = s.retro || { log: [], ting: [], maerker: [], fotos: {} }; return s.retro; }
     async function kald(handling, data) {
       await vent(150);
       if (navigator.onLine === false) throw new Error('Ingen forbindelse (simuleret).');
