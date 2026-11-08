@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '2.0.0';
+var VERSION = '2.0.1';
 
 // ---------- Faner ----------
 var FANE = {
@@ -475,13 +475,13 @@ function opretOekonomi_() {
     }
     ['2025', '2026'].forEach(function (aar) { byggSkat_(oss, aar, skatTekster_(lego, aar)); });
     formlerOekonomi_(oss);
-    byggOverblik_(oss, lego.getId());
   });
 
   var plan = kopierBilagsplan_(lego, oss);
   res.push('Bilagsplan: ' + plan + ' rækker');
   var nb = byggBilag_(lego, oss);
   res.push('Bilag: ' + nb.antal + ' bilag (' + nb.udenFil + ' uden fil-link)');
+  medEngelsk_(oss, function () { byggOverblik_(oss, lego.getId()); });   // efter Bilag, så COUNTIF kan finde fanen
 
   ['2025', '2026'].forEach(function (aar) { oss.getSheetByName(FANE['SALG' + aar.slice(2)]).hideSheet(); });
   oss.deleteSheet(forste);
