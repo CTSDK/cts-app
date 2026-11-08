@@ -50,14 +50,16 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
 ## Næste (pr. 08-11-2026)
-1. **Løbende bilag:** nyt i `Bilag/Indbakke` (Gmail → Gem bilag, eller direkte i Drive) → Claude laver Bilagsplan → Thomas kører Udfør bilagsplan.
-2. **Thomas:** vælg Område (Lego/Retro Design/Fælles/Privat) for gamle bilag i CTS Økonomi → Bilag; 2 manglende San Martino-kvitteringer.
-3. **Byg (Økonomi):** "Bilag → forslag i appen" + kolonne Q Sporingsnr i Salg 2026 (plan i okonomi.md).
-4. Bagefter: Retro Design.
+1. **Retro:** Thomas tester et rigtigt køb i appen (Retro → Registrér nyt køb → Klargør med fotos) → Claude tjekker arket "CTS Retro" og fotomappen.
+   Derefter Retro trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Se retro.md.
+2. **Løbende bilag:** nyt i `Bilag/Indbakke` (Gmail → Gem bilag, eller direkte i Drive; samtaler via GoFullPage) → Claude laver Bilagsplan → Thomas kører Udfør bilagsplan.
+3. **Thomas, når der er tid:** Område for gamle bilag i CTS Økonomi → Bilag; 2 manglende San Martino-kvitteringer.
+4. Senere: "Salg fra eBay-PDF i appen" + kolonne Q Sporingsnr (okonomi.md); idé om hjemmeside for CTS Lego (lego.md).
 
 ## Status pr. 08-11-2026
-- ✅ **CTS Økonomi** (eget regneark, id `1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (196), Udgifter, Skat, Kontoplan, Bilagsplan.
-  Flyttet fra Lego-arket 08-11, tal tjekket ens. Lego-arket = priser/lager/salg.
-- ✅ Maskinrum 2.1.1 hos Thomas (bilagsplan → også fanen Bilag; MobilePay-PDF'er gemmes). App v16 (fotos 3000 px / 92 %).
-- ✅ Alle salg 2026 har bilagsnr (næste B169; 2025 næste B029). eBay sep+okt afstemt.
-- ✅ Noter kopieres til Drive CTS/Noter hver nat. Gmail-forbindelse til CTS-kontoen virker.
+- ✅ **App v19** på Thomas' iPhone (versionen står nederst under Mere). Retro-side + nyt køb + klargør (v17), dato/pris-felter rettet (v19).
+- ✅ **Maskinrum 2.2.1** hos Thomas: Gem bilag fra Gmail, Udfør bilagsplan, økonomi-ark, Opret Retro-ark.
+- ✅ **CTS Økonomi** (`1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (196), Udgifter, Skat, Kontoplan, Bilagsplan. Lego-arket = priser/lager/salg.
+- ✅ **CTS Retro** (`1FQh_UuorscBSh59KYfhB4x6ufyJT5nNeRyA1renVpbc`) oprettet; ingen rigtige køb endnu.
+- ✅ Alle salg 2026 har bilagsnr (næste B169; 2025 næste B029). Frisk start: gamle regler (afregningsbilag m.m.) gælder ikke.
+- ✅ Noter kopieres til Drive CTS/Noter hver nat. Gmail-forbindelse virker.

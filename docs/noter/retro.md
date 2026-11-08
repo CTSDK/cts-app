@@ -1,6 +1,6 @@
 # Område: Retro Design
 
-Status pr. 08-11-2026: **trin 1 bygget og testet i testtilstand (app v17 + maskinrum 2.2.1) – IKKE testet hos Thomas.**
+Status pr. 08-11-2026: **trin 1 bygget og installeret hos Thomas (app v19 + maskinrum 2.2.1, arket CTS Retro oprettet). Nyt køb endnu ikke testet med et rigtigt køb.**
 
 ## Det vi ved (Thomas 08-11)
 - Retro Design = **danske retro-ting, der klargøres og sælges igen**. Hører under CTS og indgår i økonomien (CTS Økonomi, Område "Retro Design").
@@ -48,5 +48,5 @@ Status pr. 08-11-2026: **trin 1 bygget og testet i testtilstand (app v17 + maski
 - Tests: `node tests/retro.test.js`, `node tests/retro-e2e.js` (Playwright, mock).
 
 ## Næste i Retro
-- Thomas: sæt maskinrum 2.2.1 ind → Opret Retro-ark → test et rigtigt køb i appen.
+- Thomas: test et rigtigt køb i appen → Claude tjekker CTS Retro (Indkøbslog, Indkøb, Mærker) og fotomappen CTS/Retro/Lager.
 - Trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Trin 3: Salg + klargøringshold.
