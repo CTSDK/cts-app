@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.10.0';
+var VERSION = '2.0.0';
 
 // ---------- Faner ----------
 var FANE = {
@@ -23,7 +23,7 @@ var FANE = {
   DB: 'DB', DBS: 'DB Salgspriser', KONTO: 'Kontoplan', EBAY: 'eBay-afstemning',
   KONTROL: 'Kontrol', FOTOIMPORT: 'Foto-import'
 };
-var ORDEN = ['LOG', 'INDKOEB', 'LAGER', 'SALG26', 'SALG25', 'UDG26', 'UDG25', 'SKAT26', 'SKAT25', 'DB', 'DBS', 'KONTO', 'EBAY'];
+var ORDEN = ['LOG', 'INDKOEB', 'LAGER', 'SALG26', 'SALG25', 'DB', 'DBS', 'EBAY'];   // Udgifter, Skat og Kontoplan ligger i økonomi-arket (2.0)
 
 // Indkøb: kolonner (1 = A). Række 1 titel, række 2 overskrift (med formler), data fra række 3.
 var K = {
@@ -69,6 +69,9 @@ function onOpen() {
     .addSeparator()
     .addItem('Gem bilag fra Gmail (fragt + andre)', 'gemFragtbilagMenu')
     .addItem('Udfør bilagsplan', 'udfoerBilagsplanMenu')
+    .addSeparator()
+    .addItem('Opret økonomi-ark', 'opretOekonomiMenu')
+    .addItem('Afslut flytning til økonomi-ark (sletter gamle faner)', 'afslutFlytningMenu')
     .addToUi();
 }
 
@@ -318,7 +321,8 @@ function udfoerBilagsplanMenu() {
 }
 
 function udfoerBilagsplan() {
-  var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(BILAGSPLAN);
+  var ss = SpreadsheetApp.getActive(), oss = oekonomi_();
+  var sh = (oss && oss.getSheetByName(BILAGSPLAN)) || ss.getSheetByName(BILAGSPLAN);
   if (!sh) throw new Error('Fanen "' + BILAGSPLAN + '" findes ikke.');
   var n = sh.getLastRow() - 1, res = { ok: 0, fejl: [], mere: false }, start = Date.now();
   if (n < 1) return res;
@@ -347,7 +351,8 @@ function udfoerBilagsplan() {
 function tilfoejBilagsnr_(ss, celle, nr) {
   var m = celle.match(/^'?(.+?)'?!([A-Z]+\d+)$/);
   if (!m) throw new Error('Ukendt celle ' + celle);
-  var sh = ss.getSheetByName(m[1]);
+  var oss = oekonomi_();
+  var sh = ss.getSheetByName(m[1]) || (oss && oss.getSheetByName(m[1]));   // Salg i Lego-arket, Udgifter i økonomi-arket
   if (!sh) throw new Error('Fanen ' + m[1] + ' findes ikke');
   var c = sh.getRange(m[2]);
   c.setValue(flettBilagsnr_(String(c.getDisplayValue()), nr));
@@ -388,6 +393,8 @@ function tjekOpsaetning() {
   linjer.push('Fotomappe: ' + rodNavn);
   linjer.push('API-nøgle: ' + (p.getProperty('API_NOEGLE') ? '✓ sat' : '✗ ikke sat'));
   linjer.push('Importeret: ' + (p.getProperty('IMPORTERET') || 'nej'));
+  var o = oekonomi_();
+  linjer.push('Økonomi-ark: ' + (o ? '✓ ' + o.getName() : '✗ ikke oprettet (CTS → Opret økonomi-ark)'));
   linjer.push('Version: ' + VERSION);
   SpreadsheetApp.getUi().alert('Tjek opsætning', linjer.join('\n'), SpreadsheetApp.getUi().ButtonSet.OK);
 }
@@ -397,6 +404,331 @@ function stiTil_(mappe) {
   while (it.hasNext() && n < 5) { var m = it.next(); dele.unshift(m.getName()); it = m.getParents(); n++; }
   return dele.join('/');
 }
+
+// ======================================================================
+//  ØKONOMI-ARK "CTS Økonomi" (2.0): Bilag, Udgifter, Skat, Kontoplan, Overblik, Bilagsplan
+//  Lego-arket beholder Indkøb, Indkøbslog, Salg, Lager, DB og eBay-afstemning.
+//  Salg hentes ind i skjulte faner med IMPORTRANGE, så formlerne i Udgifter og Skat virker uændret.
+// ======================================================================
+var OEKONOMI_MAPPE = '1zD9CwVndzrYoBWv_ykZ7FaGm724hiuO0';   // CTS/Økonomi
+var OEKONOMI_NAVN = 'CTS Økonomi';
+var JOURNAL_ID = { '2025': '1sBgG0VdN1lsJK0XWqkazvuV6mXV_XpKE', '2026': '1IqRVn9LF1f9pxLCmpC-qZZluNN_3ftY_' };   // gammel bilagsjournal (CSV)
+var BILAG_AAR_MAPPE = { '2025': '1tAEpFv5WH62PRmJEO4n_kpGLFBl1Olou', '2026': '1PaUb_K1AwHbSDeC3A9VNOauzqLzJhoZR' };
+var NYE_KONTI = [['1010', 'Varesalg eBay'], ['1020', 'Varesalg Catawiki'], ['2010', 'Varekøb fra private'], ['9010', 'Privat salg']];
+var BILAG_FANE = 'Bilag', OVERBLIK = 'Overblik';
+var BILAG_KOL = ['Bilagsnr', 'År', 'Dato', 'Type', 'Konto', 'Kontonavn', 'Modpart', 'Beløb', 'Valuta', 'Beløb DKK', 'Moms DKK',
+  'Skattepligtigt', 'Område', 'Kobling', 'Fil', 'Note'];
+
+function oekonomi_() {
+  var id = PropertiesService.getScriptProperties().getProperty('OEKONOMI_ID');
+  if (!id) return null;
+  try { var f = DriveApp.getFileById(id); if (f.isTrashed()) return null; return SpreadsheetApp.openById(id); } catch (e) { return null; }
+}
+
+function opretOekonomiMenu() {
+  var ui = SpreadsheetApp.getUi(), o = oekonomi_();
+  if (o) { ui.alert('Økonomi-arket findes allerede', o.getUrl(), ui.ButtonSet.OK); return; }
+  try {
+    var r = opretOekonomi_();
+    ui.alert('Økonomi-arket er oprettet', r.join('\n') + '\n\nÅbn arket, gå til fanen Overblik og klik på cellen B3 → "Tillad adgang".\n' +
+      'Kør derefter CTS → Afslut flytning til økonomi-ark.', ui.ButtonSet.OK);
+  } catch (e) { ui.alert('Oprettelsen stoppede', String(e.message || e) + '\n\nSend et skærmbillede til Claude.', ui.ButtonSet.OK); }
+}
+
+function opretOekonomi_() {
+  var lego = SpreadsheetApp.getActive(), res = [];
+  var oss = SpreadsheetApp.create(OEKONOMI_NAVN);
+  DriveApp.getFileById(oss.getId()).moveTo(DriveApp.getFolderById(OEKONOMI_MAPPE));
+  oss.setSpreadsheetLocale(lego.getSpreadsheetLocale() || 'da_DK');
+  oss.setSpreadsheetTimeZone(lego.getSpreadsheetTimeZone());
+  PropertiesService.getScriptProperties().setProperty('OEKONOMI_ID', oss.getId());
+  var forste = oss.getSheets()[0];
+  res.push('Ark: ' + oss.getUrl());
+
+  medEngelsk_(oss, function () {
+    // Skjulte kopier af Salg (samme navn og placering som i Lego-arket)
+    ['2025', '2026'].forEach(function (aar) {
+      var sh = oss.insertSheet(FANE['SALG' + aar.slice(2)]);
+      sh.getRange('A1').setFormula('=IMPORTRANGE("' + lego.getId() + '","\'' + FANE['SALG' + aar.slice(2)] + '\'!A1:R")');
+    });
+    // Kontoplan (+ konti fra den gamle journal)
+    var kp = [], kpL = lego.getSheetByName(FANE.KONTO);
+    if (kpL && kpL.getLastRow() >= 3) kp = kpL.getRange(3, 1, kpL.getLastRow() - 2, 2).getDisplayValues().filter(function (r) { return r[0] !== ''; });
+    NYE_KONTI.forEach(function (k) { if (!kp.some(function (r) { return String(r[0]) === k[0]; })) kp.push(k); });
+    kp.sort(function (a, b) { return Number(a[0]) - Number(b[0]); });
+    byggKontoplan_(oss, { kontoplan: kp });
+    res.push('Kontoplan: ' + kp.length + ' konti');
+    // Udgifter (kun indtastede kolonner; D, H og K regnes af formler)
+    ['2025', '2026'].forEach(function (aar) {
+      byggUdgifter_(oss, aar);
+      var n = kopierUdgifter_(lego, oss, aar);
+      res.push('Udgifter ' + aar + ': ' + n + ' rækker');
+    });
+    var b133 = journalRaekke_('2026', 'B133');
+    if (b133) {
+      var u = oss.getSheetByName(FANE.UDG26), r = Math.max(START, u.getLastRow() + 1);
+      u.getRange(r, 1, 1, 3).setValues([['B133', b133.dato, '4050']]);
+      u.getRange(r, 5, 1, 3).setValues([[b133.modpart, b133.beloeb, b133.valuta || 'DKK']]);
+      u.getRange(r, 9, 1, 2).setValues([[b133.moms === '' ? '' : b133.moms, 100]]);
+      u.getRange(r, 12).setValue(b133.note);
+      res.push('Udgifter 2026: B133 (kørsel ' + b133.beloeb + ' kr) tilføjet');
+    }
+    ['2025', '2026'].forEach(function (aar) { byggSkat_(oss, aar, skatTekster_(lego, aar)); });
+    formlerOekonomi_(oss);
+    byggOverblik_(oss, lego.getId());
+  });
+
+  var plan = kopierBilagsplan_(lego, oss);
+  res.push('Bilagsplan: ' + plan + ' rækker');
+  var nb = byggBilag_(lego, oss);
+  res.push('Bilag: ' + nb.antal + ' bilag (' + nb.udenFil + ' uden fil-link)');
+
+  ['2025', '2026'].forEach(function (aar) { oss.getSheetByName(FANE['SALG' + aar.slice(2)]).hideSheet(); });
+  oss.deleteSheet(forste);
+  [OVERBLIK, BILAG_FANE, FANE.UDG26, FANE.UDG25, FANE.SKAT26, FANE.SKAT25, FANE.KONTO, BILAGSPLAN].forEach(function (navn, i) {
+    var sh = oss.getSheetByName(navn); if (sh) { oss.setActiveSheet(sh); oss.moveActiveSheet(i + 1); }
+  });
+  oss.setActiveSheet(oss.getSheetByName(OVERBLIK));
+  return res;
+}
+
+function kopierUdgifter_(lego, oss, aar) {
+  var fra = lego.getSheetByName(FANE['UDG' + aar.slice(2)]), til = oss.getSheetByName(FANE['UDG' + aar.slice(2)]);
+  if (!fra || fra.getLastRow() < START) return 0;
+  var v = fra.getRange(START, 1, fra.getLastRow() - START + 1, 12).getValues().filter(function (r) { return r[0] !== '' || r[1] !== ''; });
+  if (!v.length) return 0;
+  sikrRaekker_(til, START + v.length + 50);
+  til.getRange(START, 1, v.length, 3).setValues(v.map(function (r) { return [r[0], r[1], String(r[2])]; }));
+  til.getRange(START, 5, v.length, 3).setValues(v.map(function (r) { return [r[4], r[5], r[6]]; }));
+  til.getRange(START, 9, v.length, 2).setValues(v.map(function (r) { return [r[8], r[9]]; }));
+  til.getRange(START, 12, v.length, 1).setValues(v.map(function (r) { return [r[11]]; }));
+  return v.length;
+}
+
+function skatTekster_(lego, aar) {
+  var sh = lego.getSheetByName(FANE['SKAT' + aar.slice(2)]);
+  if (!sh) return [];
+  var v = sh.getRange(3, 1, 16, 3).getDisplayValues();
+  return v.map(function (r, i) { return [i + 3, r[0], r[2]]; });
+}
+
+function byggOverblik_(oss, legoId) {
+  var sh = nyFane_(oss, OVERBLIK, 'OVERBLIK — Copenhagen Treasures and Services', ['Post', '2025', '2026'], 5);
+  sh.getRange('A3').setValue('EUR/DKK-kurs fra Lego-arket (klik her første gang: "Tillad adgang")');
+  sh.getRange('B3').setFormula('=IMPORTRANGE("' + legoId + '","\'' + FANE.SALG26 + '\'!R2")');
+  [8, 10, 11, 13, 14, 18].forEach(function (r, i) {
+    var rk = 6 + i;
+    sh.getRange(rk, 1).setFormula('=\'' + FANE.SKAT26 + '\'!A' + r);
+    sh.getRange(rk, 2).setFormula('=\'' + FANE.SKAT25 + '\'!B' + r);
+    sh.getRange(rk, 3).setFormula('=\'' + FANE.SKAT26 + '\'!B' + r);
+  });
+  sh.getRange(11, 1, 1, 3).setFontWeight('bold');
+  sh.getRange('A13').setValue('Antal bilag');
+  sh.getRange('B13').setFormula('=COUNTIF(\'' + BILAG_FANE + '\'!B2:B,2025)');
+  sh.getRange('C13').setFormula('=COUNTIF(\'' + BILAG_FANE + '\'!B2:B,2026)');
+  sh.getRange('B6:C11').setNumberFormat('#,##0.00');
+  sh.setColumnWidth(1, 460); sh.setColumnWidths(2, 2, 140);
+}
+
+function kopierBilagsplan_(lego, oss) {
+  var fra = lego.getSheetByName(BILAGSPLAN);
+  var til = oss.insertSheet(BILAGSPLAN);
+  var hoved = [['Bilagsnr', 'Fil-id', 'Nyt filnavn', 'Mappe-id', 'Celle', 'Status', 'Dato', 'Type', 'Konto', 'Modpart', 'Beløb', 'Valuta', 'Område', 'Note']];
+  til.getRange(1, 1, 1, 14).setValues(hoved).setFontWeight('bold');
+  til.setFrozenRows(1);
+  if (!fra || fra.getLastRow() < 2) return 0;
+  var nk = Math.min(14, fra.getLastColumn());
+  var v = fra.getRange(2, 1, fra.getLastRow() - 1, nk).getDisplayValues().map(function (r) { while (r.length < 14) r.push(''); return r; });
+  til.getRange(2, 1, v.length, 14).setNumberFormat('@').setValues(v);
+  return v.length;
+}
+
+// ---- fanen Bilag: gammel journal + nye bilag fra Bilagsplan ----
+function byggBilag_(lego, oss) {
+  var kp = {};
+  oss.getSheetByName(FANE.KONTO).getRange('A3:B60').getDisplayValues().forEach(function (r) { if (r[0]) kp[r[0]] = r[1]; });
+  var kobling = bilagKoblinger_(lego, oss), filer = {}, rk = [], set = {};
+  ['2025', '2026'].forEach(function (aar) {
+    filer[aar] = filKort_(DriveApp.getFolderById(BILAG_AAR_MAPPE[aar]), {});
+    var kurs = Number(lego.getSheetByName(FANE['SALG' + aar.slice(2)]).getRange('R2').getValue()) || 7.46;
+    journal_(aar).forEach(function (j) {
+      var fil = filer[aar][j.filnavn.split(/[\/\\]/).pop()] || '';
+      set[aar + j.nr] = true;
+      rk.push([j.nr, Number(aar), j.dato, bilagType_(j.konto), j.konto, j.kontonavn || kp[j.konto] || '', j.modpart, j.beloeb, j.valuta,
+        j.beloebDkk !== '' ? j.beloebDkk : (j.valuta === 'EUR' && j.beloeb !== '' ? j.beloeb * kurs : j.beloeb), j.moms, j.skat,
+        'Ukendt', kobling[aar + j.nr] || j.bogfoert, fil, j.note]);
+    });
+  });
+  var plan = oss.getSheetByName(BILAGSPLAN);
+  if (plan && plan.getLastRow() > 1) {
+    plan.getRange(2, 1, plan.getLastRow() - 1, 14).getDisplayValues().forEach(function (p) {
+      var nr = p[0].trim(), dato = isoDato_(p[6]);
+      if (!nr || !dato) return;
+      var aar = dato.slice(0, 4);
+      if (set[aar + nr]) return;
+      var url = ''; try { if (p[1]) url = DriveApp.getFileById(p[1].trim()).getUrl(); } catch (e) { /* fil ikke fundet */ }
+      var beloeb = tal_(p[10]), valuta = p[11] || 'DKK';
+      if (beloeb === '' && p[4]) { beloeb = ordreSum_(lego, p[4]); valuta = 'EUR'; }
+      var kurs = Number(lego.getSheetByName(FANE['SALG' + aar.slice(2)]).getRange('R2').getValue()) || 7.46;
+      rk.push([nr, Number(aar), dato, p[7], p[8], kp[p[8]] || '', p[9], beloeb, valuta,
+        beloeb === '' ? '' : (valuta === 'EUR' ? Math.round(beloeb * kurs * 100) / 100 : beloeb), '', '',
+        p[12] || 'Lego', kobling[aar + nr] || p[4], url, p[13]]);
+    });
+  }
+  rk.sort(function (a, b) { return a[1] - b[1] || Number(String(a[0]).slice(1)) - Number(String(b[0]).slice(1)); });
+  var sh = oss.insertSheet(BILAG_FANE);
+  sh.getRange(1, 1, 1, BILAG_KOL.length).setValues([BILAG_KOL]).setFontWeight('bold').setBackground(NAVY).setFontColor('#ffffff');
+  sh.setFrozenRows(1);
+  if (rk.length) {
+    sikrRaekker_(sh, rk.length + 100);
+    sh.getRange(2, 5, rk.length, 1).setNumberFormat('@');
+    sh.getRange(2, 1, rk.length, BILAG_KOL.length).setValues(rk);
+    sh.getRange(2, 3, rk.length, 1).setNumberFormat('dd-mm-yyyy');
+    sh.getRange(2, 8, rk.length, 1).setNumberFormat('#,##0.00');
+    sh.getRange(2, 10, rk.length, 2).setNumberFormat('#,##0.00');
+  }
+  sh.getRange(2, 13, sh.getMaxRows() - 1, 1).setDataValidation(SpreadsheetApp.newDataValidation()
+    .requireValueInList(['Lego', 'Retro Design', 'Fælles', 'Privat', 'Ukendt'], true).setAllowInvalid(true).build());
+  sh.setColumnWidth(7, 220); sh.setColumnWidth(14, 260); sh.setColumnWidth(15, 120); sh.setColumnWidth(16, 360);
+  return { antal: rk.length, udenFil: rk.filter(function (r) { return !r[14]; }).length };
+}
+
+// "aar+Bxxx" → "Salg 2026: 260618-6285 (02-09-2026)" / "Udgifter 2026: Harald Nyborg"
+function bilagKoblinger_(lego, oss) {
+  var k = {}, tz = lego.getSpreadsheetTimeZone();
+  var tilfoej = function (noegle, tekst) { k[noegle] = k[noegle] ? k[noegle] + '; ' + tekst : tekst; };
+  ['2025', '2026'].forEach(function (aar) {
+    var s = lego.getSheetByName(FANE['SALG' + aar.slice(2)]);
+    if (s && s.getLastRow() >= SALG_START) {
+      s.getRange(SALG_START, 1, s.getLastRow() - SALG_START + 1, 16).getValues().forEach(function (r) {
+        var d = r[0] instanceof Date ? Utilities.formatDate(r[0], tz, 'dd-MM-yyyy') : String(r[0]);
+        delBilagsnr_(r[15]).forEach(function (nr) { tilfoej(aar + nr, 'Salg ' + aar + ': ' + r[1] + ' (' + d + ')'); });
+      });
+    }
+    var u = oss.getSheetByName(FANE['UDG' + aar.slice(2)]);
+    if (u && u.getLastRow() >= START) {
+      u.getRange(START, 1, u.getLastRow() - START + 1, 5).getValues().forEach(function (r) {
+        delBilagsnr_(r[0]).forEach(function (nr) { tilfoej(aar + nr, 'Udgifter ' + aar + ': ' + r[4]); });
+      });
+    }
+  });
+  return k;
+}
+function delBilagsnr_(v) { return String(v || '').split(/[,;\s]+/).filter(function (x) { return /^B\d+$/i.test(x); }).map(function (x) { return x.toUpperCase(); }); }
+
+function filKort_(mappe, kort) {
+  var f = mappe.getFiles();
+  while (f.hasNext()) { var x = f.next(); if (!kort[x.getName()]) kort[x.getName()] = x.getUrl(); }
+  var m = mappe.getFolders();
+  while (m.hasNext()) filKort_(m.next(), kort);
+  return kort;
+}
+
+// Ordresum (varer + fragt modtaget, EUR) for ordren som cellen "Salg 2026!P13" står i (samme dato og køber)
+function ordreSum_(lego, celle) {
+  var m = String(celle).match(/^'?(.+?)'?!([A-Z]+)(\d+)$/);
+  if (!m) return '';
+  var sh = lego.getSheetByName(m[1]);
+  if (!sh) return '';
+  var v = sh.getRange(SALG_START, 1, Math.max(1, sh.getLastRow() - SALG_START + 1), 9).getValues(), i = Number(m[3]) - SALG_START;
+  if (!v[i]) return '';
+  var dato = String(v[i][0]), koeber = String(v[i][2]), sum = 0;
+  v.forEach(function (r) { if (String(r[0]) === dato && String(r[2]) === koeber) sum += (Number(r[7]) || 0) + (Number(r[8]) || 0); });
+  return Math.round(sum * 100) / 100;
+}
+
+function bilagType_(konto) {
+  var k = String(konto || '');
+  if (!k) return 'Dokumentation';
+  if (/^10/.test(k)) return 'Salg';
+  if (/^20/.test(k)) return 'Varekøb';
+  if (k === '3030') return 'Fragt';
+  if (/^9/.test(k)) return 'Privat';
+  return 'Udgift';
+}
+
+// ---- gammel journal (CSV: ; som skilletegn, komma som decimal) ----
+function journal_(aar) {
+  var tekst;
+  try { tekst = DriveApp.getFileById(JOURNAL_ID[aar]).getBlob().getDataAsString('UTF-8'); } catch (e) { return []; }
+  var rk = csvParse_(tekst.replace(/^﻿/, ''), ';');
+  var h = rk.shift().map(function (x) { return String(x).trim().toLowerCase(); });
+  var col = function (navn) { return h.indexOf(navn); };
+  var g = function (r, navn) { var i = col(navn); return i < 0 ? '' : String(r[i] || '').trim(); };
+  return rk.filter(function (r) { return /^B\d+$/i.test(g(r, 'bilagsnr')); }).map(function (r) {
+    return {
+      nr: g(r, 'bilagsnr').toUpperCase(), dato: isoDato_(g(r, 'dato')), konto: g(r, 'konto'), kontonavn: g(r, 'kontonavn'),
+      modpart: g(r, 'modpart'), beloeb: tal_(g(r, 'beløb')), valuta: g(r, 'valuta'), beloebDkk: tal_(g(r, 'beløb dkk')),
+      moms: tal_(g(r, 'moms dkk')), skat: g(r, 'skattepligtigt'), filnavn: g(r, 'filnavn'), bogfoert: g(r, 'bogført'), note: g(r, 'note')
+    };
+  });
+}
+function journalRaekke_(aar, nr) { return journal_(aar).filter(function (j) { return j.nr === nr; })[0] || null; }
+
+function csvParse_(tekst, sep) {
+  var rk = [], r = [], felt = '', i = 0, iCit = false;
+  for (; i < tekst.length; i++) {
+    var c = tekst.charAt(i);
+    if (iCit) {
+      if (c === '"') { if (tekst.charAt(i + 1) === '"') { felt += '"'; i++; } else iCit = false; }
+      else felt += c;
+    } else if (c === '"') iCit = true;
+    else if (c === sep) { r.push(felt); felt = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && tekst.charAt(i + 1) === '\n') i++;
+      r.push(felt); felt = '';
+      if (r.length > 1 || r[0] !== '') rk.push(r);
+      r = [];
+    } else felt += c;
+  }
+  if (felt !== '' || r.length) { r.push(felt); rk.push(r); }
+  return rk;
+}
+// "1.342,31" → 1342.31 ; "" → ""
+function tal_(s) {
+  s = String(s === undefined || s === null ? '' : s).replace(/[^\d,.\-]/g, '');
+  if (!s) return '';
+  if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+  var n = Number(s);
+  return isNaN(n) ? '' : n;
+}
+// "2026-07-01" / "01-07-2026" → "2026-07-01" (tekst, så Sheets selv læser datoen)
+function isoDato_(s) {
+  s = String(s || '').trim();
+  var m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) return m[1] + '-' + m[2] + '-' + m[3];
+  m = s.match(/^(\d{1,2})[-.\/](\d{1,2})[-.\/](\d{4})/); if (m) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+  return '';
+}
+
+// ---- afslut flytningen: sammenlign tallene og slet de gamle faner i Lego-arket ----
+function afslutFlytningMenu() {
+  var ui = SpreadsheetApp.getUi(), lego = SpreadsheetApp.getActive(), oss = oekonomi_();
+  if (!oss) { ui.alert('Økonomi-arket findes ikke. Kør først CTS → Opret økonomi-ark.'); return; }
+  var b133 = journalRaekke_('2026', 'B133'), ekstra = { '2025': 0, '2026': b133 ? Number(b133.beloeb) || 0 : 0 };
+  var linjer = [], ok = true;
+  ['2025', '2026'].forEach(function (aar) {
+    var lu = lego.getSheetByName(FANE['UDG' + aar.slice(2)]), ls = lego.getSheetByName(FANE['SKAT' + aar.slice(2)]);
+    var ou = oss.getSheetByName(FANE['UDG' + aar.slice(2)]), os = oss.getSheetByName(FANE['SKAT' + aar.slice(2)]);
+    if (!lu || !ls) { linjer.push(aar + ': fanerne er allerede væk i Lego-arket'); return; }
+    var a = [Number(lu.getRange('Q3').getValue()), Number(ou.getRange('Q3').getValue()), Number(ls.getRange('B18').getValue()), Number(os.getRange('B18').getValue())];
+    if (a.some(isNaN) || String(os.getRange('B18').getDisplayValue()).charAt(0) === '#') {
+      ok = false; linjer.push(aar + ': økonomi-arket regner ikke endnu – har du klikket "Tillad adgang" i Overblik B3?'); return;
+    }
+    var udgOk = Math.abs(a[1] - a[0] - ekstra[aar]) < 0.01, skatOk = Math.abs(a[2] - a[3] - ekstra[aar]) < 0.01;
+    if (!udgOk || !skatOk) ok = false;
+    linjer.push(aar + ' Udgifter i alt: Lego ' + kr_(a[0]) + ' → Økonomi ' + kr_(a[1]) + (udgOk ? ' ✓' : ' ✗') +
+      '\n' + aar + ' Nettoavance:   Lego ' + kr_(a[2]) + ' → Økonomi ' + kr_(a[3]) + (skatOk ? ' ✓' : ' ✗'));
+  });
+  if (ekstra['2026']) linjer.push('(2026 forskel på ' + kr_(ekstra['2026']) + ' kr = B133 kørsel, som kun står i økonomi-arket – som aftalt.)');
+  if (!ok) { ui.alert('Tallene stemmer ikke – intet er slettet', linjer.join('\n') + '\n\nSend et skærmbillede til Claude.', ui.ButtonSet.OK); return; }
+  if (ui.alert('Tallene stemmer', linjer.join('\n') + '\n\nSlet nu Udgifter 2025/2026, Skat 2025/2026, Kontoplan og Bilagsplan i Lego-arket?',
+    ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
+  [FANE.UDG25, FANE.UDG26, FANE.SKAT25, FANE.SKAT26, FANE.KONTO, BILAGSPLAN].forEach(function (navn) {
+    var sh = lego.getSheetByName(navn); if (sh) lego.deleteSheet(sh);
+  });
+  ui.alert('Færdig', 'De gamle faner er slettet i Lego-arket. Økonomi ligger nu i "' + oss.getName() + '":\n' + oss.getUrl(), ui.ButtonSet.OK);
+}
+function kr_(n) { return (Math.round(n * 100) / 100).toFixed(2).replace('.', ','); }
 
 // ======================================================================
 //  HJÆLPERE
@@ -478,15 +810,18 @@ function byggAlt_(ss, data) {
   ss.getNamedRanges().forEach(function (r) { try { r.remove(); } catch (e) { /* ignorer */ } });
   SpreadsheetApp.flush(); Utilities.sleep(1000);
 
-  byggKontoplan_(ss, data);
+  var medOek = !oekonomi_();   // efter 2.0 ligger Kontoplan, Udgifter og Skat i økonomi-arket
+  if (medOek) byggKontoplan_(ss, data);
   byggIndkoebslog_(ss);
   byggIndkoeb_(ss);
   byggSalg_(ss, '2025', data.salg2025.kurs);
   byggSalg_(ss, '2026', data.salg2026.kurs);
-  byggUdgifter_(ss, '2025');
-  byggUdgifter_(ss, '2026');
-  byggSkat_(ss, '2025', data.skat2025);
-  byggSkat_(ss, '2026', data.skat2026);
+  if (medOek) {
+    byggUdgifter_(ss, '2025');
+    byggUdgifter_(ss, '2026');
+    byggSkat_(ss, '2025', data.skat2025);
+    byggSkat_(ss, '2026', data.skat2026);
+  }
   byggDbSalgspriser_(ss);
   byggLager_(ss);
   byggEbay_(ss, data.ebay.titel);
@@ -627,13 +962,19 @@ function formlerAlle_(ss) {
   formlerIndkoeb_(ss.getSheetByName(FANE.INDKOEB), db);
   formlerSalg_(ss.getSheetByName(FANE.SALG25), '2025');
   formlerSalg_(ss.getSheetByName(FANE.SALG26), '2026');
-  formlerUdgifter_(ss.getSheetByName(FANE.UDG25), '2025');
-  formlerUdgifter_(ss.getSheetByName(FANE.UDG26), '2026');
-  formlerSkat_(ss.getSheetByName(FANE.SKAT25), '2025');
-  formlerSkat_(ss.getSheetByName(FANE.SKAT26), '2026');
+  formlerOekonomi_(ss);   // kun hvis fanerne (stadig) findes i dette ark
   formlerDbSalgspriser_(ss.getSheetByName(FANE.DBS), db);
   formlerLager_(ss.getSheetByName(FANE.LAGER), db);
-  formlerEbay_(ss.getSheetByName(FANE.EBAY));
+  if (ss.getSheetByName(FANE.EBAY)) formlerEbay_(ss.getSheetByName(FANE.EBAY));
+}
+
+// Udgifter og Skat (i Lego-arket før flytningen, i økonomi-arket efter)
+function formlerOekonomi_(ss) {
+  ['2025', '2026'].forEach(function (aar) {
+    var u = ss.getSheetByName(FANE['UDG' + aar.slice(2)]), k = ss.getSheetByName(FANE['SKAT' + aar.slice(2)]);
+    if (u) formlerUdgifter_(u, aar);
+    if (k) formlerSkat_(k, aar);
+  });
 }
 
 function formlerIndkoebslog_(sh) {
@@ -812,7 +1153,11 @@ function formlerEbay_(sh) {
 // Skriver formlerne igen uden at røre data
 function opdaterFormler() {
   var ui = SpreadsheetApp.getUi(), ss = SpreadsheetApp.getActive();
-  try { medEngelsk_(ss, function () { formlerAlle_(ss); }); }
+  try {
+    medEngelsk_(ss, function () { formlerAlle_(ss); });
+    var oss = oekonomi_();
+    if (oss) medEngelsk_(oss, function () { formlerOekonomi_(oss); });
+  }
   catch (e) { ui.alert('Formlerne blev ikke opdateret', String(e.message || e), ui.ButtonSet.OK); return; }
   ui.alert('Formler opdateret', 'Data er ikke ændret. Kør "Kør kontrol mod Excel" for at sammenligne. Version ' + VERSION, ui.ButtonSet.OK);
 }
@@ -917,7 +1262,7 @@ function skrivData_(ss, data) {
   ['2025', '2026'].forEach(function (aar) {
     var sh = ss.getSheetByName(FANE['UDG' + aar.slice(2)]);
     var rk = data['udgifter' + aar];
-    if (!rk.length) return;
+    if (!sh || !rk.length) return;
     var g = function (r, k) { return vaerdi_(r[k]); };
     sh.getRange(START, 1, rk.length, 3).setValues(rk.map(function (r) { return [g(r, 'A'), dato_(g(r, 'B')), String(g(r, 'C'))]; }));
     sh.getRange(START, 5, rk.length, 3).setValues(rk.map(function (r) { return [g(r, 'E'), g(r, 'F'), g(r, 'G')]; }));
@@ -1006,7 +1351,7 @@ function kontrol_(ss, data) {
   ['2025', '2026'].forEach(function (aar) {
     var sh = ss.getSheetByName(FANE['UDG' + aar.slice(2)]);
     var fr = F['udgifter' + aar];
-    if (!fr.length) return;
+    if (!sh || !fr.length) return;
     var uv = sh.getRange(START, 1, fr.length, 11).getValues();
     var fejl = [];
     fr.forEach(function (f, i) {
@@ -1019,6 +1364,7 @@ function kontrol_(ss, data) {
   // Skat
   ['2025', '2026'].forEach(function (aar) {
     var sh = ss.getSheetByName(FANE['SKAT' + aar.slice(2)]);
+    if (!sh) return;
     var fs = F['skat' + aar], fejl = [];
     Object.keys(fs).forEach(function (r) {
       var a = sh.getRange(Number(r), 2).getValue();

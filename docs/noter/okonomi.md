@@ -46,9 +46,15 @@ Status pr. 07-11-2026: **bilag og fragt kører** (maskinrum 1.9.0). Fælles øko
 - Siltakylä 2025: 3 GLS-ordrer på 3 ens salgsrækker – fordelingen er vilkårlig (private, før CTS).
 
 ## Næste i Økonomi
-- **Økonomi-arket "CTS Økonomi"** (Thomas' ja 08-11 til alle 4 punkter; undersøges, ikke bygget): nyt regneark i `CTS/Økonomi` med fanerne
-  Bilag (én række pr. bilag inkl. gammel journal + nye), Udgifter 2025/2026, Skat 2025/2026, Kontoplan, eBay-afstemning (flyttes fra Lego-arket og fjernes dér
-  efter test), Overblik (henter salgstal fra Lego-arket), Bilagsplan. Lego-arket beholder Indkøb, Indkøbslog, Salg, Lager (priser). Bilagsnr i Salg P bliver stående.
+- **Økonomi-arket "CTS Økonomi"** (Thomas' ja 08-11; maskinrum 2.0.0 bygget 08-11, IKKE kørt hos Thomas endnu):
+  1. CTS → **Opret økonomi-ark** opretter arket i `CTS/Økonomi` med Overblik, Bilag, Udgifter 2025/2026 (+ B133 kørsel 385,32 kr), Skat 2025/2026,
+     Kontoplan (+ 1010/1020/2010/9010), Bilagsplan (kopieret, med kolonne G–N: dato, type, konto, modpart, beløb, valuta, område, note)
+     og skjulte "Salg 2025/2026" (IMPORTRANGE fra Lego-arket, så Skat/Udgifter-formlerne virker uændret). Arkets id gemmes i Script Properties (OEKONOMI_ID).
+  2. Thomas klikker Overblik B3 → "Tillad adgang" (IMPORTRANGE).
+  3. CTS → **Afslut flytning** sammenligner Udgifter Q3 og Skat B18 i begge ark (2026 forventet forskel = B133) → ved ja slettes Udgifter, Skat,
+     Kontoplan og Bilagsplan i Lego-arket. eBay-afstemning bliver i Lego-arket (lager).
+  - Fanen Bilag: gammel journal (Område "Ukendt" – Thomas gennemgår; nogle er Retro Design) + nye bilag fra Bilagsplan (Område Lego).
+  - Efter flytningen skriver Claude bilagsplaner i økonomi-arkets Bilagsplan; Udfør bilagsplan finder selv celler i begge ark.
 - MobilePay-kvitteringer for køb 260916, 261015, 261028 ligger i CTS-Gmailen → gemmes med 1.10.0 → bilagsnr (varekøb) i fanen Bilag.
 - **Bilag → forslag i appen** (plan, ikke bygget): maskinrummet læser Indbakke selv og viser forslag i appen, som Thomas godkender.
   Salg 2026 skal have kolonne Q "Sporingsnr" (Thomas' ja 07-11, ikke lavet).

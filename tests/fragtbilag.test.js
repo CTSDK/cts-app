@@ -56,3 +56,17 @@ assert.strictEqual(ctx.andetNavn_('Lego køb 261028', 1, 2, '.jpg'), 'Lego køb 
 assert.ok(ctx.fraAfsender_('Thomas Pejtersen <t.clifford.pejtersen@gmail.com>'));
 assert.ok(!ctx.fraAfsender_('CoolRunner <noreply@coolrunner.dk>'));
 console.log('andre bilag (navn + afsender): OK');
+// Økonomi-ark (2.0): CSV-journal, tal, datoer, typer
+const csv = '﻿Bilagsnr;Dato;Konto;Beløb;Note\nB001;2026-07-01;3020;"1.342,31";"Tekst; med ""citat"""\r\nB002;2026-07-09;;5,00;\n';
+const rk = ctx.csvParse_(csv.replace(/^﻿/, ''), ';');
+assert.strictEqual(rk.length, 3);
+assert.strictEqual(rk[1][4], 'Tekst; med "citat"');
+assert.strictEqual(ctx.tal_('1.342,31'), 1342.31);
+assert.strictEqual(ctx.tal_('-160,00'), -160);
+assert.strictEqual(ctx.tal_(''), '');
+assert.strictEqual(ctx.isoDato_('07-02-2026'), '2026-02-07');
+assert.strictEqual(ctx.isoDato_('2026-10-12'), '2026-10-12');
+assert.deepStrictEqual(['1010', '2010', '3030', '4050', '9010', ''].map(ctx.bilagType_).join(','), 'Salg,Varekøb,Fragt,Udgift,Privat,Dokumentation');
+assert.strictEqual(ctx.delBilagsnr_('B052, B054, b148').join(','), 'B052,B054,B148');
+assert.strictEqual(ctx.kr_(1234.5), '1234,50');
+console.log('økonomi-ark (journal/tal/dato/type): OK');
