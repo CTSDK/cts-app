@@ -1,6 +1,6 @@
 # Område: Økonomi (overordnet for hele CTS)
 
-Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.1.1 hos Thomas). 196 bilag. Bilag og fragt kører.
+Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.2.1 hos Thomas). 196 bilag. Bilag og fragt kører.
 
 ## Sådan er det nu
 - **CTS Økonomi** (id `1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`, mappe `CTS/Økonomi`): Overblik, Bilag, Udgifter 2025/2026, Skat 2025/2026,
