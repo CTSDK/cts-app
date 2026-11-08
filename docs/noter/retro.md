@@ -35,7 +35,7 @@ Status pr. 08-11-2026: **trin 1 bygget og testet i testtilstand (app v17 + maski
 - **Stand:** skala 1–10 som Lego, samme betegnelser i annoncen (besluttet 08-11).
 
 ## Trin 1 (bygget 08-11)
-- **Maskinrum 2.2.0:** CTS → **Opret Retro-ark** laver regnearket "CTS Retro" i `CTS/Retro` (id i Script Properties RETRO_ID) med fanerne
+- **Maskinrum 2.2.0:** CTS → **Opret Retro-ark** laver regnearket "CTS Retro" i `CTS/Retro` (✅ oprettet af Thomas 08-11, id `1FQh_UuorscBSh59KYfhB4x6ufyJT5nNeRyA1renVpbc`; også i Script Properties RETRO_ID) med fanerne
   Indkøbslog (Købsdato ÅÅMMDD | Samlet pris | Hvor købt | Antal ting | Noter | MappeID), Indkøb (SKU | Købsdato | Type | Producent | Designer | Model |
   Farve | Særligt kendetegn | Stand 1–10 | Udført arbejde | Købspris | Fotos | Klar | Lagerstatus | Noter) og Mærker (Producent | Kode).
   Fotos: `CTS/Retro/Lager/<ÅÅMMDD>/<SKU>.NN.jpg`. API: retroMaerker, retroOpretKoeb, retroHentKoeb, retroGemTing, retroUploadFoto.
