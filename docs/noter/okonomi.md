@@ -19,6 +19,8 @@ Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.0.0
   2026 Fragt 12itNKTOELmSr1TNIQR3V2oy4NRPLzLAE · 2026 Salg 1wsJRYQnIQpmh5jCKQxhDnqRcqEB1gRST · 2025 Fragt 1pFhj2wAjespGcBo43wHQM_qs7WT41xfq.
 - Gamle bilag (før 07-11) har gamle navne (`2026-09-02 - 3030 - CoolRunner Latina IT - 191,53 DKK.pdf`). Nye: **bilagsnr forrest**,
   fx `B159 261012 Fragt CoolRunner 000110673818 01-15293-04134.pdf`, `B155 261009 eBay 01-15293-04134 251001-6695.pdf`.
+- **Dokumentation til et bilag** (fx DBA-/Messenger-samtale om et køb): samme bilagsnr, filnavn `B166 260916 Varekøb DBA-tråd.pdf`, samme mappe.
+  Thomas laver hele samtalen som én PDF med Chrome-udvidelsen **GoFullPage** (virker, testet af Thomas 08-11) og lægger den direkte i Drive Indbakke.
 - Regler (fra gammelt Bilagssystem): ét bilag = én PDF; gem i 5 år; køb fra private kræver afregningsbilag (skabelon i Bilag-roden);
   eBay-månedsrapport/trackingside er ikke bilag alene.
 
