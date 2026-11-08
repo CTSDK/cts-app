@@ -15,14 +15,15 @@ Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.1.1
 ## Bilag i Drive: `CTS/Økonomi/Bilag`
 - `Indbakke` (17xqS57VoqpSHcmY0AuKGmouoCnRiR-t7): alt nyt lander her (Thomas' eBay-PDF'er + maskinrummets fragtbilag). Tom pr. 07-11.
 - `2025` (1tAEpFv5WH62PRmJEO4n_kpGLFBl1Olou) og `2026` (1PaUb_K1AwHbSDeC3A9VNOauzqLzJhoZR), hver med Salg, Fragt, Udgifter, eBay-rapporter, Afregningsbilag
-  + Bilagsjournal <år>.csv (gammel journal fra den tidligere Claude; filnavn-kolonnen peger på gamle stier). 2025 har også `Privat før CTS` (fragt før 07-07-2025, intet nr).
+  + Bilagsjournal <år>.csv (gammel journal – kun arkiv). 2025 har også `Privat før CTS` (fragt før 07-07-2025, intet nr).
   2026 Fragt 12itNKTOELmSr1TNIQR3V2oy4NRPLzLAE · 2026 Salg 1wsJRYQnIQpmh5jCKQxhDnqRcqEB1gRST · 2025 Fragt 1pFhj2wAjespGcBo43wHQM_qs7WT41xfq.
 - Gamle bilag (før 07-11) har gamle navne (`2026-09-02 - 3030 - CoolRunner Latina IT - 191,53 DKK.pdf`). Nye: **bilagsnr forrest**,
   fx `B159 261012 Fragt CoolRunner 000110673818 01-15293-04134.pdf`, `B155 261009 eBay 01-15293-04134 251001-6695.pdf`.
 - **Dokumentation til et bilag** (fx DBA-/Messenger-samtale om et køb): samme bilagsnr, filnavn `B166 260916 Varekøb DBA-tråd.pdf`, samme mappe.
   Thomas laver hele samtalen som én PDF med Chrome-udvidelsen **GoFullPage** (virker, testet af Thomas 08-11) og lægger den direkte i Drive Indbakke.
-- Regler (fra gammelt Bilagssystem): ét bilag = én PDF; gem i 5 år; køb fra private kræver afregningsbilag (skabelon i Bilag-roden);
-  eBay-månedsrapport/trackingside er ikke bilag alene.
+- **Vi starter på en frisk (Thomas 08-11):** den gamle Claudes regler (Bilagssystem, afregningsbilag osv.) gælder IKKE. Gamle filer bevares kun som arkiv.
+- **Varekøb dokumenteres med:** (1) betalingskvitteringen (fx MobilePay) og (2) samtalen om købet (DBA/Messenger, én PDF via GoFullPage) – samme bilagsnr.
+- **Intet CVR-nummer endnu** → køb og salg er Thomas' private. Når CTS ApS oprettes med CVR, sælger Thomas det resterende lager direkte til CTS ApS.
 
 ## Bilagsnumre
 - **B001, B002 …, én serie pr. år, starter forfra.** Fælles for salg, fragt, udgifter, varekøb. Salg: kolonne P (fx "B155, B159" = eBay + fragt). Udgifter: kolonne A.
@@ -55,7 +56,6 @@ Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.1.1
 - Siltakylä 2025: 3 GLS-ordrer på 3 ens salgsrækker – fordelingen er vilkårlig (private, før CTS).
 
 ## Næste i Økonomi
-- Afregningsbilag for køb fra private mangler (260906, 260916, 261015, 261028) – tages op, evt. med revisor.
 - Thomas gennemgår Område i fanen Bilag (gamle bilag "Ukendt").
 - **Bilag → forslag i appen** (plan, ikke bygget): maskinrummet læser Indbakke selv og viser forslag i appen, som Thomas godkender.
   Salg 2026 skal have kolonne Q "Sporingsnr" (Thomas' ja 07-11, ikke lavet).
