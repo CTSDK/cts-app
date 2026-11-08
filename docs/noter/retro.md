@@ -32,5 +32,4 @@ Status pr. 08-11-2026: **afklares med Thomas – intet bygget.**
 - Der ligger måske én Raadvad på eBay nu (Thomas tjekker). Ellers starter Retro, når de går rigtigt i gang.
 - **Rækkefølge:** (1) regneark + Nyt køb med fotos, (2) Lager + annoncer, (3) Salg + klargøringshold.
 
-## Skal afklares
-- Stand: skala 1–10 som Lego (forslag) eller tekst.
+- **Stand:** skala 1–10 som Lego, samme betegnelser i annoncen (besluttet 08-11).
