@@ -57,6 +57,7 @@ textarea { resize: vertical; }
 input:focus, select:focus, textarea:focus, button:focus-visible { outline: 3px solid var(--gul); outline-offset: 1px; }
 .raekke2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .raekke2 > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+input[type="date"] { -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%; display: block; }   /* iOS: datofeltet må ikke gå ind over nabofeltet */
 .batchid { font-size: 13px; color: var(--daempet); }
 .batchid b { font-family: var(--mono); color: var(--tekst); }
 h3 { margin: 8px 0 0; font-size: 15px; }
