@@ -25,7 +25,9 @@ Status pr. 07-11-2026: **bilag og fragt kører** (maskinrum 1.9.0). Fælles øko
 - Uafklaret: kalenderår eller regnskabsår (spørg revisor).
 
 ## Sådan arbejder vi (testet 07-11)
-1. **Fragt:** Thomas videresender CoolRunner/GLS-mails til CTS-Gmailen → **CTS → Gem fragtbilag fra Gmail** (1.8.x) gemmer dem i Indbakke og sætter etiketten
+0. **Andre bilag (1.10.0, bygget 08-11, ikke testet):** mails fra Thomas' private mail med PDF/billede (fx MobilePay-kvittering, emne "Lego køb 261028")
+   gemmes som `<emne>.pdf` i Indbakke af samme menupunkt (nu "Gem bilag fra Gmail (fragt + andre)").
+1. **Fragt:** Thomas videresender CoolRunner/GLS-mails til CTS-Gmailen → **CTS → Gem bilag fra Gmail** gemmer dem i Indbakke og sætter etiketten
    *CTS/Bilag behandlet*. CoolRunner-mail → PDF; GLS → faktura-PDF. Labels gemmes ikke. Tryk kun én gang (1.8.1 forhindrer dobbeltkørsel).
 2. **eBay:** Thomas gemmer hver ordreside ("Einzelheiten zum Kauf") som PDF i Indbakke, navn "eBay <ordrenr>.pdf".
 3. **Claude** (via hjælper) kobler bilag ↔ salg (sporingsnr/by/dato/beløb), fjerner dubletter, foreslår numre → skriver planen i fanen **Bilagsplan**

@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '1.9.0';
+var VERSION = '1.10.0';
 
 // ---------- Faner ----------
 var FANE = {
@@ -67,7 +67,7 @@ function onOpen() {
     .addSeparator()
     .addItem('Kopiér noter til Drive (og hver nat)', 'synkNoterMenu')
     .addSeparator()
-    .addItem('Gem fragtbilag fra Gmail', 'gemFragtbilagMenu')
+    .addItem('Gem bilag fra Gmail (fragt + andre)', 'gemFragtbilagMenu')
     .addItem('Udfør bilagsplan', 'udfoerBilagsplanMenu')
     .addToUi();
 }
@@ -107,11 +107,13 @@ function synkNoterMenu() {
 // Færdige tråde får etiketten "CTS/Bilag behandlet". Intet slettes, og der gives ikke bilagsnumre.
 var BILAG_INDBAKKE = '17xqS57VoqpSHcmY0AuKGmouoCnRiR-t7';
 var BILAG_ETIKET = 'CTS/Bilag behandlet';
-var FRAGT_SOEG = '(coolrunner OR gls) -label:cts-bilag-behandlet';
+// Thomas videresender bilag fra sin private mail. Andre mails med vedhæftninger fra den adresse gemmes også (fx MobilePay-kvitteringer).
+var BILAG_AFSENDER = 't.clifford.pejtersen@gmail.com';
+var FRAGT_SOEG = '(coolrunner OR gls OR from:' + BILAG_AFSENDER + ') -label:cts-bilag-behandlet';
 
 function gemFragtbilagMenu() {
   var r = gemFragtbilag();
-  SpreadsheetApp.getUi().alert('Fragtbilag fra Gmail',
+  SpreadsheetApp.getUi().alert('Bilag fra Gmail',
     'Gemt i Indbakke: ' + r.gemt.length + '\nFandtes allerede: ' + r.findes + '\nIkke genkendt: ' + r.ukendt.length +
     '\nTråde færdige: ' + r.traade + (r.mere ? '\n\nDer er mere – kør igen.' : '') +
     (r.ukendt.length ? '\n\nIkke genkendt:\n' + r.ukendt.slice(0, 15).join('\n') : ''), SpreadsheetApp.getUi().ButtonSet.OK);
@@ -133,21 +135,41 @@ function gemFragtbilagIndre_() {
   for (var t = 0; t < traade.length; t++) {
     if (Date.now() - start > 4.5 * 60 * 1000) { res.mere = true; break; }
     traade[t].getMessages().forEach(function (m) {
+      var fundet = 0;
+      var gem = function (b) {
+        var gls = b.navn.match(/^(GLS \d+) \d{6}\.pdf$/);   // GLS-mail uden faktura: spring over, hvis fakturaen findes
+        if (findes[b.navn] || (gls && Object.keys(findes).some(function (n) { return n.indexOf(gls[1] + ' faktura ') === 0; }))) { res.findes++; return; }
+        mappe.createFile(b.blob.setName(b.navn)); findes[b.navn] = true; res.gemt.push(b.navn);
+      };
       fragtMails_(m).forEach(function (mail) {
         var bilag = fragtBilag_(mail);
+        fundet += bilag.length;
         if (!bilag.length) { if (mail.vigtig) res.ukendt.push(mail.emne || '(uden emne)'); return; }
-        bilag.forEach(function (b) {
-          var gls = b.navn.match(/^(GLS \d+) \d{6}\.pdf$/);   // GLS-mail uden faktura: spring over, hvis fakturaen findes
-          if (findes[b.navn] || (gls && Object.keys(findes).some(function (n) { return n.indexOf(gls[1] + ' faktura ') === 0; }))) { res.findes++; return; }
-          mappe.createFile(b.blob.setName(b.navn)); findes[b.navn] = true; res.gemt.push(b.navn);
-        });
+        bilag.forEach(gem);
       });
+      // Andet bilag fra Thomas (ikke fragt): vedhæftede PDF'er/billeder gemmes med mailens emne som navn
+      if (!fundet && fraAfsender_(m.getFrom())) andreBilag_(m).forEach(gem);
     });
     traade[t].addLabel(etiket); res.traade++;
   }
   if (traade.length === 20 && !res.mere) res.mere = true;
   return res;
 }
+
+function fraAfsender_(fra) { return String(fra || '').toLowerCase().indexOf(BILAG_AFSENDER) >= 0; }
+
+// "Lego køb 261028" + 4521415852.pdf → "Lego køb 261028.pdf" (flere filer: "… (2).pdf")
+function andreBilag_(m) {
+  var emne = String(m.getSubject() || 'Bilag').replace(/^(\s*(VS|SV|Fwd?|Re)\s*:\s*)+/i, '').replace(/[\\\/:*?"<>|]+/g, ' ').trim() || 'Bilag';
+  var filer = m.getAttachments({ includeInlineImages: false }).filter(function (a) {
+    return /pdf|image\//i.test(String(a.getContentType() || '')) || /\.(pdf|jpe?g|png|heic)$/i.test(String(a.getName() || ''));
+  });
+  return filer.map(function (a, i) {
+    var ext = (String(a.getName()).match(/\.[A-Za-z0-9]+$/) || ['.pdf'])[0].toLowerCase();
+    return { navn: andetNavn_(emne, i, filer.length, ext), blob: a.copyBlob() };
+  });
+}
+function andetNavn_(emne, i, antal, ext) { return emne + (antal > 1 ? ' (' + (i + 1) + ')' : '') + ext; }
 
 // En Gmail-besked → liste af "mails": selve beskeden + hver vedhæftet .eml (rekursivt). Læses fra rå-mailen.
 function fragtMails_(m) {

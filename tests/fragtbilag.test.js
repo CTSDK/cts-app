@@ -51,3 +51,8 @@ assert.strictEqual(ctx.flettBilagsnr_('B052, B054', 'B148'), 'B052, B054, B148')
 assert.strictEqual(ctx.flettBilagsnr_('', 'B134'), 'B134');
 assert.strictEqual(ctx.flettBilagsnr_('B157', 'B157'), 'B157');
 console.log('bilagsplan (flet numre): OK');
+assert.strictEqual(ctx.andetNavn_('Lego køb 261028', 0, 1, '.pdf'), 'Lego køb 261028.pdf');
+assert.strictEqual(ctx.andetNavn_('Lego køb 261028', 1, 2, '.jpg'), 'Lego køb 261028 (2).jpg');
+assert.ok(ctx.fraAfsender_('Thomas Pejtersen <t.clifford.pejtersen@gmail.com>'));
+assert.ok(!ctx.fraAfsender_('CoolRunner <noreply@coolrunner.dk>'));
+console.log('andre bilag (navn + afsender): OK');
