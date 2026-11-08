@@ -28,8 +28,9 @@ Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.0.0
 - Uafklaret: kalenderår eller regnskabsår (spørg revisor).
 
 ## Sådan arbejder vi (testet 07-11)
-0. **Andre bilag (1.10.0, bygget 08-11, ikke testet):** mails fra Thomas' private mail med PDF/billede (fx MobilePay-kvittering, emne "Lego køb 261028")
-   gemmes som `<emne>.pdf` i Indbakke af samme menupunkt (nu "Gem bilag fra Gmail (fragt + andre)").
+0. **Andre bilag (2.1.1, ikke testet):** mails fra Thomas' private mail med PDF/billede (fx MobilePay-kvittering, emne "Lego køb 261028") gemmes som
+   `<emne>.pdf` i Indbakke af samme menupunkt. Findes uden etiket (sidste 120 dage); gemte beskeder huskes i Script Properties (ANDRE_BILAG_GEMT).
+   PDF'er tages fra den rå mail (iPhone lægger dem ind i mailen). 2.0/2.1.0 gemte dem ikke (fejl rettet 08-11).
 1. **Fragt:** Thomas videresender CoolRunner/GLS-mails til CTS-Gmailen → **CTS → Gem bilag fra Gmail** gemmer dem i Indbakke og sætter etiketten
    *CTS/Bilag behandlet*. CoolRunner-mail → PDF; GLS → faktura-PDF. Labels gemmes ikke. Tryk kun én gang (1.8.1 forhindrer dobbeltkørsel).
 2. **eBay:** Thomas gemmer hver ordreside ("Einzelheiten zum Kauf") som PDF i Indbakke, navn "eBay <ordrenr>.pdf".
