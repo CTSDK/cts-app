@@ -226,3 +226,16 @@ body.laast { overflow: hidden; }
 .dbny-panel h2 { margin: 0; font-size: 20px; }
 .db-knap { margin-left: 8px; padding: 2px 4px; min-height: 0; font-size: 13px; display: inline; }
 .omraade-spm { margin: 8px 20px 0; font-weight: 600; color: var(--daempet); text-align: center; }
+
+/* Retro Design: nyt køb */
+.rlinje { background: var(--kort); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.rl-top { display: flex; justify-content: space-between; align-items: center; }
+.rl-felter { display: grid; grid-template-columns: 1fr 96px; gap: 8px; }
+.rl-felter input, .rl-felter select { min-height: 44px; }
+.rl-typer { display: flex; gap: 8px; }
+.rl-typer > * { flex: 1; min-width: 0; min-height: 44px; }
+.rl-kode, .rl-antal { text-align: center; }
+.rl-kode:disabled { background: var(--chip); }
+.rl-kode[readonly] { background: var(--groen-bg); color: var(--groen); }
+.rskuer { display: flex; flex-wrap: wrap; gap: 6px; }
+.rsku { font-size: 12px; background: var(--kort); border: 1.5px solid var(--kant); border-radius: 10px; padding: 6px 8px; }

@@ -47,10 +47,10 @@
   // ================= Navigation =================
   var aktiv = 'hjem';
   function gaa(navn) {
-    if (aktiv === 'koeb3' && navn !== 'koeb3') { Foto.stopKamera($('k3-video')); kameraUi(); }
+    if (kameraer[aktiv] && navn !== aktiv) kameraer[aktiv].stop();
     document.querySelectorAll('.visning').forEach(function (v) { v.hidden = v.id !== 'v-' + navn; });
     aktiv = navn;
-    var fane = { forside: 'hjem', koeb2: 'koeb1', koeb3: k3 && k3.fra === 'lager' ? 'lager' : 'koeb1', indstillinger: 'mere', udbakke: 'mere' }[navn] || navn;
+    var fane = { forside: 'hjem', retro: 'hjem', rk1: 'hjem', rk2: 'hjem', koeb2: 'koeb1', koeb3: k3 && k3.fra === 'lager' ? 'lager' : 'koeb1', indstillinger: 'mere', udbakke: 'mere' }[navn] || navn;
     document.querySelectorAll('[data-fane]').forEach(function (b) { b.classList.toggle('til', b.getAttribute('data-fane') === fane); });
     window.scrollTo(0, 0);
     if (navn === 'hjem') tjekForbindelse();
@@ -60,6 +60,8 @@
     if (navn === 'lager') visLager();
     if (navn === 'udbakke') tegnUdbakke();
     if (navn === 'salg') visSalg();
+    if (navn === 'retro') Data.retroHentMaerker();
+    if (navn === 'rk1') visRk1();
   }
   document.addEventListener('click', function (e) {
     var g = e.target.closest('[data-gaa]');
@@ -399,76 +401,79 @@
     }
   });
 
-  // Kamera
-  function kameraUi() {
-    var koerer = Foto.kameraKoerer();
-    $('k3-start').textContent = koerer ? 'Stop kamera' : 'Start kamera';
-    $('k3-tag').disabled = !koerer;
-    $('k3-kamera-tom').hidden = koerer;
-    visKameraInfo();
-  }
-  // Viser den opløsning, iPhonen faktisk giver live-kameraet (til test af fotokvalitet)
-  function visKameraInfo() {
-    var v = $('k3-video');
-    $('k3-kamerainfo').textContent = Foto.kameraKoerer() && v.videoWidth
-      ? 'Kamera: ' + v.videoWidth + ' × ' + v.videoHeight + ' px' : '';
-  }
-  $('k3-video').addEventListener('loadedmetadata', visKameraInfo);
-  $('k3-video').addEventListener('resize', visKameraInfo);
-  $('k3-start').addEventListener('click', async function () {
-    var f = $('k3-kamerafejl'); f.textContent = '';
-    if (Foto.kameraKoerer()) { Foto.stopKamera($('k3-video')); kameraUi(); return; }
-    try { await Foto.startKamera($('k3-video')); }
-    catch (e) {
-      var standalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
-      var t = e && e.name === 'NotAllowedError'
-        ? 'iPhonen afviste kameraet uden at spørge. Tjek Indstillinger → Apps → Safari → Kamera (skal være Spørg eller Tillad).'
-        : (e.message || String(e));
-      f.textContent = 'Live-kamera virker ikke: ' + t + ' [' + (e && e.name) + ', ' + (standalone ? 'hjemmeskærm' : 'Safari') + ']. Brug imens knappen herover.';
-    }
-    kameraUi();
-  });
-  // Foto → beskæring → upload-kø. SKU låses, når fotoet tages.
+  // ================= Kamera + fotos (fælles for Lego og Retro) =================
+  // Foto → beskæring → udbakke. SKU låses, når fotoet tages.
+  var kameraer = {}; // visning → {ui, stop}
   var beskaerer = false;
-  async function beskaerOgSend(raa, sku) {
+  async function beskaerOgSend(raa, sku, type) {
     var r = await Beskaer.aabn(raa);
     if (!r) return false;
     var jpg = Foto.beskaerTilJpg(raa, r);
     var thumb = await Foto.miniature(jpg.dataUrl);
     var uploadId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-    await Data.tilfoej('uploadFoto', { sku: sku, billede: jpg.base64, uploadId: uploadId }, { sku: sku, thumb: thumb });
+    await Data.tilfoej(type, { sku: sku, billede: jpg.base64, uploadId: uploadId }, { sku: sku, thumb: thumb });
     return true;
   }
-  $('k3-tag').addEventListener('click', async function () {
-    if (beskaerer) return;
-    var sku = k3.sku;
-    try {
-      var raa = Foto.tagRaa($('k3-video'));
-      beskaerer = true;
-      await beskaerOgSend(raa, sku);
-    } catch (e) { $('k3-kamerafejl').textContent = e.message; }
-    finally { beskaerer = false; }
-  });
-  $('k3-fil').addEventListener('change', async function () {
-    var filer = Array.prototype.slice.call(this.files || []); this.value = '';
-    var sku = k3.sku;
-    beskaerer = true;
-    try {
-      for (var i = 0; i < filer.length; i++) {
-        try { await beskaerOgSend(await Foto.filTilRaa(filer[i]), sku); }
-        catch (e) { $('k3-kamerafejl').textContent = e.message; }
+  // p = id-forstavelse ('k3' / 'rk2'): <p>-video, -start, -tag, -fil, -kamera-tom, -kamerainfo, -kamerafejl
+  function lavKamera(p, type, skuFn) {
+    var video = $(p + '-video');
+    function info() {
+      // Viser den opløsning, iPhonen faktisk giver live-kameraet (til test af fotokvalitet)
+      $(p + '-kamerainfo').textContent = Foto.kameraKoerer() && video.videoWidth ? 'Kamera: ' + video.videoWidth + ' × ' + video.videoHeight + ' px' : '';
+    }
+    function ui() {
+      var koerer = Foto.kameraKoerer();
+      $(p + '-start').textContent = koerer ? 'Stop kamera' : 'Start kamera';
+      $(p + '-tag').disabled = !koerer;
+      $(p + '-kamera-tom').hidden = koerer;
+      info();
+    }
+    video.addEventListener('loadedmetadata', info);
+    video.addEventListener('resize', info);
+    $(p + '-start').addEventListener('click', async function () {
+      var f = $(p + '-kamerafejl'); f.textContent = '';
+      if (Foto.kameraKoerer()) { Foto.stopKamera(video); ui(); return; }
+      try { await Foto.startKamera(video); }
+      catch (e) {
+        var standalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+        var t = e && e.name === 'NotAllowedError'
+          ? 'iPhonen afviste kameraet uden at spørge. Tjek Indstillinger → Apps → Safari → Kamera (skal være Spørg eller Tillad).'
+          : (e.message || String(e));
+        f.textContent = 'Live-kamera virker ikke: ' + t + ' [' + (e && e.name) + ', ' + (standalone ? 'hjemmeskærm' : 'Safari') + ']. Brug imens knappen herover.';
       }
-    } finally { beskaerer = false; }
-  });
+      ui();
+    });
+    $(p + '-tag').addEventListener('click', async function () {
+      if (beskaerer) return;
+      var sku = skuFn();
+      try {
+        var raa = Foto.tagRaa(video);
+        beskaerer = true;
+        await beskaerOgSend(raa, sku, type);
+      } catch (e) { $(p + '-kamerafejl').textContent = e.message; }
+      finally { beskaerer = false; }
+    });
+    $(p + '-fil').addEventListener('change', async function () {
+      var filer = Array.prototype.slice.call(this.files || []); this.value = '';
+      var sku = skuFn();
+      beskaerer = true;
+      try {
+        for (var i = 0; i < filer.length; i++) {
+          try { await beskaerOgSend(await Foto.filTilRaa(filer[i]), sku, type); }
+          catch (e) { $(p + '-kamerafejl').textContent = e.message; }
+        }
+      } finally { beskaerer = false; }
+    });
+    return { ui: ui, stop: function () { Foto.stopKamera(video); ui(); } };
+  }
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden && aktiv === 'koeb3') { Foto.stopKamera($('k3-video')); kameraUi(); }
+    if (document.hidden && kameraer[aktiv]) kameraer[aktiv].stop();
   });
-
-  function tegnFotos() {
-    var c = $('k3-fotos'); c.innerHTML = '';
-    var sku = k3.sku;
+  // Miniaturer: sendt i denne session + venter i udbakken (type = 'uploadFoto' / 'retroUploadFoto')
+  function tegnFotoListe(c, sku, type) {
+    c.innerHTML = '';
     var vis = Data.sendteFotos(sku).map(function (f) { return { thumb: f.thumb, tekst: f.navn.replace(sku, ''), kl: 'ok' }; });
-    Data.poster().filter(function (p) { return p.type === 'uploadFoto' && p.data.sku === sku; }).forEach(function (p) {
+    Data.poster().filter(function (p) { return p.type === type && p.data.sku === sku; }).forEach(function (p) {
       vis.push({ thumb: p.meta.thumb, kl: p.status, tekst: p.status === 'sender' ? 'sender …' : p.status === 'fejl' ? 'fejlede' : 'venter', post: p });
     });
     vis.forEach(function (f) {
@@ -482,6 +487,8 @@
       c.appendChild(d);
     });
   }
+  kameraer.koeb3 = lavKamera('k3', 'uploadFoto', function () { return k3.sku; });
+  function tegnFotos() { tegnFotoListe($('k3-fotos'), k3.sku, 'uploadFoto'); }
 
   function opdaterK3() {
     visKoebStatus();
@@ -811,8 +818,246 @@
     finally { knap.disabled = false; }
   });
 
+  // ================= Retro Design =================
+  var R = window.Retro;
+  var RKLADDE = 'cts.retrokladde';
+  var RTYPER = ['Brødskærer', 'Lampe', 'Møbel', 'Radio/TV-kabinet', 'Andet'];
+  var rk = null, rlEl = new WeakMap(); // kladde for nyt køb; linje → element
+  function nyRk() { return { iso: iDag(), pris: '', hvor: '', noter: '', linjer: [nyRLinje()] }; }
+  function nyRLinje() { return { type: RTYPER[0], andet: '', producent: '', kode: '', model: '', antal: '1' }; }
+  function gemRk() { try { localStorage.setItem(RKLADDE, JSON.stringify(rk)); } catch (e) { /* ignorer */ } }
+  function hentRk() { try { return JSON.parse(localStorage.getItem(RKLADDE)); } catch (e) { return null; } }
+  function sletRk() { localStorage.removeItem(RKLADDE); rk = null; }
+  function rlType(l) { return l.type === 'Andet' ? String(l.andet || '').trim() : l.type; }
+  // Linje → data til maskinrummet (kendt producent: koden fra Mærker)
+  function rlData(l) {
+    var p = String(l.producent || '').trim(), kendt = Data.retroKode(p);
+    return { type: rlType(l), producent: p, kode: p ? (kendt || String(l.kode || '').trim().toUpperCase()) : '', model: String(l.model || '').trim(),
+      antal: /^\d+$/.test(String(l.antal).trim()) ? Number(String(l.antal).trim()) : NaN };
+  }
+
+  function visRk1() {
+    if (!rk) rk = hentRk() || nyRk();
+    $('rk1-dato').value = rk.iso; $('rk1-pris').value = rk.pris; $('rk1-hvor').value = rk.hvor; $('rk1-noter').value = rk.noter || '';
+    $('rk1-fejl').textContent = '';
+    tegnRLinjer(); rk1Opdater();
+    Data.retroHentMaerker();
+  }
+  function rk1Opdater() {
+    if (!rk) return;
+    var dl = Data.retroMaerker().map(function (m) { return '<option value="' + esc(m.producent) + '">' + esc(m.kode) + '</option>'; }).join('');
+    if (rk1Opdater.dl !== dl) { $('rk1-maerker').innerHTML = dl; rk1Opdater.dl = dl; }
+    $('rk1-info').textContent = Data.status().retroFejl ? 'Maskinrummet: ' + Data.status().retroFejl : '';
+    rk.linjer.forEach(function (l) { var d = rlEl.get(l); if (d && d.isConnected) visKode(d, l); });
+    visRkSkuer();
+  }
+  $('rk1-dato').addEventListener('change', function () { rk.iso = this.value; gemRk(); visRkSkuer(); });
+  $('rk1-pris').addEventListener('input', function () { rk.pris = this.value; gemRk(); visRkSkuer(); });
+  $('rk1-hvor').addEventListener('input', function () { rk.hvor = this.value; gemRk(); });
+  $('rk1-noter').addEventListener('input', function () { rk.noter = this.value; gemRk(); });
+  $('rk1-ny-linje').addEventListener('click', function () {
+    var l = nyRLinje(); rk.linjer.push(l); $('rk1-linjer').appendChild(lavRLinje(l)); nummererRLinjer(); gemRk(); visRkSkuer();
+  });
+
+  function tegnRLinjer() {
+    if (!rk.linjer.length) rk.linjer.push(nyRLinje());
+    var c = $('rk1-linjer'); c.innerHTML = '';
+    rk.linjer.forEach(function (l) { c.appendChild(lavRLinje(l)); });
+    nummererRLinjer();
+  }
+  function nummererRLinjer() {
+    $('rk1-linjer').querySelectorAll('.rlinje').forEach(function (d, i, alle) {
+      d.querySelector('.rl-nr').textContent = 'Linje ' + (i + 1);
+      d.querySelector('.slet').style.visibility = alle.length > 1 ? '' : 'hidden';
+    });
+  }
+  function lavRLinje(l) {
+    var d = document.createElement('div'); d.className = 'rlinje';
+    d.innerHTML =
+      '<div class="rl-top"><span class="rl-nr lille"></span><button type="button" class="slet" aria-label="Fjern linje">×</button></div>' +
+      '<div class="rl-typer"><select class="rl-type" aria-label="Type">' + RTYPER.map(function (t) { return '<option' + (l.type === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>' +
+      '<input class="rl-andet" autocomplete="off" placeholder="Hvilken type?" aria-label="Anden type" value="' + esc(l.andet) + '"></div>' +
+      '<div class="rl-felter"><input class="rl-producent" list="rk1-maerker" autocomplete="off" placeholder="Producent (kan udelades)" aria-label="Producent" value="' + esc(l.producent) + '">' +
+      '<input class="rl-kode mono" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="4" placeholder="Kode" aria-label="Mærkekode"></div>' +
+      '<div class="rl-felter"><input class="rl-model" autocomplete="off" placeholder="Model (fx 294)" aria-label="Model" value="' + esc(l.model) + '">' +
+      '<input class="rl-antal" inputmode="numeric" autocomplete="off" aria-label="Antal" placeholder="Antal" value="' + esc(l.antal) + '"></div>' +
+      '<div class="rl-info lille"></div>';
+    rlEl.set(l, d);
+    var q = function (k) { return d.querySelector(k); };
+    var andet = q('.rl-andet');
+    andet.hidden = l.type !== 'Andet';
+    var aendret = function () { gemRk(); visRkSkuer(); };
+    q('.rl-type').addEventListener('change', function () { l.type = this.value; andet.hidden = l.type !== 'Andet'; if (!andet.hidden) andet.focus(); aendret(); });
+    andet.addEventListener('input', function () { l.andet = this.value; aendret(); });
+    q('.rl-producent').addEventListener('input', function () { l.producent = this.value; visKode(d, l); aendret(); });
+    q('.rl-kode').addEventListener('input', function () {
+      var v = this.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+      if (this.value !== v) this.value = v;
+      l.kode = v; aendret();
+    });
+    q('.rl-model').addEventListener('input', function () { l.model = this.value; aendret(); });
+    q('.rl-antal').addEventListener('input', function () { l.antal = this.value; aendret(); });
+    q('.slet').addEventListener('click', function () {
+      if (rk.linjer.length < 2) return;
+      rk.linjer.splice(rk.linjer.indexOf(l), 1); d.remove(); nummererRLinjer(); aendret();
+    });
+    visKode(d, l);
+    return d;
+  }
+  // Kendt producent: koden vises og kan ikke ændres. Ny producent: koden skal skrives.
+  function visKode(d, l) {
+    var kode = d.querySelector('.rl-kode'), info = d.querySelector('.rl-info');
+    var p = String(l.producent || '').trim(), kendt = Data.retroKode(p), v;
+    if (!p) { v = ''; kode.disabled = true; kode.readOnly = false; info.textContent = ''; info.className = 'rl-info lille'; }
+    else if (kendt) { v = kendt; kode.disabled = false; kode.readOnly = true; info.textContent = 'Kendt producent · kode ' + kendt; info.className = 'rl-info lille ok-tekst'; }
+    else {
+      v = l.kode || ''; kode.disabled = false; kode.readOnly = false;
+      info.textContent = 'Ny producent – skriv en kode på 2–4 store bogstaver (fx RV for Raadvad). Appen husker den.'; info.className = 'rl-info lille';
+    }
+    if (kode.value !== v) kode.value = v;
+  }
+  function visRkSkuer() {
+    var el = $('rk1-skuer'), dato = B.batchId(rk.iso);
+    if (!dato) { el.textContent = 'Vælg købsdato'; $('rk1-pr-ting').textContent = ''; return; }
+    var linjer = rk.linjer.map(rlData).filter(function (l) { return l.type && l.antal >= 1; });
+    var eks = Data.retroKoeb(dato).ting.map(function (t) { return t.sku; });
+    var plan = R.retroSkuer(dato, linjer, eks);
+    el.innerHTML = plan.skuer.map(function (s) { return '<span class="rsku mono">' + esc(s) + '</span>'; }).join('') +
+      (plan.omdoeb.length ? '<div class="lille">Omdøbes i købet: ' + plan.omdoeb.map(function (o) { return esc(o[0]) + ' → ' + esc(o[1]); }).join(', ') + '</div>' : '');
+    var pris = B.tal(rk.pris), n = plan.skuer.length;
+    $('rk1-pr-ting').textContent = !n ? '' : eks.length
+      ? 'Købet ' + dato + ' findes allerede (' + eks.length + ' ting) – tingene tilføjes til det.'
+      : pris > 0 ? n + ' ting · købspris ca. ' + B.kr(pris / n) + ' kr pr. ting' : n + ' ting';
+  }
+  function tjekRLinjer(linjer) {
+    var kendte = Data.retroMaerker(), nye = {};
+    for (var i = 0; i < linjer.length; i++) {
+      var l = linjer[i], nr = 'Linje ' + (i + 1) + ': ';
+      if (!l.type) return nr + 'skriv hvilken type.';
+      if (!(l.antal >= 1 && l.antal <= 99)) return nr + 'antal skal være et helt tal fra 1 til 99.';
+      if (!l.producent || Data.retroKode(l.producent)) continue;
+      if (!/^[A-Z]{2,4}$/.test(l.kode)) return nr + 'skriv en kode på 2–4 store bogstaver for den nye producent ' + l.producent + '.';
+      var ejer = kendte.find(function (m) { return m.kode === l.kode; });
+      if (ejer) return nr + 'koden ' + l.kode + ' bruges allerede af ' + ejer.producent + '.';
+      var p = l.producent.toLowerCase();
+      if (nye[p] && nye[p] !== l.kode) return nr + l.producent + ' har fået to forskellige koder.';
+      var andenP = Object.keys(nye).find(function (k) { return k !== p && nye[k] === l.kode; });
+      if (andenP) return nr + 'koden ' + l.kode + ' er brugt til en anden ny producent.';
+      nye[p] = l.kode;
+    }
+    return '';
+  }
+  $('rk1-gem').addEventListener('click', async function () {
+    var f = $('rk1-fejl'); f.textContent = '';
+    var dato = B.batchId(rk.iso), pris = B.tal(rk.pris);
+    if (!dato) { f.textContent = 'Vælg købsdato.'; return; }
+    var linjer = rk.linjer.map(rlData);
+    var t = tjekRLinjer(linjer); if (t) { f.textContent = t; return; }
+    var tilfoej = false;
+    if (Data.retroKoebFindes(dato)) {
+      if (isNaN(pris)) pris = 0;
+      if (pris < 0) { f.textContent = 'Prisen kan ikke være negativ.'; return; }
+      if (!confirm('Køb ' + dato + ' findes allerede.\n\nVil du tilføje tingene til købet? ' + B.kr(pris) + ' kr lægges til købets samlede pris, og hele prisen fordeles igen ligeligt på alle ting i købet.')) return;
+      tilfoej = true;
+    } else if (!(pris > 0)) { f.textContent = 'Skriv den samlede pris i DKK.'; return; }
+    var plan = R.retroSkuer(dato, linjer, Data.retroKoeb(dato).ting.map(function (x) { return x.sku; }));
+    var knap = this; knap.disabled = true;
+    try {
+      await Data.tilfoej('retroOpretKoeb', {
+        dato: rk.iso, pris: pris, hvorKoebt: String(rk.hvor || '').trim(), noter: String(rk.noter || '').trim(), ting: linjer, tilfoej: tilfoej,
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+      }, { dato: dato });
+      sletRk();
+      aabnRk2(dato, plan.skuer[0]);
+      toast(Data.status().online ? 'Gemmer i Sheets …' : 'Gemt på telefonen – sendes til Sheets, når der er net');
+    } catch (e) { f.textContent = 'Ikke gemt: ' + e.message; }
+    finally { knap.disabled = false; }
+  });
+
+  // ----- Side 2: klargør -----
+  var rk2 = { dato: null, sku: null };
+  function rk2Ting() { return Data.retroKoeb(rk2.dato).ting; }
+  function findTing(sku) { return rk2Ting().find(function (t) { return t.sku === sku; }); }
+  function kortSku(sku) { return String(sku).replace(/^R\d{6}-/, ''); }
+  function aabnRk2(dato, sku) {
+    rk2.dato = String(dato);
+    gaa('rk2');
+    var alle = rk2Ting();
+    vaelgTing(sku && findTing(sku) ? sku : (alle[0] && alle[0].sku));
+    Data.retroOpdaterKoeb(rk2.dato);
+  }
+  function tegnRVaelger() {
+    var c = $('rk2-vaelg'); c.innerHTML = '';
+    rk2Ting().forEach(function (t) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.setAttribute('role', 'tab');
+      b.className = (t.sku === rk2.sku ? 'til ' : '') + (t.klar ? 'klar' : '');
+      b.setAttribute('aria-selected', t.sku === rk2.sku ? 'true' : 'false');
+      b.textContent = (t.klar ? '✓ ' : '') + kortSku(t.sku);
+      b.addEventListener('click', async function () {
+        if (t.sku === rk2.sku) return;
+        if (rErAendret()) await rGem(true);
+        vaelgTing(t.sku);
+      });
+      c.appendChild(b);
+    });
+  }
+  function rk2Info(t) {
+    var n = (t.antalFotos || 0), v = t.ventendeFotos || 0;
+    return 'Købspris ' + B.kr(t.koebspris) + ' kr' + (t.lagerstatus ? ' · ' + t.lagerstatus : '') + ' · ' + n + ' foto(s) i Drive' +
+      (v ? ', ' + v + ' venter' : '') + (t.ventende ? ' · venter på at blive sendt' : '');
+  }
+  function rk2Koeb() {
+    var k = Data.retroKoeb(rk2.dato);
+    $('rk2-koeb').textContent = 'Køb ' + rk2.dato + ' · ' + k.ting.length + ' ting' + (k.log ? ' · ' + B.kr(k.log.pris) + ' kr' + (k.log.hvorKoebt ? ' · ' + k.log.hvorKoebt : '') : '');
+  }
+  var RFELTER = { designer: 'rk2-designer', farve: 'rk2-farve', kendetegn: 'rk2-kendetegn', stand: 'rk2-stand', arbejde: 'rk2-arbejde', noter: 'rk2-noter' };
+  function vaelgTing(sku) {
+    var t = findTing(sku); if (!t) return;
+    rk2.sku = sku;
+    tegnRVaelger(); rk2Koeb();
+    $('rk2-sku').textContent = t.sku;
+    $('rk2-navn').textContent = [t.type, t.producent, t.model].filter(Boolean).join(' ');
+    $('rk2-info').textContent = rk2Info(t);
+    Object.keys(RFELTER).forEach(function (k) { $(RFELTER[k]).value = t[k] == null ? '' : String(t[k]); });
+    $('rk2-klar').checked = !!t.klar;
+    $('rk2-status').textContent = '';
+    tegnFotoListe($('rk2-fotos'), rk2.sku, 'retroUploadFoto');
+  }
+  function rFormular() {
+    var d = { sku: rk2.sku, klar: $('rk2-klar').checked };
+    Object.keys(RFELTER).forEach(function (k) { d[k] = $(RFELTER[k]).value.trim(); });
+    return d;
+  }
+  function rErAendret() {
+    var t = findTing(rk2.sku); if (!t) return false;
+    var f = rFormular();
+    return f.klar !== !!t.klar || Object.keys(RFELTER).some(function (k) { return f[k] !== String(t[k] == null ? '' : t[k]); });
+  }
+  async function rGem(stille) {
+    if (!findTing(rk2.sku)) return false;
+    var d = rFormular(), st = $('rk2-status'); st.className = 'besked';
+    try {
+      await Data.tilfoej('retroGemTing', d, { sku: d.sku });
+      if (!stille) st.textContent = (d.klar ? '✓ Gemt · klar' : '✓ Gemt') + (Data.status().online ? '' : ' på telefonen – sendes, når der er net');
+      tegnRVaelger();
+      return true;
+    } catch (e) { st.className = 'besked fejl'; st.textContent = 'Ikke gemt: ' + e.message; return false; }
+  }
+  $('rk2-gem').addEventListener('click', function () { rGem(false); });
+  kameraer.rk2 = lavKamera('rk2', 'retroUploadFoto', function () { return rk2.sku; });
+  function opdaterRk2() {
+    if (!rk2.dato) return;
+    rk2Koeb();
+    if (!findTing(rk2.sku)) { var a = rk2Ting(); if (a[0]) vaelgTing(a[0].sku); return; }
+    tegnRVaelger();
+    tegnFotoListe($('rk2-fotos'), rk2.sku, 'retroUploadFoto');
+    $('rk2-info').textContent = rk2Info(findTing(rk2.sku));
+  }
+
   // ================= Udbakke =================
-  var TYPENAVN = { tilfoejDb: 'Nyt sæt i DB', opretBatch: 'Nyt køb', gemKlargoering: 'Klargøring', uploadFoto: 'Foto', registrerSalg: 'Salg', saetListet: 'Listet' };
+  var TYPENAVN = { tilfoejDb: 'Nyt sæt i DB', opretBatch: 'Nyt køb', gemKlargoering: 'Klargøring', uploadFoto: 'Foto', registrerSalg: 'Salg', saetListet: 'Listet',
+    retroOpretKoeb: 'Retro: nyt køb', retroGemTing: 'Retro: klargøring', retroUploadFoto: 'Retro: foto' };
   function tegnUdbakke() {
     var c = $('u-liste'); c.innerHTML = '';
     var p = Data.poster();
@@ -821,7 +1066,9 @@
       var d = document.createElement('div'); d.className = 'post';
       var hvad = x.type === 'opretBatch' ? 'Batch ' + x.data.dato + ' · ' + x.data.saet.length + ' sæt · ' + B.kr(x.data.pris) + ' kr'
         : x.type === 'registrerSalg' ? x.data.koeber + ' · ' + x.data.varer.map(function (v) { return v.sku; }).join(', ')
-        : x.type === 'tilfoejDb' ? x.data.setnr + ' ' + x.data.navn : x.data.sku;
+        : x.type === 'tilfoejDb' ? x.data.setnr + ' ' + x.data.navn
+        : x.type === 'retroOpretKoeb' ? 'Køb ' + x.meta.dato + ' · ' + R.udvid(x.data.ting).length + ' ting · ' + B.kr(x.data.pris) + ' kr' + (x.data.tilfoej ? ' (tilføjet)' : '')
+        : x.data.sku;
       d.innerHTML = '<div class="post-top"><span class="navn">' + TYPENAVN[x.type] + '</span><span class="mono">' + esc(hvad) + '</span></div>' +
         '<div class="lille">' + (x.status === 'fejl' ? '<span class="ikke-off">Fejlede:</span> ' + esc(x.fejl) : x.status === 'sender' ? 'Sender …' : 'Venter på net') + '</div>';
       if (x.status === 'fejl') {
@@ -843,9 +1090,12 @@
     if (aktiv === 'lager') tegnLager();
     if (aktiv === 'koeb3') opdaterK3();
     if (aktiv === 'udbakke') tegnUdbakke();
+    if (aktiv === 'rk1') rk1Opdater();
+    if (aktiv === 'rk2') opdaterRk2();
   });
   Data.paaHaendelse(function (type, info) {
     if (type === 'batchGemt') toast(info.afvig ? 'Batch ' + info.dato + ' gemt – men Sheets regnede anderledes for ' + info.afvig + ' sæt. Tjek arket.' : 'Batch ' + info.dato + ' gemt i Sheets ✓');
+    if (type === 'retroKoebGemt') toast('Retro-køb ' + info.dato + ' gemt i Sheets ✓');
     if (type === 'altSendt') toast('Alt er sendt til Sheets ✓');
     if (type === 'salgGemt') toast('Salg gemt i Sheets ✓ ' + info.antal + ' vare(r)' + (info.fortjeneste !== null && info.fortjeneste !== undefined ? ' · fortjeneste ' + B.kr(info.fortjeneste) + ' kr' : ''));
     if (type === 'fejl') toast('Kunne ikke sendes: ' + info.fejl);

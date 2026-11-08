@@ -13,6 +13,9 @@
   var lyttere = [], haendelser = [];
   var status = { online: navigator.onLine, sender: false, henter: false, fejl: '' };
   var sendteFotos = {}; // sku → [{thumb, navn}] for fotos sendt i denne session
+  // Retro Design: lokal kopi af de køb/ting, telefonen kender, og kendte mærker (producent → kode)
+  function nyRetro() { return { ting: [], log: {}, maerker: [] }; }
+  var retro = nyRetro();
 
   function fyr() { lyttere.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }
   function haendelse(type, info) { haendelser.forEach(function (fn) { try { fn(type, info); } catch (e) { console.error(e); } }); }
@@ -22,6 +25,7 @@
       var v = await Promise.all(['db', 'salg', 'lager', 'log', 'hentet', 'kurs'].map(function (k) { return Lokal.hent(k); }));
       kopi.db = v[0] || null; kopi.salg = v[1] || {}; kopi.lager = v[2] || []; kopi.log = v[3] || {}; kopi.hentet = v[4] || 0; kopi.kurs = v[5] || {};
       listings = (await Lokal.hent('listings')) || { saet: {}, doc: {} };
+      retro = (await Lokal.hent('retro')) || nyRetro();
       udbakke = (await Lokal.udbakke.alle()) || [];
       udbakke.forEach(function (p) { if (p.status === 'sender') p.status = 'venter'; });
     } catch (e) { status.fejl = 'Lokal lagring virker ikke: ' + e.message; }
@@ -193,6 +197,23 @@
       haendelse('salgGemt', { antal: (svar.raekker || []).length, fortjeneste: svar.fortjenesteOrdre });
     } else if (p.type === 'tilfoejDb') {
       if (kopi.db) { kopi.db[svar.setnr] = [svar.navn, svar.tema, svar.undertema || '', svar.aar]; await Lokal.saet('db', kopi.db); }
+    } else if (p.type === 'retroOpretKoeb') {
+      p.sendt = true;
+      retroErstatKoeb(svar);
+      (p.data.ting || []).forEach(function (l) {
+        if (l.producent && l.kode && !retro.maerker.some(function (m) { return m.producent.toLowerCase() === String(l.producent).toLowerCase(); })) retro.maerker.push({ producent: l.producent, kode: l.kode });
+      });
+      await Lokal.saet('retro', retro);
+      haendelse('retroKoebGemt', { dato: svar.dato, antal: (svar.nye || []).length });
+    } else if (p.type === 'retroGemTing') {
+      var ri = retro.ting.findIndex(function (x) { return x.sku === svar.sku; });
+      if (ri >= 0) retro.ting[ri] = svar;
+      await Lokal.saet('retro', retro);
+    } else if (p.type === 'retroUploadFoto') {
+      var rt = retro.ting.find(function (x) { return x.sku === p.data.sku; });
+      if (rt) { rt.antalFotos = svar.antalFotos; rt.fotos = true; }
+      (sendteFotos[p.data.sku] = sendteFotos[p.data.sku] || []).push({ thumb: p.meta.thumb, navn: svar.navn });
+      await Lokal.saet('retro', retro);
     } else if (p.type === 'uploadFoto') {
       var r = kopi.lager.find(function (x) { return x.sku === p.data.sku; });
       if (r) { r.antalFotos = svar.antalFotos; r.fotos = true; }
@@ -273,6 +294,92 @@
     } catch (e) { /* uden net: brug kopien */ }
   }
 
+  // ---------------- Retro Design ----------------
+  // Visning = lokal kopi + det der venter i udbakken (samme mønster som Lego).
+  function retroAnvend() {
+    var R = rod.Retro;
+    var ting = retro.ting.map(function (t) { return Object.assign({}, t, { ventende: false, ventendeFotos: 0 }); });
+    var log = {}; Object.keys(retro.log).forEach(function (k) { log[k] = Object.assign({}, retro.log[k]); });
+    udbakke.forEach(function (p) {
+      if (p.type === 'retroOpretKoeb') {
+        if (p.sendt || p.status === 'fejl') return; // afvist af maskinrummet: vises kun i udbakken
+        var d = p.data, dato = R.retroDato(d.dato), gl = log[dato];
+        var eks = ting.filter(function (t) { return t.dato === dato; });
+        var linjer = (d.ting || []).map(function (l) { return Object.assign({}, l, { kode: retroKode(l.producent) || l.kode }); });
+        var plan = R.retroSkuer(dato, linjer, eks.map(function (t) { return t.sku; }));
+        plan.omdoeb.forEach(function (o) { var t = eks.find(function (x) { return x.sku === o[0]; }); if (t) { t.sku = o[1]; t.ventende = true; } });
+        var nye = R.udvid(linjer).map(function (l, i) {
+          return { sku: plan.skuer[i], dato: dato, type: l.type, producent: String(l.producent || '').trim(), designer: '', model: String(l.model || '').trim(),
+            farve: '', kendetegn: '', stand: '', arbejde: '', koebspris: 0, fotos: false, klar: false, lagerstatus: 'På lager', noter: '',
+            antalFotos: 0, ventende: true, ventendeFotos: 0, lokal: true };
+        });
+        var sidste = -1; ting.forEach(function (t, i) { if (t.dato === dato) sidste = i; });
+        if (sidste < 0) ting = nye.concat(ting); else ting.splice.apply(ting, [sidste + 1, 0].concat(nye));
+        var pris = gl && d.tilfoej ? gl.pris + (Number(d.pris) || 0) : Number(d.pris) || 0;
+        log[dato] = { pris: Math.round(pris * 100) / 100, hvorKoebt: (gl && gl.hvorKoebt) || d.hvorKoebt || '', noter: (gl && gl.noter) || d.noter || '', ventende: true };
+        var alle = ting.filter(function (t) { return t.dato === dato; }), kp = R.retroPriser(log[dato].pris, alle.length);
+        alle.forEach(function (t, i) { t.koebspris = kp[i]; });
+      } else if (p.type === 'retroGemTing') {
+        var t = ting.find(function (x) { return x.sku === p.data.sku; }); if (!t) return;
+        ['designer', 'farve', 'kendetegn', 'stand', 'arbejde', 'noter', 'klar'].forEach(function (k) { t[k] = p.data[k]; });
+        t.ventende = true;
+      } else if (p.type === 'retroUploadFoto') {
+        var f = ting.find(function (x) { return x.sku === p.data.sku; }); if (!f) return;
+        f.fotos = true; f.ventendeFotos++;
+      }
+    });
+    return { ting: ting, log: log };
+  }
+  function retroKoeb(dato) {
+    var a = retroAnvend(), d = String(dato);
+    return { dato: d, log: a.log[d] || null, ting: a.ting.filter(function (t) { return t.dato === d; }) };
+  }
+  function retroKoebFindes(dato) { return !!retroAnvend().log[String(dato)]; }
+  // Kendte mærker: kopien + nye mærker i udbakken
+  function retroMaerker() {
+    var liste = retro.maerker.slice();
+    udbakke.forEach(function (p) {
+      if (p.type !== 'retroOpretKoeb') return;
+      (p.data.ting || []).forEach(function (l) {
+        if (l.producent && l.kode && !liste.some(function (m) { return m.producent.toLowerCase() === String(l.producent).toLowerCase(); })) liste.push({ producent: String(l.producent).trim(), kode: l.kode });
+      });
+    });
+    return liste.sort(function (a, b) { return a.producent.localeCompare(b.producent); });
+  }
+  function retroKode(producent) {
+    var p = String(producent || '').trim().toLowerCase(); if (!p) return '';
+    var m = retroMaerker().find(function (x) { return x.producent.toLowerCase() === p; });
+    return m ? m.kode : '';
+  }
+  function retroErstatKoeb(k) {
+    var dato = String(k.dato);
+    var gl = {}; retro.ting.forEach(function (t) { gl[t.sku] = t.antalFotos; });
+    var nye = (k.ting || []).map(function (t) { if (t.antalFotos === undefined) t.antalFotos = gl[t.sku] || 0; return t; });
+    var foer = retro.ting.findIndex(function (t) { return t.dato === dato; });
+    var rest = retro.ting.filter(function (t) { return t.dato !== dato; });
+    if (foer < 0) foer = 0; else foer = retro.ting.slice(0, foer).filter(function (t) { return t.dato !== dato; }).length;
+    rest.splice.apply(rest, [foer, 0].concat(nye));
+    retro.ting = rest;
+    retro.log[dato] = { pris: Number(k.pris) || 0, hvorKoebt: k.hvorKoebt || '', noter: k.noter || '' };
+  }
+  // Hent mærker fra Sheets (når der er net). Fejl fra maskinrummet (fx intet Retro-ark) gemmes i status.retroFejl.
+  async function retroHentMaerker() {
+    try {
+      var m = await Api.kald('retroMaerker', {}, 2);
+      retro.maerker = (m || []).map(function (x) { return { producent: String(x.producent), kode: String(x.kode) }; });
+      status.retroFejl = '';
+      await Lokal.saet('retro', retro); fyr(); return true;
+    } catch (e) { if (e.fraServer) { status.retroFejl = e.message; fyr(); } return false; }
+  }
+  // Præcis udgave af ét køb fra Sheets (fototællinger m.m.) – uden net bruges kopien
+  async function retroOpdaterKoeb(dato) {
+    try {
+      var k = await Api.kald('retroHentKoeb', { dato: String(dato) }, 1);
+      retroErstatKoeb(k);
+      await Lokal.saet('retro', retro); fyr(); return true;
+    } catch (e) { return false; }
+  }
+
   window.addEventListener('online', function () { status.online = true; fyr(); koer(); });
   window.addEventListener('offline', function () { status.online = false; fyr(); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) koer(); });
@@ -284,6 +391,8 @@
     hentAlt: hentAlt, opdaterFotos: opdaterFotos, status: function () { return status; },
     retKoeb: retKoeb, koebStatus: koebStatus, lavListings: lavListings,
     listing: function (sku) { return listings.saet[sku] || null; }, listingDoc: function (dato) { return listings.doc[String(dato)] || ''; },
+    retroKoeb: retroKoeb, retroKoebFindes: retroKoebFindes, retroMaerker: retroMaerker, retroKode: retroKode,
+    retroHentMaerker: retroHentMaerker, retroOpdaterKoeb: retroOpdaterKoeb,
     hentetTid: function () { return kopi.hentet; }, kurs: function (aar) { return Number(kopi.kurs[String(aar)]) || 7.46; }, sendteFotos: function (sku) { return sendteFotos[sku] || []; }
   };
 })(this);

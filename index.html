@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/app.css?v=16">
+<link rel="stylesheet" href="css/app.css?v=17">
 </head>
 <body>
 <div id="testbanner" class="banner" hidden></div>
@@ -32,9 +32,9 @@
       <span class="ikon ikon-gul"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14v10H5zM8 9V6h3v3M13 9V6h3v3"/></svg></span>
       <span class="kort-tekst"><b>Lego</b><small>Køb, klargøring, lager og salg</small></span>
     </button>
-    <button class="kort" disabled>
+    <button class="kort" data-gaa="retro">
       <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
-      <span class="kort-tekst"><b>Retro Design</b><small>Kommer senere</small></span>
+      <span class="kort-tekst"><b>Retro Design</b><small>Køb og klargøring</small></span>
     </button>
     <button class="kort" disabled>
       <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V10M10 19V5M16 19v-6M22 19H2"/></svg></span>
@@ -64,6 +64,99 @@
       <span class="kort-tekst"><b>Databaser</b><small>Kommer senere</small></span>
     </button>
   </nav>
+</section>
+
+<!-- ============ RETRO DESIGN ============ -->
+<section id="v-retro" class="visning" hidden>
+  <header class="top"><button class="tilbage" data-gaa="hjem" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Retro Design</h2></header>
+  <nav class="menu">
+    <button class="kort kort-primaer" data-gaa="rk1">
+      <span class="ikon ikon-gul"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
+      <span class="kort-tekst"><b>Registrér nyt køb</b><small>Dato, pris og ting</small></span>
+    </button>
+    <button class="kort" disabled>
+      <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7"/></svg></span>
+      <span class="kort-tekst"><b>Lager</b><small>Kommer senere</small></span>
+    </button>
+    <button class="kort" disabled>
+      <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v12H4zM8 7V5h8v2"/></svg></span>
+      <span class="kort-tekst"><b>Registrér salg</b><small>Kommer senere</small></span>
+    </button>
+  </nav>
+</section>
+
+<!-- ============ RETRO: NYT KØB – SIDE 1 ============ -->
+<section id="v-rk1" class="visning" hidden>
+  <header class="top"><button class="tilbage" data-gaa="retro" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Retro: nyt køb</h2><span class="side">Side 1 af 2</span></header>
+  <div class="trin"><i class="til"></i><i></i></div>
+  <div class="indhold">
+    <div class="raekke2">
+      <div><label for="rk1-dato">Købsdato</label><input id="rk1-dato" type="date"></div>
+      <div><label for="rk1-pris">Samlet pris (DKK)</label><input id="rk1-pris" inputmode="decimal" autocomplete="off" placeholder="0,00"></div>
+    </div>
+    <label for="rk1-hvor">Hvor købt</label>
+    <input id="rk1-hvor" list="rk1-hvor-liste" autocomplete="off" placeholder="Fx Loppemarked">
+    <datalist id="rk1-hvor-liste"><option value="Loppemarked"><option value="DBA"><option value="Dødsbo"><option value="Andet"></datalist>
+    <label for="rk1-noter">Noter (kan udelades)</label>
+    <input id="rk1-noter" autocomplete="off">
+    <h3>Ting</h3>
+    <datalist id="rk1-maerker"></datalist>
+    <div id="rk1-linjer" class="linjer"></div>
+    <button type="button" class="link" id="rk1-ny-linje">+ Tilføj linje</button>
+    <div id="rk1-info" class="lille"></div>
+    <h3>SKU'er</h3>
+    <div id="rk1-skuer" class="rskuer" aria-live="polite"></div>
+    <div id="rk1-pr-ting" class="lille"></div>
+    <div id="rk1-fejl" class="besked fejl" role="alert"></div>
+  </div>
+  <footer class="bund"><button id="rk1-gem" class="knap knap-gul">Gem køb</button></footer>
+</section>
+
+<!-- ============ RETRO: SIDE 2 – KLARGØR ============ -->
+<section id="v-rk2" class="visning" hidden>
+  <header class="top"><button class="tilbage" data-gaa="retro" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Klargør</h2><span class="side">Side 2 af 2</span></header>
+  <div class="trin"><i class="til"></i><i class="til"></i></div>
+  <div class="indhold">
+    <div class="koebsstatus"><span id="rk2-koeb"></span></div>
+    <div id="rk2-vaelg" class="vaelg" role="tablist" aria-label="Vælg ting"></div>
+    <div class="saetkort">
+      <div class="mono" id="rk2-sku"></div>
+      <div class="navn" id="rk2-navn"></div>
+      <div class="lille" id="rk2-info"></div>
+    </div>
+
+    <div class="kamera">
+      <video id="rk2-video" playsinline muted autoplay></video>
+      <div class="kamera-tom" id="rk2-kamera-tom">Kameraet er slukket</div>
+    </div>
+    <div class="knapper">
+      <button id="rk2-start" class="knap">Start kamera</button>
+      <button id="rk2-tag" class="knap knap-primaer" disabled>Tag foto</button>
+    </div>
+    <label class="knap knap-sekundaer fil-knap">Tag foto med telefonens kamera
+      <input id="rk2-fil" type="file" accept="image/*" capture="environment" hidden>
+    </label>
+    <div id="rk2-kamerainfo" class="hjaelp"></div>
+    <div id="rk2-kamerafejl" class="besked fejl" role="alert"></div>
+    <div id="rk2-fotos" class="fotos" aria-live="polite"></div>
+
+    <label for="rk2-designer">Designer</label>
+    <input id="rk2-designer" autocomplete="off">
+    <div class="raekke2">
+      <div><label for="rk2-farve">Farve</label><input id="rk2-farve" autocomplete="off"></div>
+      <div><label for="rk2-stand">Stand (1–10)</label>
+        <select id="rk2-stand"><option value="">–</option><option value="10">10</option><option value="9">9</option><option value="8">8</option><option value="7">7</option><option value="6">6</option><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select></div>
+    </div>
+    <label for="rk2-kendetegn">Særligt kendetegn</label>
+    <input id="rk2-kendetegn" autocomplete="off" placeholder="Fx RAADVAD-logo på armen">
+    <label for="rk2-arbejde">Udført arbejde</label>
+    <textarea id="rk2-arbejde" rows="2" placeholder="Fx malet, ny ledning"></textarea>
+    <label for="rk2-noter">Noter</label>
+    <textarea id="rk2-noter" rows="2"></textarea>
+    <div class="chips"><label class="chip"><input type="checkbox" id="rk2-klar"><span>Klar</span></label></div>
+    <div id="rk2-status" class="besked" role="status"></div>
+  </div>
+  <footer class="bund"><button id="rk2-gem" class="knap knap-gul">Gem</button></footer>
 </section>
 
 <!-- ============ UDBAKKE ============ -->
@@ -327,12 +420,13 @@
 
 <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="js/beregn.js?v=16"></script>
-<script src="js/api.js?v=16"></script>
-<script src="js/lokal.js?v=16"></script>
-<script src="js/data.js?v=16"></script>
-<script src="js/foto.js?v=16"></script>
-<script src="js/beskaer.js?v=16"></script>
-<script src="js/app.js?v=16"></script>
+<script src="js/beregn.js?v=17"></script>
+<script src="js/retro.js?v=17"></script>
+<script src="js/api.js?v=17"></script>
+<script src="js/lokal.js?v=17"></script>
+<script src="js/data.js?v=17"></script>
+<script src="js/foto.js?v=17"></script>
+<script src="js/beskaer.js?v=17"></script>
+<script src="js/app.js?v=17"></script>
 </body>
 </html>
