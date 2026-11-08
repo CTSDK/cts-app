@@ -43,7 +43,7 @@ Status pr. 08-11-2026: **trin 1 bygget og testet i testtilstand (app v17 + maski
   → Klargør (designer, farve, kendetegn, stand, arbejde, noter, klar + live-kamera/fotos som Lego). Lager og Salg: "kommer senere".
 - SKU-detaljer: æøå → AE/OE/AA, kun A–Z/0–9 (fx "Radio/TV-kabinet" → RADIOTVKABINET). Flere ens → -a, -b … Tilføjes en ens ting senere,
   omdøbes en enlig ting til -a (også dens fotos).
-- **Tilføj til eksisterende køb:** beløbet lægges til købets samlede pris, og hele prisen fordeles igen ligeligt (hjælperens valg – bekræftes med Thomas).
+- **Tilføj til eksisterende køb:** beløbet lægges til købets samlede pris, og hele prisen fordeles igen ligeligt (bekræftet af Thomas 08-11).
 - Begrænsning: appen kender kun køb lavet/hentet på telefonen; findes købsdatoen i arket fra anden enhed → fejl i udbakken.
 - Tests: `node tests/retro.test.js`, `node tests/retro-e2e.js` (Playwright, mock).
 
