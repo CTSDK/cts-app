@@ -3,9 +3,9 @@
 Kort vejledning til Thomas. Opdateres af Claude, når noget ændrer sig.
 
 ## 1. Hvor du skriver
-- Åbn **Claude-appen** på computeren → **Code** → samtalen **"CTS-appen: arkitektur og opsætning"**.
-- Det er **samme samtale hver gang**. Du skal ikke starte en ny.
-- Du kan også skrive fra telefonen i Claude-appen i den samme samtale.
+- Åbn **Claude-appen** → **Code** og start en **ny samtale** med projektet **cts-app** hver gang efter "afslut" (sparer forbrug).
+- Skriv bare, hvad dagen handler om. Claude læser hovednoten og områdets note og ved, hvor I slap.
+- Midt i en opgave bliver du i samme samtale. Du kan også skrive fra telefonen.
 
 ## 2. Når du starter
 Skriv bare, hvad dagen handler om – i almindeligt dansk. Eksempler:

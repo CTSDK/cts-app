@@ -13,6 +13,7 @@ Thomas koder ikke selv: forklar i almindeligt dansk, ét trin ad gangen, med pr�
 
 Thomas skriver bare, hvad dagen handler om. Claude er hovedagent: læser hovednoten + områdets note og laver opgaven.
 Store, opdelelige opgaver kan sendes til hjælpe-agenter (de læser samme noter). Små skridt laves direkte.
+**Hjælpe-agenter til læsning/opslag** (PDF'er, mails, Sheets-opslag, gennemgang) startes med `model: "sonnet"`; kode og planlægning bruger den store model.
 
 ## Arbejdsregler (Thomas)
 - **Alle spørgsmål samlet FØR der bygges.** Ikke gæt-og-flag bagefter. Diskutér muligheder før der bygges.
@@ -28,7 +29,8 @@ Store, opdelelige opgaver kan sendes til hjælpe-agenter (de læser samme noter)
 - Thomas' ASUS: F5 er lysstyrke – brug **Ctrl+Shift+R** til genindlæsning.
 
 ## Arbejdsform
-- **Vi bliver i samme samtale.** Thomas skal ikke starte nye samtaler eller flytte noget.
+- **Ny samtale efter hver "afslut" (fra 08-11, for at spare forbrug).** Noterne er overleveringen (handoff): en ny samtale læser hovednoten +
+  områdets note og fortsætter derfra. Alt vigtigt skal derfor stå i noterne ved afslut. Midt i en opgave bliver vi i samme samtale.
 - **Start:** Thomas skriver bare, hvad dagen handler om. Claude læser denne note + områdets note og går i gang.
 - **Uddeling (sparer hukommelse):** opgaver der kræver meget læsning – store opslag i Sheets, PDF'er/billeder, gennemgang af kode,
   undersøgelser – sendes til en hjælpe-agent med hovednoten + områdets note, og kun resultatet kommer tilbage.
@@ -41,7 +43,7 @@ Store, opdelelige opgaver kan sendes til hjælpe-agenter (de læser samme noter)
 Connectors Google Drive + Google Sheets virker. Regneark **cts-app**: `1cCBaGigDN0c5UK3iIKL8GDtNKwNqVHq-PnuEclieGvw`.
 Drive-mappe **CTS/Noter** (læse-kopi af noterne): id `1dCTDB4xGkJTLc7bL156aiNAGqDjHkxJ0`. Maskinrummet (1.7.0, `synkNoter`) henter noterne fra GitHub
 hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gennem samtalen (koster hukommelse).
-- **Gmail (CTS-kontoen ctsdanmark@gmail.com):** ✓ forbundet 07-11 og virker i denne samtale (søgning testet). Kun til CTS – Thomas har givet lov til at Claude læser den.
+- **Gmail (CTS-kontoen ctsdanmark@gmail.com):** ✓ forbundet 07-11 (søgning testet). Kun til CTS – Thomas har givet lov til at Claude læser den.
   Thomas' private mail er t.clifford.pejtersen@gmail.com – derfra videresender han bilag (fx CoolRunner-mail 07-11, tråd-id 1a1b5f1995767b0a, ikke læst endnu).
 - ✓ Læse/skrive celler, oprette/slette faner og rækker. ✓ Søge, oprette, omdøbe, flytte filer i Drive.
 - ✗ Apps Script-koden kan ikke opdateres via forbindelsen – Thomas kopierer koden ind.

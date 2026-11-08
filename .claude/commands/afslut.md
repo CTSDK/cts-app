@@ -8,3 +8,5 @@ Afslut dagens arbejde for CTS (fast rutine – Thomas skriver "afslut" eller /af
 4. Drive-kopien (CTS/Noter) laves automatisk hver nat af maskinrummet (synkNoter, fra 1.7.0). Kopiér IKKE noterne gennem samtalen.
    Haster det: bed Thomas vælge CTS → Kopiér noter til Drive.
 5. Giv Thomas en kort dansk opsummering: hvad blev lavet i dag, hvad mangler at blive testet, hvad er næste.
+6. Mind Thomas om at starte en **ny samtale** næste gang (noterne er overleveringen). Tjek før afslutning, at alt der er aftalt, bygget,
+   testet og NÆSTE står i noterne – en ny samtale ved kun det, der står dér.
