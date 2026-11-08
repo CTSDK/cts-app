@@ -48,14 +48,14 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
 ## Næste (pr. 08-11-2026)
-1. **MobilePay-kvitteringer (køb 260916/261015/261028):** Thomas sætter maskinrum 2.1.0 ind → Gem bilag fra Gmail → Claude laver Bilagsplan → Thomas kører den.
+1. **Løbende bilag:** nyt i `Bilag/Indbakke` (Gmail → Gem bilag, eller direkte i Drive) → Claude laver Bilagsplan → Thomas kører Udfør bilagsplan.
 2. **Thomas:** vælg Område (Lego/Retro Design/Fælles/Privat) for gamle bilag i CTS Økonomi → Bilag; 2 manglende San Martino-kvitteringer.
 3. **Byg (Økonomi):** "Bilag → forslag i appen" + kolonne Q Sporingsnr i Salg 2026 (plan i okonomi.md).
 4. Bagefter: Retro Design.
 
 ## Status pr. 08-11-2026
-- ✅ **CTS Økonomi** (eget regneark, id `1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (193), Udgifter, Skat, Kontoplan, Bilagsplan.
+- ✅ **CTS Økonomi** (eget regneark, id `1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (196), Udgifter, Skat, Kontoplan, Bilagsplan.
   Flyttet fra Lego-arket 08-11, tal tjekket ens. Lego-arket = priser/lager/salg.
-- ✅ Maskinrum 2.0.0 hos Thomas (2.1.0 klar: bilagsplan → også fanen Bilag). App v16 (fotos 3000 px / 92 %).
-- ✅ Alle salg 2026 har bilagsnr (næste B166; 2025 næste B029). eBay sep+okt afstemt.
+- ✅ Maskinrum 2.1.1 hos Thomas (bilagsplan → også fanen Bilag; MobilePay-PDF'er gemmes). App v16 (fotos 3000 px / 92 %).
+- ✅ Alle salg 2026 har bilagsnr (næste B169; 2025 næste B029). eBay sep+okt afstemt.
 - ✅ Noter kopieres til Drive CTS/Noter hver nat. Gmail-forbindelse til CTS-kontoen virker.

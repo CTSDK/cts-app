@@ -1,6 +1,6 @@
 # Område: Økonomi (overordnet for hele CTS)
 
-Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.0.0 hos Thomas; 2.1.0 klar). Bilag og fragt kører.
+Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.1.1 hos Thomas). 196 bilag. Bilag og fragt kører.
 
 ## Sådan er det nu
 - **CTS Økonomi** (id `1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`, mappe `CTS/Økonomi`): Overblik, Bilag, Udgifter 2025/2026, Skat 2025/2026,
@@ -26,11 +26,11 @@ Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.0.0
 
 ## Bilagsnumre
 - **B001, B002 …, én serie pr. år, starter forfra.** Fælles for salg, fragt, udgifter, varekøb. Salg: kolonne P (fx "B155, B159" = eBay + fragt). Udgifter: kolonne A.
-- 2025: B001–B028 brugt → næste **B029**. 2026: B001–B168 brugt (B166–B168 = MobilePay-varekøb 260916/261015/261028, i Bilagsplan 08-11) → næste **B169**. Alle salg 2026 har bilagsnr (pr. 07-11).
+- 2025: B001–B028 brugt → næste **B029**. 2026: B001–B168 brugt (B166–B168 = MobilePay-varekøb 260916/261015/261028 + samtaler, ✅ udført 08-11) → næste **B169**. Alle salg 2026 har bilagsnr (pr. 07-11).
 - Uafklaret: kalenderår eller regnskabsår (spørg revisor).
 
 ## Sådan arbejder vi (testet 07-11)
-0. **Andre bilag (2.1.1, ikke testet):** mails fra Thomas' private mail med PDF/billede (fx MobilePay-kvittering, emne "Lego køb 261028") gemmes som
+0. **Andre bilag (2.1.1, ✅ testet 08-11):** mails fra Thomas' private mail med PDF/billede (fx MobilePay-kvittering, emne "Lego køb 261028") gemmes som
    `<emne>.pdf` i Indbakke af samme menupunkt. Findes uden etiket (sidste 120 dage); gemte beskeder huskes i Script Properties (ANDRE_BILAG_GEMT).
    PDF'er tages fra den rå mail (iPhone lægger dem ind i mailen). 2.0/2.1.0 gemte dem ikke (fejl rettet 08-11).
 1. **Fragt:** Thomas videresender CoolRunner/GLS-mails til CTS-Gmailen → **CTS → Gem bilag fra Gmail** gemmer dem i Indbakke og sætter etiketten
@@ -55,8 +55,7 @@ Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.0.0
 - Siltakylä 2025: 3 GLS-ordrer på 3 ens salgsrækker – fordelingen er vilkårlig (private, før CTS).
 
 ## Næste i Økonomi
-- **MobilePay-kvitteringer** for køb 260916, 261015, 261028 ligger i CTS-Gmailen → Thomas sætter 2.1.0 ind og kører Gem bilag fra Gmail →
-  Claude laver Bilagsplan (varekøb, konto 2010, nr fra B166) → Thomas kører Udfør bilagsplan.
+- Afregningsbilag for køb fra private mangler (260906, 260916, 261015, 261028) – tages op, evt. med revisor.
 - Thomas gennemgår Område i fanen Bilag (gamle bilag "Ukendt").
 - **Bilag → forslag i appen** (plan, ikke bygget): maskinrummet læser Indbakke selv og viser forslag i appen, som Thomas godkender.
   Salg 2026 skal have kolonne Q "Sporingsnr" (Thomas' ja 07-11, ikke lavet).
