@@ -34,6 +34,7 @@ Status pr. 07-11-2026: **bilag og fragt kører** (maskinrum 1.9.0). Fælles øko
    (A Bilagsnr, B Fil-id, C Nyt filnavn, D Mappe-id, E Celle, F Status) med ét kald.
 4. **Thomas** godkender én gang og kører **CTS → Udfør bilagsplan** (1.9.0): omdøber, flytter, fletter numre ind i cellerne, skriver "OK". Kan køres igen.
 5. **Månedlig:** eBays månedsoversigt ("<Mon> 2026 statement.pdf") → `Bilag/<år>/eBay-rapporter` → afstemning mod Salg-fanen (sep+okt 2026 gjort 07-11).
+- **Udgifter: skriv ALDRIG i D, H og K** (regnes af formlen i række 2 – en værdi dér stopper hele kolonnen; skete 07-11, rettet 08-11).
 - Returfragt (pakke ikke afhentet) lægges til det oprindelige salgs Udgift Fragt i samme år; ellers i Udgifter (konto 3030). Fx Bielefeld 06-08-2026 F = 317,81;
   Brünzow-retur 07-02-2026 = Udgifter 2026 række 18 (B136).
 - Delvise refusioner = som regel fragt refunderet ved køb i flere omgange. Står nogle gange netto uden kolonne J – Thomas: lad det være.
