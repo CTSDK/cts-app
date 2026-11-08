@@ -1,12 +1,15 @@
 # Område: Økonomi (overordnet for hele CTS)
 
-Status pr. 07-11-2026: **bilag og fragt kører** (maskinrum 1.9.0). Fælles økonomi-ark: planlagt, ikke bygget.
+Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.0.0 hos Thomas; 2.1.0 klar). Bilag og fragt kører.
 
 ## Sådan er det nu
-- Udgifter og skat ligger i Lego-regnearket **cts-app**: fanerne Udgifter 2025/2026, Skat 2025/2026, Kontoplan, eBay-afstemning, **Bilagsplan**.
-- Salg 2025/2026 (kun Lego) ligger også dér. Salgsdato = datoen kunden betalte.
+- **CTS Økonomi** (id `1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`, mappe `CTS/Økonomi`): Overblik, Bilag, Udgifter 2025/2026, Skat 2025/2026,
+  Kontoplan, Bilagsplan + skjulte "Salg 2025/2026" (IMPORTRANGE fra Lego-arket, så Skat/Udgifter-formlerne virker uændret; adgang givet 08-11).
+  Flyttet 08-11; tallene tjekket ens (2026 forskel = B133 kørsel 385,32, som kun står i økonomi-arket). Arkets id står i Script Properties (OEKONOMI_ID).
+- **Lego-arket cts-app** beholder Indkøb, Indkøbslog, Salg 2025/2026 (bilagsnr i P), Lager, DB, DB Salgspriser, eBay-afstemning (lager). Salgsdato = betalingsdato.
+- **Fanen Bilag:** én række pr. bilag (Bilagsnr, År, Dato, Type, Konto, Kontonavn, Modpart, Beløb, Valuta, Beløb DKK, Moms, Skattepligtigt, Område,
+  Kobling, Fil-link, Note). 193 bilag pr. 08-11. Gamle journal-bilag har Område "Ukendt" – Thomas vælger Lego/Retro Design/Fælles/Privat (nogle er Retro).
 - **Plan (Thomas' tegning):** Økonomi samler Lego, Retro Design og andre udgifter (Claude, emballage, Excel). CTS er ét firma (CVR kommer) → én skatteopgørelse.
-  Udgifter/Skat flyttes på sigt op i et fælles økonomi-ark – separat opgave, aftales først.
 - **Moms:** CTS er ikke momsregistreret → hele beløbet inkl. moms er udgiften. Købsmoms bygges til, når CTS bliver momsregistreret.
 
 ## Bilag i Drive: `CTS/Økonomi/Bilag`
@@ -30,9 +33,11 @@ Status pr. 07-11-2026: **bilag og fragt kører** (maskinrum 1.9.0). Fælles øko
 1. **Fragt:** Thomas videresender CoolRunner/GLS-mails til CTS-Gmailen → **CTS → Gem bilag fra Gmail** gemmer dem i Indbakke og sætter etiketten
    *CTS/Bilag behandlet*. CoolRunner-mail → PDF; GLS → faktura-PDF. Labels gemmes ikke. Tryk kun én gang (1.8.1 forhindrer dobbeltkørsel).
 2. **eBay:** Thomas gemmer hver ordreside ("Einzelheiten zum Kauf") som PDF i Indbakke, navn "eBay <ordrenr>.pdf".
-3. **Claude** (via hjælper) kobler bilag ↔ salg (sporingsnr/by/dato/beløb), fjerner dubletter, foreslår numre → skriver planen i fanen **Bilagsplan**
-   (A Bilagsnr, B Fil-id, C Nyt filnavn, D Mappe-id, E Celle, F Status) med ét kald.
-4. **Thomas** godkender én gang og kører **CTS → Udfør bilagsplan** (1.9.0): omdøber, flytter, fletter numre ind i cellerne, skriver "OK". Kan køres igen.
+3. **Claude** (via hjælper) kobler bilag ↔ salg (sporingsnr/by/dato/beløb), fjerner dubletter, foreslår numre → skriver planen i **økonomi-arkets Bilagsplan**
+   (A Bilagsnr, B Fil-id, C Nyt filnavn, D Mappe-id, E Celle fx "Salg 2026!P111" eller "Udgifter 2026!A18", F Status (tom), G Dato ÅÅÅÅ-MM-DD,
+   H Type, I Konto, J Modpart, K Beløb, L Valuta, M Område, N Note) med ét kald.
+4. **Thomas** godkender én gang og kører **CTS → Udfør bilagsplan**: omdøber, flytter, fletter numre ind i cellerne (Lego- eller økonomi-arket), skriver "OK"
+   og (fra 2.1.0) tilføjer bilaget i fanen Bilag. Kan køres igen.
 5. **Månedlig:** eBays månedsoversigt ("<Mon> 2026 statement.pdf") → `Bilag/<år>/eBay-rapporter` → afstemning mod Salg-fanen (sep+okt 2026 gjort 07-11).
 - **Udgifter: skriv ALDRIG i D, H og K** (regnes af formlen i række 2 – en værdi dér stopper hele kolonnen; skete 07-11, rettet 08-11).
 - Returfragt (pakke ikke afhentet) lægges til det oprindelige salgs Udgift Fragt i samme år; ellers i Udgifter (konto 3030). Fx Bielefeld 06-08-2026 F = 317,81;
@@ -47,16 +52,9 @@ Status pr. 07-11-2026: **bilag og fragt kører** (maskinrum 1.9.0). Fælles øko
 - Siltakylä 2025: 3 GLS-ordrer på 3 ens salgsrækker – fordelingen er vilkårlig (private, før CTS).
 
 ## Næste i Økonomi
-- **Økonomi-arket "CTS Økonomi"** id `1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM` (✅ oprettet af Thomas 08-11 med 2.0.0: 193 bilag, alle med fil-link; Afslut flytning mangler):
-  1. CTS → **Opret økonomi-ark** opretter arket i `CTS/Økonomi` med Overblik, Bilag, Udgifter 2025/2026 (+ B133 kørsel 385,32 kr), Skat 2025/2026,
-     Kontoplan (+ 1010/1020/2010/9010), Bilagsplan (kopieret, med kolonne G–N: dato, type, konto, modpart, beløb, valuta, område, note)
-     og skjulte "Salg 2025/2026" (IMPORTRANGE fra Lego-arket, så Skat/Udgifter-formlerne virker uændret). Arkets id gemmes i Script Properties (OEKONOMI_ID).
-  2. Thomas klikker Overblik B3 → "Tillad adgang" (IMPORTRANGE).
-  3. CTS → **Afslut flytning** sammenligner Udgifter Q3 og Skat B18 i begge ark (2026 forventet forskel = B133) → ved ja slettes Udgifter, Skat,
-     Kontoplan og Bilagsplan i Lego-arket. eBay-afstemning bliver i Lego-arket (lager).
-  - Fanen Bilag: gammel journal (Område "Ukendt" – Thomas gennemgår; nogle er Retro Design) + nye bilag fra Bilagsplan (Område Lego).
-  - Efter flytningen skriver Claude bilagsplaner i økonomi-arkets Bilagsplan; Udfør bilagsplan finder selv celler i begge ark.
-- MobilePay-kvitteringer for køb 260916, 261015, 261028 ligger i CTS-Gmailen → gemmes med 1.10.0 → bilagsnr (varekøb) i fanen Bilag.
+- **MobilePay-kvitteringer** for køb 260916, 261015, 261028 ligger i CTS-Gmailen → Thomas sætter 2.1.0 ind og kører Gem bilag fra Gmail →
+  Claude laver Bilagsplan (varekøb, konto 2010, nr fra B166) → Thomas kører Udfør bilagsplan.
+- Thomas gennemgår Område i fanen Bilag (gamle bilag "Ukendt").
 - **Bilag → forslag i appen** (plan, ikke bygget): maskinrummet læser Indbakke selv og viser forslag i appen, som Thomas godkender.
   Salg 2026 skal have kolonne Q "Sporingsnr" (Thomas' ja 07-11, ikke lavet).
 - Videresendelse fra Thomas' private mail til CTS-Gmailen automatisk (senere).

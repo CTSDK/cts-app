@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '2.0.1';
+var VERSION = '2.1.0';
 
 // ---------- Faner ----------
 var FANE = {
@@ -326,7 +326,8 @@ function udfoerBilagsplan() {
   if (!sh) throw new Error('Fanen "' + BILAGSPLAN + '" findes ikke.');
   var n = sh.getLastRow() - 1, res = { ok: 0, fejl: [], mere: false }, start = Date.now();
   if (n < 1) return res;
-  var data = sh.getRange(2, 1, n, 6).getDisplayValues(), mapper = {};
+  var nk = Math.min(14, sh.getLastColumn());
+  var data = sh.getRange(2, 1, n, nk).getDisplayValues().map(function (r) { while (r.length < 14) r.push(''); return r; }), mapper = {}, udfoert = [];
   for (var i = 0; i < data.length; i++) {
     var r = data[i], nr = r[0].trim();
     if (!nr || r[5]) continue;
@@ -339,12 +340,53 @@ function udfoerBilagsplan() {
       }
       if (r[4]) tilfoejBilagsnr_(ss, r[4].trim(), nr);
       sh.getRange(i + 2, 6).setValue('OK ' + Utilities.formatDate(new Date(), 'Europe/Copenhagen', 'dd-MM-yyyy HH:mm'));
-      res.ok++;
+      res.ok++; udfoert.push(r);
     } catch (e) {
       sh.getRange(i + 2, 6).setValue('FEJL: ' + e.message); res.fejl.push(nr + ': ' + e.message);
     }
   }
+  if (oss && udfoert.length) {   // nye bilag kommer også i fanen Bilag (hvis de ikke står der)
+    try { res.bilag = tilfoejTilBilag_(ss, oss, udfoert); } catch (e) { res.fejl.push('Fanen Bilag: ' + e.message); }
+  }
   return res;
+}
+
+function tilfoejTilBilag_(lego, oss, planRaekker) {
+  var b = oss.getSheetByName(BILAG_FANE);
+  if (!b) return 0;
+  var findes = {};
+  if (b.getLastRow() > 1) b.getRange(2, 1, b.getLastRow() - 1, 2).getDisplayValues().forEach(function (r) { findes[r[1] + r[0]] = true; });
+  var kp = {};
+  oss.getSheetByName(FANE.KONTO).getRange('A3:B60').getDisplayValues().forEach(function (r) { if (r[0]) kp[r[0]] = r[1]; });
+  var kobling = bilagKoblinger_(lego, oss), nye = [];
+  planRaekker.forEach(function (p) {
+    var r = bilagFraPlan_(lego, p, kp, kobling);
+    if (r && !findes[r[1] + r[0]]) { nye.push(r); findes[r[1] + r[0]] = true; }
+  });
+  if (!nye.length) return 0;
+  var start = b.getLastRow() + 1;
+  sikrRaekker_(b, start + nye.length + 10);
+  b.getRange(start, 5, nye.length, 1).setNumberFormat('@');
+  b.getRange(start, 1, nye.length, BILAG_KOL.length).setValues(nye);
+  b.getRange(start, 3, nye.length, 1).setNumberFormat('dd-mm-yyyy');
+  b.getRange(start, 8, nye.length, 1).setNumberFormat('#,##0.00');
+  b.getRange(start, 10, nye.length, 2).setNumberFormat('#,##0.00');
+  return nye.length;
+}
+
+// Én række i Bilagsplan (A–N) → én række til fanen Bilag
+function bilagFraPlan_(lego, p, kp, kobling) {
+  var nr = String(p[0]).trim(), dato = isoDato_(p[6]);
+  if (!nr || !dato) return null;
+  var aar = dato.slice(0, 4);
+  var url = ''; try { if (p[1]) url = DriveApp.getFileById(String(p[1]).trim()).getUrl(); } catch (e) { /* fil ikke fundet */ }
+  var beloeb = tal_(p[10]), valuta = p[11] || 'DKK';
+  if (beloeb === '' && p[4]) { beloeb = ordreSum_(lego, p[4]); valuta = 'EUR'; }
+  var salg = lego.getSheetByName(FANE['SALG' + aar.slice(2)]);
+  var kurs = (salg && Number(salg.getRange('R2').getValue())) || 7.46;
+  return [nr, Number(aar), dato, p[7], p[8], kp[p[8]] || '', p[9], beloeb, valuta,
+    beloeb === '' ? '' : (valuta === 'EUR' ? Math.round(beloeb * kurs * 100) / 100 : beloeb), '', '',
+    p[12] || 'Lego', kobling[aar + nr] || p[4], url, p[13]];
 }
 
 // "Salg 2026!P111" + "B148" → "B052, B054, B148" (ingen dubletter, sorteret)
@@ -553,7 +595,7 @@ function byggBilag_(lego, oss) {
     var kurs = Number(lego.getSheetByName(FANE['SALG' + aar.slice(2)]).getRange('R2').getValue()) || 7.46;
     journal_(aar).forEach(function (j) {
       var fil = filer[aar][j.filnavn.split(/[\/\\]/).pop()] || '';
-      set[aar + j.nr] = true;
+      set[Number(aar) + j.nr] = true;
       rk.push([j.nr, Number(aar), j.dato, bilagType_(j.konto), j.konto, j.kontonavn || kp[j.konto] || '', j.modpart, j.beloeb, j.valuta,
         j.beloebDkk !== '' ? j.beloebDkk : (j.valuta === 'EUR' && j.beloeb !== '' ? j.beloeb * kurs : j.beloeb), j.moms, j.skat,
         'Ukendt', kobling[aar + j.nr] || j.bogfoert, fil, j.note]);
@@ -562,17 +604,8 @@ function byggBilag_(lego, oss) {
   var plan = oss.getSheetByName(BILAGSPLAN);
   if (plan && plan.getLastRow() > 1) {
     plan.getRange(2, 1, plan.getLastRow() - 1, 14).getDisplayValues().forEach(function (p) {
-      var nr = p[0].trim(), dato = isoDato_(p[6]);
-      if (!nr || !dato) return;
-      var aar = dato.slice(0, 4);
-      if (set[aar + nr]) return;
-      var url = ''; try { if (p[1]) url = DriveApp.getFileById(p[1].trim()).getUrl(); } catch (e) { /* fil ikke fundet */ }
-      var beloeb = tal_(p[10]), valuta = p[11] || 'DKK';
-      if (beloeb === '' && p[4]) { beloeb = ordreSum_(lego, p[4]); valuta = 'EUR'; }
-      var kurs = Number(lego.getSheetByName(FANE['SALG' + aar.slice(2)]).getRange('R2').getValue()) || 7.46;
-      rk.push([nr, Number(aar), dato, p[7], p[8], kp[p[8]] || '', p[9], beloeb, valuta,
-        beloeb === '' ? '' : (valuta === 'EUR' ? Math.round(beloeb * kurs * 100) / 100 : beloeb), '', '',
-        p[12] || 'Lego', kobling[aar + nr] || p[4], url, p[13]]);
+      var r = bilagFraPlan_(lego, p, kp, kobling);
+      if (r && !set[r[1] + r[0]]) { set[r[1] + r[0]] = true; rk.push(r); }
     });
   }
   rk.sort(function (a, b) { return a[1] - b[1] || Number(String(a[0]).slice(1)) - Number(String(b[0]).slice(1)); });
