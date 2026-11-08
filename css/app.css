@@ -55,8 +55,8 @@ label { font-size: 13px; font-weight: 600; color: var(--daempet); }
 input, select, textarea { width: 100%; min-height: 48px; border: 1.5px solid var(--kant); border-radius: 12px; padding: 10px 12px; background: var(--kort); font-size: 16px; }
 textarea { resize: vertical; }
 input:focus, select:focus, textarea:focus, button:focus-visible { outline: 3px solid var(--gul); outline-offset: 1px; }
-.raekke2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.raekke2 > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.raekke2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.raekke2 > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; overflow: hidden; padding: 4px; margin: -4px; }   /* iOS-datofelt holdes inden for sin kolonne (padding giver plads til fokus-rammen) */
 input[type="date"] { -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%; display: block; }   /* iOS: datofeltet må ikke gå ind over nabofeltet */
 .batchid { font-size: 13px; color: var(--daempet); }
 .batchid b { font-family: var(--mono); color: var(--tekst); }
@@ -240,3 +240,5 @@ body.laast { overflow: hidden; }
 .rl-kode[readonly] { background: var(--groen-bg); color: var(--groen); }
 .rskuer { display: flex; flex-wrap: wrap; gap: 6px; }
 .rsku { font-size: 12px; background: var(--kort); border: 1.5px solid var(--kant); border-radius: 10px; padding: 6px 8px; }
+
+.app-version { text-align: center; margin: 24px 0; }

@@ -1,11 +1,11 @@
 # Område: Lego (CTS-appen + regnearket cts-app)
 
-Status pr. 07-11-2026 (app v18 + maskinrum 2.2.1 klar; hos Thomas: v16 + 2.1.1). Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
+Status pr. 07-11-2026 (app v19 + maskinrum 2.2.1 klar; hos Thomas: v16 + 2.1.1). Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
 
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
   Hjemmeskærms-app på iPhone (iOS 27.2). Offline: service worker (`sw.js`), lokal kopi + udbakke i IndexedDB (`js/lokal.js`, `js/data.js`).
-  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v18).
+  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v19; versionen står nederst under Mere).
 - **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.2.1** med Retro; hos Thomas 2.1.1; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
   Webapp "Udfør som: Mig", adgang "Alle"; alle kald kræver API-nøgle (Script Properties).
 - **Faste kodetrin (altid sådan):** (1) åbn https://raw.githubusercontent.com/CTSDK/cts-app/main/apps-script/Code.gs, (2) Ctrl+Shift+R og tjek versionen,
