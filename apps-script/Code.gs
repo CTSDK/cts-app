@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '2.2.0';
+var VERSION = '2.2.1';
 
 // ---------- Faner ----------
 var FANE = {
@@ -2526,7 +2526,6 @@ function opretRetro_() {
   var ind = nyFane_(ss, RF.INDKOEB, RETRO_NAVN + ' – Indkøb', RETRO_INDKOEB_KOL, 2);
   ind.setColumnWidths(1, RETRO_KOL, 120);
   ind.setColumnWidth(RK.SKU, 170);
-  ind.setFrozenColumns(1);
   var mk = ss.insertSheet(ss.getSheets().length);
   mk.setName(RF.MAERKER);
   mk.getRange(1, 1, 1, 2).setValues([['Producent', 'Kode']]).setBackground(NAVY).setFontColor('#ffffff').setFontWeight('bold');
