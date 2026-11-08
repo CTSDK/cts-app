@@ -46,7 +46,7 @@ Status pr. 07-11-2026: **bilag og fragt kører** (maskinrum 1.9.0). Fælles øko
 - Siltakylä 2025: 3 GLS-ordrer på 3 ens salgsrækker – fordelingen er vilkårlig (private, før CTS).
 
 ## Næste i Økonomi
-- **Økonomi-arket "CTS Økonomi"** (Thomas' ja 08-11; maskinrum 2.0.0 bygget 08-11, IKKE kørt hos Thomas endnu):
+- **Økonomi-arket "CTS Økonomi"** id `1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM` (✅ oprettet af Thomas 08-11 med 2.0.0: 193 bilag, alle med fil-link; Afslut flytning mangler):
   1. CTS → **Opret økonomi-ark** opretter arket i `CTS/Økonomi` med Overblik, Bilag, Udgifter 2025/2026 (+ B133 kørsel 385,32 kr), Skat 2025/2026,
      Kontoplan (+ 1010/1020/2010/9010), Bilagsplan (kopieret, med kolonne G–N: dato, type, konto, modpart, beløb, valuta, område, note)
      og skjulte "Salg 2025/2026" (IMPORTRANGE fra Lego-arket, så Skat/Udgifter-formlerne virker uændret). Arkets id gemmes i Script Properties (OEKONOMI_ID).
