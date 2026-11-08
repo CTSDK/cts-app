@@ -24,7 +24,7 @@ Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.0.0
 
 ## Bilagsnumre
 - **B001, B002 …, én serie pr. år, starter forfra.** Fælles for salg, fragt, udgifter, varekøb. Salg: kolonne P (fx "B155, B159" = eBay + fragt). Udgifter: kolonne A.
-- 2025: B001–B028 brugt → næste **B029**. 2026: B001–B165 brugt → næste **B166**. Alle salg 2026 har bilagsnr (pr. 07-11).
+- 2025: B001–B028 brugt → næste **B029**. 2026: B001–B168 brugt (B166–B168 = MobilePay-varekøb 260916/261015/261028, i Bilagsplan 08-11) → næste **B169**. Alle salg 2026 har bilagsnr (pr. 07-11).
 - Uafklaret: kalenderår eller regnskabsår (spørg revisor).
 
 ## Sådan arbejder vi (testet 07-11)
