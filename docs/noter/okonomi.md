@@ -14,7 +14,7 @@ Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.1.1
 
 ## Bilag i Drive: `CTS/Økonomi/Bilag`
 - `Indbakke` (17xqS57VoqpSHcmY0AuKGmouoCnRiR-t7): alt nyt lander her (Thomas' eBay-PDF'er + maskinrummets fragtbilag). Tom pr. 07-11.
-- `2025` (1tAEpFv5WH62PRmJEO4n_kpGLFBl1Olou) og `2026` (1PaUb_K1AwHbSDeC3A9VNOauzqLzJhoZR), hver med Salg, Fragt, Udgifter, eBay-rapporter, Afregningsbilag
+- `2025` (1tAEpFv5WH62PRmJEO4n_kpGLFBl1Olou) og `2026` (1PaUb_K1AwHbSDeC3A9VNOauzqLzJhoZR), hver med Salg, Fragt, Udgifter, eBay-rapporter (afregningsbilag slettet 08-11 – bruges ikke)
   + Bilagsjournal <år>.csv (gammel journal – kun arkiv). 2025 har også `Privat før CTS` (fragt før 07-07-2025, intet nr).
   2026 Fragt 12itNKTOELmSr1TNIQR3V2oy4NRPLzLAE · 2026 Salg 1wsJRYQnIQpmh5jCKQxhDnqRcqEB1gRST · 2025 Fragt 1pFhj2wAjespGcBo43wHQM_qs7WT41xfq.
 - Gamle bilag (før 07-11) har gamle navne (`2026-09-02 - 3030 - CoolRunner Latina IT - 191,53 DKK.pdf`). Nye: **bilagsnr forrest**,
