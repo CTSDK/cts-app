@@ -47,14 +47,20 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
   Thomas' private mail er t.clifford.pejtersen@gmail.com – derfra videresender han bilag (fx CoolRunner-mail 07-11, tråd-id 1a1b5f1995767b0a, ikke læst endnu).
 - ✓ Læse/skrive celler, oprette/slette faner og rækker. ✓ Søge, oprette, omdøbe, flytte filer i Drive.
 - ✗ Apps Script-koden kan ikke opdateres via forbindelsen – Thomas kopierer koden ind.
+- **Del aldrig regneark/mapper med "alle med linket"** – id'erne står på GitHub (offentligt).
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
-## Næste (pr. 08-11-2026)
+## Næste (pr. 09-11-2026)
 1. **Retro:** Thomas tester et rigtigt køb i appen (Retro → Registrér nyt køb → Klargør med fotos) → Claude tjekker arket "CTS Retro" og fotomappen.
    Derefter Retro trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Se retro.md.
 2. **Løbende bilag:** nyt i `Bilag/Indbakke` (Gmail → Gem bilag, eller direkte i Drive; samtaler via GoFullPage) → Claude laver Bilagsplan → Thomas kører Udfør bilagsplan.
 3. **Thomas, når der er tid:** Område for gamle bilag i CTS Økonomi → Bilag; 2 manglende San Martino-kvitteringer.
 4. Senere: "Salg fra eBay-PDF i appen" + kolonne Q Sporingsnr (okonomi.md); idé om hjemmeside for CTS Lego (lego.md).
+5. **Ikke hastende – repoet er offentligt:** noterne (mails, id'er, bilag/skat) kan læses af alle på GitHub. Ingen nøgler/koder ligger der (tjekket 09-11),
+   og alle 15 Drive-id'er er kun delt med ctsdanmark (tjekket 09-11). Plan, når Thomas vil: noter → nyt privat repo `cts-noter` (app-repo forbliver
+   offentligt pga. gratis Pages) + ren historik i app-repoet. Obs: `synkNoter` henter fra offentlig GitHub-adresse (Code.gs linje 83) → skal have
+   GitHub-nøgle i Apps Script. Ikke tjekket: om en samtale læser hovednoten fra et andet repo end appen. Senere ideer: del Code.gs (161 KB) og app.js
+   (65 KB) op efter emne; slank hovednoten.
 
 ## Status pr. 08-11-2026
 - ✅ **App v19** på Thomas' iPhone (versionen står nederst under Mere). Retro-side + nyt køb + klargør (v17), dato/pris-felter rettet (v19).
