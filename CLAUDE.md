@@ -8,6 +8,7 @@ Thomas koder ikke selv: forklar i almindeligt dansk, ét trin ad gangen, med pr�
 |---|---|---|
 | **Lego** | Køb, klargøring, lager, salg af LEGO. CTS-appen + regnearket *cts-app* | `docs/noter/lego.md` |
 | **Retro Design** | Salg af andre ting end LEGO – håndteres anderledes. Ikke beskrevet endnu | `docs/noter/retro.md` |
+| **Playmobil** | Sortering/tjek af Playmobil-sæt (5142 Prinsesseslot). Eget regneark i CTS/Playmobil – ikke appen, ikke Lego | `docs/noter/playmobil.md` |
 | *Vejledning* | Sådan arbejder Thomas med Claude (start, afslut, hukommelse) | `docs/SAADAN.md` |
 | **Økonomi** | Overordnet for hele CTS: Lego + Retro + andre udgifter (Claude, emballage, Excel …), skat | `docs/noter/okonomi.md` |
 
@@ -50,7 +51,8 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - **Del aldrig regneark/mapper med "alle med linket"** – id'erne står på GitHub (offentligt).
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
-## Næste (pr. 09-11-2026)
+## Næste (pr. 14-11-2026)
+0. **Playmobil:** Thomas tester den nye sorteringsside (gemmer i Google Sheets) → sortering fortsætter (101 numre). Nyt sæt tages i ny samtale. Se playmobil.md.
 1. **Retro:** Thomas tester et rigtigt køb i appen (Retro → Registrér nyt køb → Klargør med fotos) → Claude tjekker arket "CTS Retro" og fotomappen.
    Derefter Retro trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Se retro.md.
 2. **Løbende bilag:** nyt i `Bilag/Indbakke` (Gmail → Gem bilag, eller direkte i Drive; samtaler via GoFullPage) → Claude laver Bilagsplan → Thomas kører Udfør bilagsplan.
