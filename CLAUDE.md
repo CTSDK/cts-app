@@ -52,7 +52,7 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
 ## Næste (pr. 14-11-2026)
-0. **Playmobil:** Nyt sæt 5139 Soldaterfort (regneark + sorteringsside 14-11, ikke testet). Thomas tester den nye sorteringsside til 5142 (gemmer i Google Sheets) → sortering fortsætter (101 numre). 5135 Piratskib: regneark + sorteringsside lavet 14-11. Begge sider har notefelt (kolonne I), ikke testet mod arket.
+0. **Playmobil:** Nyt sæt 5139 Soldaterfort (regneark + sorteringsside 14-11, ikke testet). Thomas tester den nye sorteringsside til 5142 (gemmer i Google Sheets; arket stadig 74/175 sidst 14-11) → sortering fortsætter (101 numre). 5142-manualen ligger i Drive (link i playmobil.md). 5135 Piratskib: regneark + sorteringsside lavet 14-11. Begge sider har notefelt (kolonne I), ikke testet mod arket.
    Lignende skibe: venter på Thomas' valg (3940-manual eller netværksadgang). Se playmobil.md.
 1. **Retro:** Thomas tester et rigtigt køb i appen (Retro → Registrér nyt køb → Klargør med fotos) → Claude tjekker arket "CTS Retro" og fotomappen.
    Derefter Retro trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Se retro.md.

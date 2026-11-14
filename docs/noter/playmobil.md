@@ -19,7 +19,9 @@ Formål: tjekke at alle dele er der, ud fra manualens stykliste.
   Thomas skal åbne den i claude.ai (CTS-kontoen), trykke Tillad, prøve +/✓/note og derefter tjekke arket.
 - Gammel sorteringsside fra chatten (https://claude.ai/artifact/22aHokqH6ji8CA7AxWrxPx, database `parts`): **urørt, bruges ikke**.
   Den kan slettes, når den nye side virker. Det gamle Claude Sheets-regneark bruges heller ikke.
-- Manual-PDF (kun billeder, ingen tekst): https://playmobil.scene7.com/is/content/Playmobil/5142pdf.pdf. Side 22–26 er styklisten, og side 21 er tilbehør.
+- Manual-PDF (kun billeder, ingen tekst) ligger i Drive: `5142pdf.pdf` https://drive.google.com/file/d/1zjiYGKWPirGCJ6zlCNyc_5bN8zLcj_p9/view
+  (mappe `p5142`, ikke CTS/Playmobil). En ens kopi `playmobil-5142-manual.pdf` (id `1KoMdEywSx6aVjv8cP_jp9KPfTsVsMNhV`) ligger samme sted.
+  Side 22–26 er styklisten, og side 21 er tilbehør. Kilde: playmobil.scene7.com/is/content/Playmobil/5142pdf.pdf (kan ikke åbnes fra sessionen).
 
 ### Beslutninger
 - "Skal være" = antal af varenummeret, som manualen viser det. Et sæt/en pose tæller som 1 ("sæt med N dele" står i beskrivelsen). I alt 561 enheder på 175 numre.
@@ -29,7 +31,7 @@ Formål: tjekke at alle dele er der, ud fra manualens stykliste.
 - "Fundet" tomt = ikke talt (ikke 0).
 
 ### Status pr. 14-11-2026
-74 af 175 numre afkrydset, 101 mangler: side 21: 8 · 22: 11 · 23: 4 · 24: 5 · 25: 22 · 26: 51.
+74 af 175 numre afkrydset, 101 mangler: side 21: 8 · 22: 11 · 23: 4 · 24: 5 · 25: 22 · 26: 51. (Tjekket i arket 14-11 sidst på dagen: stadig 74 – den nye side har ikke gemt noget endnu.)
 
 ### Sådan arbejder vi
 Thomas tæller på sorteringssiden, eller skriver til Claude fx "fundet 30 22 9002: 1", "afkryds 30 25 6590" eller "mangler 2 af 30 09 6900"
@@ -74,6 +76,8 @@ Thomas sagde ja til arknavnet "Soldaterfort".
 ## Næste
 0. 5139 Soldaterfort: Thomas åbner sorteringssiden, trykker Tillad og prøver +/✓/note → tjekker arket. Derefter sorteres der (77 numre).
 1. Thomas tester den nye sorteringsside (se ovenfor). Virker den, slettes den gamle side.
+   Test: åbn siden → Tillad → filter Mangler → + på første del + note "test" → Thomas skriver varenr. → Claude tjekker arket.
+   Spurgt, ikke svaret: flyt 5142-manualen til CTS/Playmobil og læg dubletten i papirkurven?
 2. Sortering fortsætter (101 numre).
 3. 5135 Piratskib: Thomas tester sorteringssiden (se ovenfor). Derefter kan der sorteres (85 numre).
 4. Lignende skibe (samme skrog/klistermærker/sejl): Thomas vælger (a) sende 3940-manualen som PDF → Claude sammenligner numre (anbefalet),
