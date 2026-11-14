@@ -44,11 +44,12 @@ Samme fremgangsmåde som 5142. Navnet står ikke på forsiden; "5135 Pirate Ship
   Kanon-boksen "2x" gælder alle 4 numre (30 65 6322, 30 22 8070, 30 27 4240, 30 03 0600 = 2 hver). 30 60 1382 = 2.
   30 27 4240 og 30 25 6230 står på både side 13 og 16 og tælles kun under side 16.
 - Delenes navne er Claudes egne ud fra tegningerne.
-- **Sorteringsside: ikke lavet endnu.** Den laves, når 5142-siden er testet og virker (Thomas' valg).
+- **Sorteringsside:** https://claude.ai/artifact/KQHh2MMnrn597CaNtBX5DT. Den er en kopi af 5142-siden, men bruger 5135-arket (række 14–98).
+  **Bygget, ikke testet.**
 - Status: 0 af 85 afkrydset.
 
 ## Næste
 1. Thomas tester den nye sorteringsside (se ovenfor). Virker den, slettes den gamle side.
 2. Sortering fortsætter (101 numre).
-3. 5135 Piratskib: når 5142-siden virker, laves en sorteringsside til 5135. Derefter kan der sorteres.
+3. 5135 Piratskib: Thomas tester sorteringssiden (se ovenfor). Derefter kan der sorteres (85 numre).
 4. `synkNoter` (Code.gs linje 84) kopierer ikke playmobil.md til Drive endnu. Den kan tilføjes ved næste maskinrumsopdatering.
