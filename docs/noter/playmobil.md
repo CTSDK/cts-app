@@ -54,7 +54,25 @@ Samme fremgangsmåde som 5142. Navnet står ikke på forsiden; "5135 Pirate Ship
   eBay, Klickypedia og playmodb.org kan ikke åbnes fra sessionen.
 - Status: 0 af 85 afkrydset.
 
+## Sæt 5139 Soldaterfort – sortering af dele (startet 14-11-2026)
+Samme fremgangsmåde som 5142/5135. Navnet står ikke i manualen (kun "5139", © 2011). Opslag 14-11 (kun søgeresuméer):
+"Soldiers Fort with Dungeon", 2011–2014, tema Pirates ([Klickypedia](https://www.klickypedia.com/sets/5139-soldiers-fort-with-dungeon/?elang=en)).
+Thomas sagde ja til arknavnet "Soldaterfort".
+- **Regneark "Playmobil 5139 Soldaterfort"**: `1bVSwG2Pq085PKvuKqB8531RWUNx-3Xsgr2nZPeXHWz0` i CTS/Playmobil, fane **Dele** (sheetId 449130092).
+  Kopi af 5135-arket (= samme opbygning som 5142). **Række 14–90 = de 77 varenumre** (95 enheder). Søgning testet ("kanon" gav 3 træf).
+- Manual: Thomas' PDF (8 sider, kun billeder). Kilde: playmobil.a.bigcontent.io/v1/static/5139_buildinginstruction.
+  Stykliste side 1–4 og 6–8. Side 5 = samlebillede. Intet tilbehør, der sælges separat, og ingen dobbelte numre.
+- Beslutninger (Thomas, 14-11): dele tegnet flere gange med én etiket uden "2x" tælles som tegningen:
+  30 08 9610 bropæl = 4, 30 03 6600 stifter = 3, 30 07 7040 hængsel = 4, 30 24 7680 lås = 2, 30 03 0600 hjul = 2.
+  30 02 6460 bregneblade = 1. 30 51 6850 bænk/bord = 1 sæt (4 dele).
+  Et gult værktøj uden etiket på side 4 ligner 30 65 8822 (2x) og er ikke talt ekstra.
+- Manualen læst af en hjælpe-agent. Delenes navne er Claudes egne ud fra tegningerne.
+- **Sorteringsside:** https://claude.ai/artifact/Ucu5ejse5cx9DCPLvovYvJ (rød). Samme kode som 5135-siden, men bruger 5139-arket (række 14–90).
+  **Bygget; ikke testet mod det rigtige ark.**
+- Status: 0 af 77 afkrydset.
+
 ## Næste
+0. 5139 Soldaterfort: Thomas åbner sorteringssiden, trykker Tillad og prøver +/✓/note → tjekker arket. Derefter sorteres der (77 numre).
 1. Thomas tester den nye sorteringsside (se ovenfor). Virker den, slettes den gamle side.
 2. Sortering fortsætter (101 numre).
 3. 5135 Piratskib: Thomas tester sorteringssiden (se ovenfor). Derefter kan der sorteres (85 numre).
