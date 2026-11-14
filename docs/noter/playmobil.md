@@ -52,7 +52,7 @@ Samme fremgangsmåde som 5142. Navnet står ikke på forsiden; "5135 Pirate Ship
   Lignende skib: **3940** Großes Piratenflaggschiff har samme skrog ifølge én anmeldelse (Klickypedia), men sandsynligvis andre sejl (uden tryk).
   Intet sæt bekræftet med samme skrog + klistermærker + sejl. Uafklaret: en eBay-annonce siger skrog 30 22 8412 (manualen: 30 23 2852).
   eBay, Klickypedia og playmodb.org kan ikke åbnes fra sessionen.
-- Status: 0 af 85 afkrydset.
+- Status: noten sagde 0 af 85, men 14-11 var nogle rækker i arket afkrydset med noter (fx "mangler hår"). Ikke talt op – tælles ved næste opslag.
 
 ## Sæt 5139 Soldaterfort – sortering af dele (startet 14-11-2026)
 Samme fremgangsmåde som 5142/5135. Navnet står ikke i manualen (kun "5139", © 2011). Opslag 14-11 (kun søgeresuméer):

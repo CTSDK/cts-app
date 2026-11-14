@@ -8,7 +8,7 @@ Thomas koder ikke selv: forklar i almindeligt dansk, ét trin ad gangen, med pr�
 |---|---|---|
 | **Lego** | Køb, klargøring, lager, salg af LEGO. CTS-appen + regnearket *cts-app* | `docs/noter/lego.md` |
 | **Retro Design** | Salg af andre ting end LEGO – håndteres anderledes. Ikke beskrevet endnu | `docs/noter/retro.md` |
-| **Playmobil** | Sortering/tjek af Playmobil-sæt (5142 Prinsesseslot, 5135 Piratskib). Eget regneark i CTS/Playmobil – ikke appen, ikke Lego | `docs/noter/playmobil.md` |
+| **Playmobil** | Sortering/tjek af Playmobil-sæt (5142 Prinsesseslot, 5135 Piratskib, 5139 Soldaterfort). Eget regneark i CTS/Playmobil – ikke appen, ikke Lego | `docs/noter/playmobil.md` |
 | *Vejledning* | Sådan arbejder Thomas med Claude (start, afslut, hukommelse) | `docs/SAADAN.md` |
 | **Økonomi** | Overordnet for hele CTS: Lego + Retro + andre udgifter (Claude, emballage, Excel …), skat | `docs/noter/okonomi.md` |
 
