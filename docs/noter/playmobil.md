@@ -10,11 +10,11 @@ Formål: tjekke at alle dele er der, ud fra manualens stykliste.
 - **Regneark "Playmobil 5142 Prinsesseslot"** (den eneste kilde): `1m1KBMvgFHQnmQqJ6DmQbCkDBkqTSPqL2OFjGOIHsq6s`, fane **Dele** (sheetId 449130092).
   - Række 1: søgefelt **B1** (gult), C1 = antal træf. Række 2–12: op til 10 træf med link "Gå til". Række 1–13 er frosset.
   - Række 13 = overskrift. **Række 14–188 = de 175 varenumre**, sorteret efter varenr.
-  - Kolonner: A Varenr. · B Del · C Skal være · **D Fundet** · E Mangler (formel) · **F ✓** (afkrydsningsfelt) · G Side · H skjult hjælpekolonne.
+  - Kolonner: A Varenr. · B Del · C Skal være · **D Fundet** · E Mangler (formel) · **F ✓** (afkrydsningsfelt) · G Side · H skjult hjælpekolonne · **I Note** (fri tekst, tilføjet 14-11 i begge ark).
   - Arket er dansk (formler bruger `;`). Afkrydsede rækker er grønne, og søgetræf er gule og fede.
   - Søgeregel: små bogstaver og ingen mellemrum, leder i varenr.+del (så "30 22 9002", "229002", "9002" og "guld" alle virker).
 - **Sorteringsside (ny, 14-11):** https://claude.ai/artifact/4epV2FkKY4MBv1NZ76kbq9. Den læser og skriver arket via Google Sheets-forbindelsen
-  (get_values A14:G188, update_values D{række} og F{række}). Søg øverst, træf lige under, −/+/talfelt/✓, filtre Alle/Mangler/Afkrydset.
+  (get_values A14:I188, update_values D/F/I{række}). Notefelt under hver del (gemmer i kolonne I, søgbart på siden). Søg øverst, træf lige under, −/+/talfelt/✓, filtre Alle/Mangler/Afkrydset.
   **Bygget, ikke testet.** Thomas skal åbne den i claude.ai (CTS-kontoen), trykke Tillad og prøve +/✓, og derefter tjekke arket.
 - Gammel sorteringsside fra chatten (https://claude.ai/artifact/22aHokqH6ji8CA7AxWrxPx, database `parts`): **urørt, bruges ikke**.
   Den kan slettes, når den nye side virker. Det gamle Claude Sheets-regneark bruges heller ikke.
@@ -37,7 +37,7 @@ Thomas tæller på sorteringssiden, eller skriver til Claude fx "fundet 30 22 90
 ## Sæt 5135 Piratskib – sortering af dele (startet 14-11-2026)
 Samme fremgangsmåde som 5142. Navnet står ikke på forsiden; "5135 Pirate Ship" står på manualens side 11 (Thomas sagde ja til "Piratskib").
 - **Regneark "Playmobil 5135 Piratskib"**: `1dzRA-XnTaA-b0_-ZxJvMVVmr3oIvj4Wyou-TfjEBuCo` i CTS/Playmobil, fane **Dele** (sheetId 449130092).
-  Lavet som kopi af 5142-arket, så søgefelt, kolonner, farver og formler er de samme. **Række 14–98 = de 85 varenumre** (150 enheder).
+  Lavet som kopi af 5142-arket, så søgefelt, kolonner, farver og formler er de samme. Kolonne I Note som i 5142. **Række 14–98 = de 85 varenumre** (150 enheder).
   Søgning testet ("kanon" gav 6 træf). Søgefeltets eksempeltekst nævner stadig "rose" (fra 5142).
 - Manual: Thomas' PDF (16 sider, kun billeder). Side 13–16 er styklisten. Side 11–12 er tilbehør, der sælges separat, og er ikke med.
 - Beslutninger (Thomas, 14-11): poser og numre med flere dele uden antal = 1 (antallet af dele står i beskrivelsen).
