@@ -71,7 +71,26 @@ Thomas sagde ja til arknavnet "Soldaterfort".
   **Bygget; ikke testet mod det rigtige ark.**
 - Status: 0 af 77 afkrydset.
 
+## Små sæt (3315, 3319 og flere senere) – sortering af dele (startet 14-11-2026)
+Thomas valgte 14-11: **ét fælles ark og én sorteringsside** til alle små sæt (ikke ét ark pr. sæt).
+- **Regneark "Playmobil små sæt"**: `1tYpEzSjua4Q4G81JnN3RWzNkuqutXkX8fYfYANDL_UQ` i CTS/Playmobil, fane **Dele** (sheetId 449130092).
+  Kopi af 5139-arket (samme søgefelt/farver/formler). **Række 14–56 = 43 rækker** sorteret efter sæt, derefter varenr.
+  Forskel: **kolonne G = "Sæt · side"** (fx "3315 · s.2"), og søgningen leder også i G (så "3319" viser hele sættet). Søgning testet ("3315" = 12 træf, "sværd" = 3).
+  Et varenr. der findes i flere sæt står én gang pr. sæt (30 67 1760 Hest, 30 24 7480 Sværd).
+- **Nyt sæt tilføjes:** indsæt rækker *før* sidste række (så formlernes områder A14:A56 vokser med), udfyld A–D, F=FALSK, G "sæt · s.N", E-formel.
+- **3315 Sort ridder** (navn: [manuall.fr](https://manuall.fr/playmobil-set-3315-knights-chevalier-noir/) "Chevalier noir", Klickypedia-anmeldelse "Black Knight").
+  Manual 2 sider (© 2004): s.1 hest, s.2 ridder + udstyr. 12 numre, 13 enheder. 30 20 1002 = 2 ("2x").
+- **3319 Dragebaronens tropper** (navn: eBay-annonce "Dragon Baron Knights Castle Troops"; svag kilde, finn.no siger 2003, manualen © 2004).
+  Manual 2 sider: s.1 hest + flag, s.2 fire figurer + våben/skjolde. 31 numre, 34 enheder. 2x: 30 22 9420, 30 22 8840. 30 20 8050 = 2 (tegnet to gange, Thomas' regel).
+  30 07 6550 Pile (gul cirkel) = 1.
+- Manualer: Thomas' PDF'er (playmobil.scene7.com/is/content/Playmobil/3315pdf.pdf og playmobil.a.bigcontent.io/v1/static/3319_buildinginstruction). Navnene på delene er Claudes egne.
+- **Sorteringsside "Små sæt":** https://claude.ai/artifact/K3mYEi5WeYVy57NDCw1n3j (lilla). Samme kode som 5139-siden + valg af sæt øverst
+  (Alle sæt / 3315 / 3319 – nye sæt dukker op af sig selv). Læser `Dele!A14:I` (til bunden), gemmer pr. række.
+  **Bygget; testet i browser med falske data (sætvalg, +, ✓, note gemmer i rigtig række); ikke testet mod det rigtige ark.**
+- Status: 0 af 43 afkrydset.
+
 ## Næste
+0. Små sæt (3315/3319): Thomas åbner sorteringssiden "Små sæt", trykker Tillad, prøver +/✓/note → tjekker arket. Derefter sorteres der (43 rækker).
 0. 5139 Soldaterfort: Thomas åbner sorteringssiden, trykker Tillad og prøver +/✓/note → tjekker arket. Derefter sorteres der (77 numre).
 1. Thomas tester den nye sorteringsside (se ovenfor). Virker den, slettes den gamle side.
 2. Sortering fortsætter (101 numre).
