@@ -34,9 +34,21 @@ Formål: tjekke at alle dele er der, ud fra manualens stykliste.
 Thomas tæller på sorteringssiden, eller skriver til Claude fx "fundet 30 22 9002: 1", "afkryds 30 25 6590" eller "mangler 2 af 30 09 6900"
 (= fundet skal−2, intet kryds). Claude læser rækken i arket først, skriver D/F og bekræfter i én linje.
 
+## Sæt 5135 Piratskib – sortering af dele (startet 14-11-2026)
+Samme fremgangsmåde som 5142. Navnet står ikke på forsiden; "5135 Pirate Ship" står på manualens side 11 (Thomas sagde ja til "Piratskib").
+- **Regneark "Playmobil 5135 Piratskib"**: `1dzRA-XnTaA-b0_-ZxJvMVVmr3oIvj4Wyou-TfjEBuCo` i CTS/Playmobil, fane **Dele** (sheetId 449130092).
+  Lavet som kopi af 5142-arket, så søgefelt, kolonner, farver og formler er de samme. **Række 14–98 = de 85 varenumre** (150 enheder).
+  Søgning testet ("kanon" gav 6 træf). Søgefeltets eksempeltekst nævner stadig "rose" (fra 5142).
+- Manual: Thomas' PDF (16 sider, kun billeder). Side 13–16 er styklisten. Side 11–12 er tilbehør, der sælges separat, og er ikke med.
+- Beslutninger (Thomas, 14-11): poser og numre med flere dele uden antal = 1 (antallet af dele står i beskrivelsen).
+  Kanon-boksen "2x" gælder alle 4 numre (30 65 6322, 30 22 8070, 30 27 4240, 30 03 0600 = 2 hver). 30 60 1382 = 2.
+  30 27 4240 og 30 25 6230 står på både side 13 og 16 og tælles kun under side 16.
+- Delenes navne er Claudes egne ud fra tegningerne.
+- **Sorteringsside: ikke lavet endnu.** Den laves, når 5142-siden er testet og virker (Thomas' valg).
+- Status: 0 af 85 afkrydset.
+
 ## Næste
 1. Thomas tester den nye sorteringsside (se ovenfor). Virker den, slettes den gamle side.
 2. Sortering fortsætter (101 numre).
-3. Thomas har nævnt et nyt emne ("gør det samme med denne"), sandsynligvis et andet sæt. Det tages i en ny samtale med samme fremgangsmåde:
-   stykliste → regneark i CTS/Playmobil → sorteringsside.
+3. 5135 Piratskib: når 5142-siden virker, laves en sorteringsside til 5135. Derefter kan der sorteres.
 4. `synkNoter` (Code.gs linje 84) kopierer ikke playmobil.md til Drive endnu. Den kan tilføjes ved næste maskinrumsopdatering.
