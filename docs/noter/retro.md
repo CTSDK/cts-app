@@ -74,8 +74,7 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   PM_STANDARD_ID i Code.gs (kan overstyres med Script Property PLAYMOBIL_ID).
   **Sætnavne** (v21/2.3.1): fanen **"Sæt"** i arket (A nr., B navn) → vises under nummeret på knapperne. Nye navne skrives bare i fanen.
   Testet i browser med testdata (`tests/pm-e2e.js`). **Hos Thomas 15-11 virker:** noter, ✓, + og **fotos af sæt** (Fotos-mappe id
-  `1jbdX824Irc5XpEBbblUx02bIrzOv8cDa`: PM-3155.01, PM-4343.01–03). **Ikke set hos Thomas endnu:** fotos pr. del (v22), Nyt sæt/Div, sætnavne
-  (kræver at 2.3.2 er kopieret ind og app v22).
+  `1jbdX824Irc5XpEBbblUx02bIrzOv8cDa`: PM-3155.01, PM-4343.01–03). Thomas 15-11: **alt testet og virker** (inkl. fotos pr. del, Nyt sæt, sætnavne).
 - Status 15-11 aften (ca.): **274 af 542 afkrydset** – 3315: 10/12 · 3319: 13/31 · 5135: 63/85 · 5139: 40/77 · 5142: 86/175 · 4343: 41/100 · 4439: 19/46 · 3155: 2/16.
 - Regler for antal (fra manualerne): et sæt/en pose = 1; dele på to sider tælles én gang; tegnet flere gange uden "2x" tælles som tegningen.
   Delenes navne er Claudes egne ud fra tegningerne – **erstattes med PlaymoDB-navne** (Thomas kopierer sættets PlaymoDB-side ind i samtalen;

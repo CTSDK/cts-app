@@ -81,7 +81,8 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
   **"Færdig – overfør til klargøring"** (når alle ✓): viser først teksten → Overfør: Indkøb **Sorteret ✓**, **Komplet** ✓ hvis intet mangler,
   og tilføjer til **Noter** (eksisterende noter bevares): `Missing: 1 x Black Brick 1 x 2 (3004)` + linje med del-noter. Tomt Fundet = ikke talt.
   Ingen ren liste → besked "kopiér listen fra BrickLink og sæt den ind i samtalen". Kun nye sæt sorteres.
-  **Testet i browser med testdata** (`tests/lgs-e2e.js`). **Ikke testet hos Thomas.** Thomas' testkøb: **261110-6080** King's Castle (pris 1 kr).
+  Testet i browser (`tests/lgs-e2e.js`) og **✅ hos Thomas 15-11** ("alt virker"): ark `261110 Sortering` oprettet og udfyldt.
+  "Færdig – overfør" er endnu ikke kørt på et rigtigt sæt (261110-6080 står ikke som Sorteret). Testkøb: **261110-6080** King's Castle (pris 1 kr).
 - **Senere (ikke besluttet):** SKU-sorteringsark slettes, når sættet er solgt; "Ny sorteringsliste" i appen (indsæt BrickLink-tekst fra telefonen).
 - **Test (15-11):** `CTS/Lego/Sorteringslister/Test sortering` (`187NNroSbDSO3h_Bar5j3bEoGBEthKG1HzWGZiLuE__o`, fane Dele, række 14–118, SKU TEST-6080)
   + testside https://claude.ai/artifact/2fqHt1ppFSatTcd8XpMwKy (rød). Testet i browser med falske data; **ikke testet mod arket af Thomas endnu.**
