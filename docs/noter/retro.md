@@ -71,7 +71,10 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   Delenes navne er Claudes egne ud fra tegningerne – **erstattes med PlaymoDB-navne** (Thomas kopierer sættets PlaymoDB-side ind i samtalen;
   Claude holder den op mod arket/manualen, viser forslag, skriver efter ja). Format: "navn (farve)" som PlaymoDB. PlayMoDB kan ikke åbnes fra sessionen.
   - **3315 ✓ 15-11:** 12 navne fra PlaymoDB. 30 20 1002 (2x i manualen) = "Arm greave, wing shape at shoulder" (PlaymoDB: extra part; samme del også som 30 09 1660).
-    Manualen 30 89 7202 er ikke tilføjet som række (ikke besluttet). Næste: 3319, 5135, 5139, 5142.
+    Manualen 30 89 7202 er ikke tilføjet som række (ikke besluttet).
+  - **3319 ✓ 15-11:** alle 31 numre = PlaymoDB (32 inkl. manual 30 89 6862). PlaymoDB-navn på sættet: "Dragon Baron".
+    Tilføjelser efter PlaymoDB-navnet (Thomas' ja): " – m. drage" på flag, hestedække og de 3 skjolde.
+  - Næste: 5135, 5139, 5142.
 - Sætnavne (søgeresuméer 14-11): 5142 Prinsesseslot, 5135 Piratskib ("Pirate Prize Ship", 2011–2015), 5139 Soldaterfort ("Soldiers Fort with Dungeon", 2011–2014),
   3315 Sort ridder, 3319 Dragebaronens tropper (svag kilde).
 - Åbent (ikke hastende): lignende skib til 5135 (3940?) – Thomas sender evt. 3940-manualen. Skrog-nr. uafklaret (eBay 30 22 8412 / manual 30 23 2852).
