@@ -281,7 +281,7 @@
       pmHent: function () {
         var s = laes(), p = pmL(s), fotos = {};
         skriv(s);
-        p.dele.forEach(function (d) { fotos[d.saet] = (p.fotos[d.saet] || []).length; });
+        p.dele.forEach(function (d) { fotos[d.saet] = (p.fotos[d.saet] || []).length; d.antalFotos = d.nr ? (p.fotos[d.saet + '|' + d.nr] || []).length : 0; });
         return { dele: p.dele, fotos: fotos, navne: { '3315': 'Sort ridder', '5135': 'Piratskib', '5142': 'Prinsesseslot' } };
       },
       pmGem: function (d) {
@@ -309,15 +309,16 @@
         skriv(s); return H.pmHent();
       },
       pmUploadFoto: function (d) {
-        var s = laes(), p = pmL(s), saet = String(d.saet || '').trim();
-        if (!p.dele.some(function (x) { return x.saet === saet; })) throw srv('Sættet ' + saet + ' findes ikke i Playmobil-arket.');
+        var s = laes(), p = pmL(s), saet = String(d.saet || '').trim(), dnr = String(d.nr || '').trim();
+        if (!p.dele.some(function (x) { return x.saet === saet && (!dnr || x.nr === dnr); })) throw srv((dnr ? 'Delen ' + dnr + ' i sæt ' : 'Sættet ') + saet + ' findes ikke i Playmobil-arket.');
         if (!d.billede) throw srv('Intet billede.');
-        var liste = p.fotos[saet] = p.fotos[saet] || [], kode = 'PM-' + rod.Retro.rens(saet);
+        var nk = dnr ? saet + '|' + dnr : saet;
+        var liste = p.fotos[nk] = p.fotos[nk] || [], kode = 'PM-' + rod.Retro.rens(saet) + (dnr ? '-' + rod.Retro.rens(dnr) : '');
         var gl = liste.find(function (f) { return f.id === d.uploadId; });
-        if (gl) return { navn: gl.navn, antalFotos: liste.length, gentaget: true, saet: saet };
+        if (gl) return { navn: gl.navn, antalFotos: liste.length, gentaget: true, saet: saet, nr: dnr };
         var nr = liste.length + 1, navn = kode + '.' + (nr < 10 ? '0' + nr : nr) + '.jpg';
         liste.push({ id: d.uploadId, navn: navn }); skriv(s);
-        return { navn: navn, antalFotos: liste.length, gentaget: false, saet: saet };
+        return { navn: navn, antalFotos: liste.length, gentaget: false, saet: saet, nr: dnr };
       },
       hentAlt: function () {
         var s = laes(); genberegn(s);

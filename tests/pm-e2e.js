@@ -81,6 +81,17 @@ fs.mkdirSync(UD, { recursive: true });
   assert.strictEqual((await page.textContent('#pm-status')).trim(), '3 af 4 afkrydset');
   await skud('2-3315');
 
+  // Foto af én del via kamera-ikonet ved noten
+  const fotoPng = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 800; c.height = 600; c.getContext('2d').fillRect(0, 0, 10, 10); return c.toDataURL('image/png').split(',')[1]; });
+  await page.locator('#pm-liste .pm-del', { hasText: '30 20 1002' }).locator('.pm-foto input').setInputFiles({ name: 'IMG_1.png', mimeType: 'image/png', buffer: Buffer.from(fotoPng, 'base64') });
+  await page.waitForSelector('.beskaer:not([hidden])');
+  await page.click('[data-b="ok"]');
+  await tomUdbakke();
+  pm = await mock();
+  assert.strictEqual(pm.fotos['3315|30 20 1002'][0].navn, 'PM-3315-30201002.01.jpg');
+  await page.waitForFunction(() => { const x = [...document.querySelectorAll('#pm-liste .pm-del')].find(e => e.textContent.includes('30 20 1002')); return x && x.querySelector('.pm-antal:not([hidden])') && x.querySelector('.pm-antal').textContent === '1'; });
+  assert.strictEqual(pm.fotos['3315'], undefined, 'del-foto tæller ikke som sæt-foto');
+
   // Filter "Mangler"
   await page.click('[data-pmfilter="mangler"]');
   assert.strictEqual(await page.locator('#pm-liste .pm-del').count(), 1);

@@ -225,7 +225,8 @@
       await Lokal.saet('pm', pm);
       haendelse('pmSaetOprettet', { navn: p.data.navn });
     } else if (p.type === 'pmUploadFoto') {
-      pm.fotos[p.data.saet] = svar.antalFotos;
+      if (p.data.nr) { var pd = pm.dele.find(function (d) { return d.saet === p.data.saet && d.nr === p.data.nr; }); if (pd) pd.antalFotos = svar.antalFotos; }
+      else pm.fotos[p.data.saet] = svar.antalFotos;
       (sendteFotos[p.data.sku] = sendteFotos[p.data.sku] || []).push({ thumb: p.meta.thumb, navn: svar.navn });
       await Lokal.saet('pm', pm);
     } else if (p.type === 'uploadFoto') {
@@ -419,8 +420,13 @@
   }
   function pmFotos(saet) {
     var n = pm.fotos[saet] || 0;
-    var v = udbakke.filter(function (p) { return p.type === 'pmUploadFoto' && p.data.saet === saet && p.status !== 'fejl'; }).length;
+    var v = udbakke.filter(function (p) { return p.type === 'pmUploadFoto' && p.data.saet === saet && !p.data.nr && p.status !== 'fejl'; }).length;
     return { iDrive: n, venter: v };
+  }
+  function pmDelFotos(saet, nr) {
+    var d = pm.dele.find(function (x) { return x.saet === saet && x.nr === nr; });
+    var v = udbakke.filter(function (p) { return p.type === 'pmUploadFoto' && p.data.saet === saet && p.data.nr === nr && p.status !== 'fejl'; }).length;
+    return { iDrive: (d && d.antalFotos) || 0, venter: v };
   }
   // Ny kopi fra Sheets (kun med net). Fejl fra maskinrummet gemmes i status.pmFejl.
   async function pmHent() {
@@ -445,7 +451,7 @@
     listing: function (sku) { return listings.saet[sku] || null; }, listingDoc: function (dato) { return listings.doc[String(dato)] || ''; },
     retroKoeb: retroKoeb, retroKoebFindes: retroKoebFindes, retroMaerker: retroMaerker, retroKode: retroKode,
     retroHentMaerker: retroHentMaerker, retroOpdaterKoeb: retroOpdaterKoeb,
-    pmDele: pmDele, pmFotos: pmFotos, pmHent: pmHent, pmNavn: function (s) { return (pm.navne || {})[s] || ''; }, pmHentet: function () { return pm.hentet; },
+    pmDele: pmDele, pmFotos: pmFotos, pmDelFotos: pmDelFotos, pmHent: pmHent, pmNavn: function (s) { return (pm.navne || {})[s] || ''; }, pmHentet: function () { return pm.hentet; },
     hentetTid: function () { return kopi.hentet; }, kurs: function (aar) { return Number(kopi.kurs[String(aar)]) || 7.46; }, sendteFotos: function (sku) { return sendteFotos[sku] || []; }
   };
 })(this);

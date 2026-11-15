@@ -1064,7 +1064,8 @@
   var pm = { saet: 'alle', filter: 'alle', pend: {}, timere: {}, redigerer: false };
   function pmNoegle(d) { return d.saet + '|' + d.nr; }
   function pmNorm(t) { return String(t).toLowerCase().replace(/\s+/g, ''); }
-  function pmFotoSku(saet) { return 'PM-' + (R.rens(saet) || 'SAET'); }
+  function pmFotoSku(saet, nr) { return 'PM-' + (R.rens(saet) || 'SAET') + (nr && R.rens(nr) ? '-' + R.rens(nr) : ''); }
+  var KAMERA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
   function pmNoteLinje(d) { return d.skal === null && !d.nr; }
   function pmDele() {
     return Data.pmDele().map(function (d) { var p = pm.pend[pmNoegle(d)]; return p ? Object.assign(d, p, { gemmer: true }) : d; });
@@ -1150,7 +1151,8 @@
       el.innerHTML = '<div class="info"><div class="nr"></div><div class="navn"></div><div class="meta"></div></div>' +
         (note ? '' : '<div class="pm-taeller"><button type="button" aria-label="En mindre">−</button><input type="number" inputmode="numeric" min="0" aria-label="Fundet"><button type="button" aria-label="En mere">+</button><span class="af"></span></div>' +
           '<button type="button" class="pm-chk" aria-label="Færdig">✓</button>') +
-        '<input class="note" type="text" placeholder="Note …" aria-label="Note">';
+        '<div class="pm-noterad"><input class="note" type="text" placeholder="Note …" aria-label="Note">' +
+        '<label class="pm-foto" aria-label="Tag foto af delen">' + KAMERA_SVG + '<span class="pm-antal" hidden></span><input type="file" accept="image/*" capture="environment" hidden></label></div>';
       el.querySelector('.nr').textContent = d.nr || d.saet;
       el.querySelector('.navn').textContent = d.del;
       el.querySelector('.meta').innerHTML = 'Sæt ' + esc(d.saet) + (d.side ? ' · ' + esc(d.side) : '') + (note ? '' : ' · skal være ' + d.skal) +
@@ -1178,7 +1180,22 @@
           else pmTegn();
         });
       }
-      if (laast) el.querySelectorAll('button, input').forEach(function (x) { x.disabled = true; });
+      // Foto af delen (eller af hele sættet på en note-linje som "Div")
+      var fk = el.querySelector('.pm-foto'), fi = fk.querySelector('input'), fa = fk.querySelector('.pm-antal');
+      var df = note ? Data.pmFotos(d.saet) : Data.pmDelFotos(d.saet, d.nr), n = df.iDrive + df.venter;
+      if (n) { fa.hidden = false; fa.textContent = n; fk.classList.toggle('venter', df.venter > 0); }
+      fi.addEventListener('change', async function () {
+        var filer = Array.prototype.slice.call(this.files || []); this.value = '';
+        if (beskaerer) return;
+        beskaerer = true;
+        try {
+          for (var i = 0; i < filer.length; i++) {
+            try { await beskaerOgSend(await Foto.filTilRaa(filer[i]), pmFotoSku(d.saet, note ? '' : d.nr), 'pmUploadFoto', note ? { saet: d.saet } : { saet: d.saet, nr: d.nr }); }
+            catch (e) { toast('Foto: ' + e.message); }
+          }
+        } finally { beskaerer = false; pmTegn(); }
+      });
+      if (laast) { el.querySelectorAll('button, input').forEach(function (x) { x.disabled = true; }); fk.classList.add('laast'); }
       c.appendChild(el);
     });
   }

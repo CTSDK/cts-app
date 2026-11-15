@@ -1,12 +1,12 @@
 # Område: Lego (CTS-appen + regnearket cts-app)
 
-Status pr. 15-11-2026: app v21 + maskinrum 2.3.1 (Playmobil i appen) lagt ud 15-11; v20 + 2.3.0 kører hos Thomas. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
+Status pr. 15-11-2026: app v22 + maskinrum 2.3.2 (Playmobil i appen) lagt ud 15-11; v20 + 2.3.0 bekræftet hos Thomas. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
 
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
   Hjemmeskærms-app på iPhone (iOS 27.2). Offline: service worker (`sw.js`), lokal kopi + udbakke i IndexedDB (`js/lokal.js`, `js/data.js`).
-  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v21, lagt ud 15-11; v20 bekræftet på iPhone 15-11; versionen står nederst under Mere).
-- **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.3.1**, lagt ud 15-11 – Thomas kopierer ind; 2.3.0 kører hos Thomas; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
+  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v22, lagt ud 15-11; v20 bekræftet på iPhone 15-11; versionen står nederst under Mere).
+- **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.3.2**, lagt ud 15-11 – Thomas kopierer ind; 2.3.0 bekræftet hos Thomas; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
   Webapp "Udfør som: Mig", adgang "Alle"; alle kald kræver API-nøgle (Script Properties).
 - **Faste kodetrin (altid sådan):** (1) åbn https://raw.githubusercontent.com/CTSDK/cts-app/main/apps-script/Code.gs, (2) Ctrl+Shift+R og tjek versionen,
   (3) Ctrl+A → Ctrl+C → Apps Script → Ctrl+A → Ctrl+V → Ctrl+S, (4) Implementer → Administrer implementeringer → blyanten → Ny version → Implementer,

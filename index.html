@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/app.css?v=21">
+<link rel="stylesheet" href="css/app.css?v=22">
 </head>
 <body>
 <div id="testbanner" class="banner" hidden></div>
@@ -107,7 +107,7 @@
     <div id="pm-status" class="lille"></div>
     <div id="pm-ro" class="besked pm-ro" hidden>Kun visning. Vælg et sæt øverst for at sortere, skrive noter og tage fotos.</div>
     <details id="pm-fotoboks" class="pm-fotoboks" hidden>
-      <summary id="pm-fototitel">Fotos af sættet</summary>
+      <summary><span class="pm-foto" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span id="pm-fototitel">Fotos af sættet</span></summary>
       <div class="kamera">
         <video id="pm-video" playsinline muted autoplay></video>
         <div class="kamera-tom" id="pm-kamera-tom">Kameraet er slukket</div>
@@ -431,7 +431,7 @@
       <span class="kort-tekst"><b>Indstillinger</b><small>Adresse og API-nøgle</small></span>
     </button>
   </nav>
-  <p class="hjaelp app-version">App-version 21</p>
+  <p class="hjaelp app-version">App-version 22</p>
 </section>
 
 <!-- ============ MENUBJÆLKE ============ -->
@@ -475,13 +475,13 @@
 
 <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="js/beregn.js?v=21"></script>
-<script src="js/retro.js?v=21"></script>
-<script src="js/api.js?v=21"></script>
-<script src="js/lokal.js?v=21"></script>
-<script src="js/data.js?v=21"></script>
-<script src="js/foto.js?v=21"></script>
-<script src="js/beskaer.js?v=21"></script>
-<script src="js/app.js?v=21"></script>
+<script src="js/beregn.js?v=22"></script>
+<script src="js/retro.js?v=22"></script>
+<script src="js/api.js?v=22"></script>
+<script src="js/lokal.js?v=22"></script>
+<script src="js/data.js?v=22"></script>
+<script src="js/foto.js?v=22"></script>
+<script src="js/beskaer.js?v=22"></script>
+<script src="js/app.js?v=22"></script>
 </body>
 </html>

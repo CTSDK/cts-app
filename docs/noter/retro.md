@@ -65,14 +65,16 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   Først når Thomas trykker ✓, bliver det grønt = færdig. ✓ kan også trykkes, når der mangler dele: så er delen færdig, og manglen (Skal−Fundet)
   er selve noten – tom note = intet andet at notere. Efter ✓ ryddes søgefeltet, og markøren springer op i det, så næste nummer kan tastes.
   "Alle sæt"/"Alle SKU" er kun visning; sortering og noter kun under ét valgt sæt/SKU.
-- **I appen (v21 + maskinrum 2.3.1, 15-11; v20/2.3.0 testet af Thomas 15-11: noter og ✓ gemt i arket ✓):** Hjem → Retro Design → **Playmobil**. Samme regler som den lilla side (sæt øverst,
+- **I appen (v22 + maskinrum 2.3.2, 15-11; v20/2.3.0 testet af Thomas 15-11: noter og ✓ gemt i arket ✓):** Hjem → Retro Design → **Playmobil**. Samme regler som den lilla side (sæt øverst,
   "Alle sæt" kun visning, søg, −/+/talfelt, ✓-regel, note pr. del). Gemmer via maskinrummet (pmHent/pmGem) og udbakken (virker offline).
   **"+ Nyt sæt"**: navn (fx "Div" = løsdele) → én linje "Note og fotos" (ingen antal/✓), indsat før sidste række (pmNytSaet).
-  **Fotos pr. sæt** (fotoboks når ét sæt er valgt): `CTS/Retro/Playmobil/Fotos/PM-<SÆT>.NN.jpg` (pmUploadFoto). Arkets id: konstant
+  **Fotos pr. sæt** (fotoboks med kamera-ikon, når ét sæt er valgt): `CTS/Retro/Playmobil/Fotos/PM-<SÆT>.NN.jpg` (pmUploadFoto).
+  **Fotos pr. del** (v22/2.3.2): kamera-ikon ved noten på hver del (telefonens kamera → beskær) → `PM-<SÆT>-<VARENR>.NN.jpg`; tal på ikonet = antal fotos.
+  På note-linjer (fx Div) gælder ikonet hele sættet. Arkets id: konstant
   PM_STANDARD_ID i Code.gs (kan overstyres med Script Property PLAYMOBIL_ID).
   **Sætnavne** (v21/2.3.1): fanen **"Sæt"** i arket (A nr., B navn) → vises under nummeret på knapperne. Nye navne skrives bare i fanen.
   Testet i browser med testdata (`tests/pm-e2e.js`). Hos Thomas: noter + ✓ virker (3315). **Ikke testet hos Thomas: + (hesten nåede ikke arket
-  – Claude rettede den til 1 efter Thomas' ønske), Nyt sæt, fotos, sætnavne.**
+  – Claude rettede den til 1 efter Thomas' ønske), Nyt sæt, fotos (sæt og del), sætnavne.**
 - Status 15-11: **211 af 380 afkrydset** – 3315: 8/12 · 3319: 13/31 · 5135: 63/85 · 5139: 41/77 · 5142: 86/175.
 - Regler for antal (fra manualerne): et sæt/en pose = 1; dele på to sider tælles én gang; tegnet flere gange uden "2x" tælles som tegningen.
   Delenes navne er Claudes egne ud fra tegningerne – **erstattes med PlaymoDB-navne** (Thomas kopierer sættets PlaymoDB-side ind i samtalen;
