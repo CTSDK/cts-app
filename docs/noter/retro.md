@@ -52,8 +52,8 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
 (kolonne I) + Thomas' input: "sæt X, Y, Z … med disse mangler – stort set alle næsten komplette". Kun noget vi har nu; evt. små mængder senere her.
 - **Drive:** `CTS/Retro/Playmobil` (id `1GMWYxrs8T8cvRCSUxSWs5MaaExXHgxXQ`, flyttet fra CTS/Playmobil 15-11). Manual-PDF'er ligger hos Thomas.
 - **Regneark "Playmobil alle sæt"** (eneste kilde): `1pEB0STX0_rDlWOzGswuZyo2ot3zCztb99Ezueoi1NEc`, fane **Dele** (sheetId 449130092).
-  Række 1 søgefelt B1 (leder i A+B+G), række 2–12 træf, række 13 overskrift. **Række 14–539 = 526 rækker:** 3315 (14–25), 3319 (26–56),
-  5135 (57–141), 5139 (142–218), 5142 (219–393), 4343 (394–493), 4439 (494–539); inden for sæt i samme orden som de gamle ark.
+  Række 1 søgefelt B1 (leder i A+B+G), række 2–12 træf, række 13 overskrift. **Række 14–555 = 542 rækker:** 3315 (14–25), 3319 (26–56),
+  5135 (57–141), 5139 (142–218), 5142 (219–393), 4343 (394–493), 4439 (494–539), 3155 (540–555); inden for sæt i samme orden som de gamle ark.
   Kolonner: A Varenr. · B Del · C Skal være · **D Fundet** · E Mangler (formel) · **F ✓** · **G Sæt · side** (fx "5142 · s.22") · H tom · **I Note**.
   Dansk ark (`;` i formler). "Fundet" tomt = ikke talt.
 - 15-11: samlet fra de 4 gamle ark (5142, 5135, 5139, små sæt). Tjek i arket: 0 forskelle i A–D, F, G, I for alle rækker. Søgning testet ("5139" = 77 træf).
@@ -65,7 +65,8 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   Først når Thomas trykker ✓, bliver det grønt = færdig. ✓ kan også trykkes, når der mangler dele: så er delen færdig, og manglen (Skal−Fundet)
   er selve noten – tom note = intet andet at notere. Efter ✓ ryddes søgefeltet, og markøren springer op i det, så næste nummer kan tastes.
   "Alle sæt"/"Alle SKU" er kun visning; sortering og noter kun under ét valgt sæt/SKU.
-  Senere: samme side inde i appen under Retro (kommer med Lego-maskinrumsopdateringen).
+  Senere: samme side inde i appen under Retro (kommer med Lego-maskinrumsopdateringen). Appen skal også kunne **"Nyt sæt"**
+  (Thomas laver selv en ny linje) – fx **"Div" = løsdele**: kun note + fotos, ingen antal/✓ (Thomas 15-11). Ikke bygget; ikke i arket endnu.
 - Status 15-11: **211 af 380 afkrydset** – 3315: 8/12 · 3319: 13/31 · 5135: 63/85 · 5139: 41/77 · 5142: 86/175.
 - Regler for antal (fra manualerne): et sæt/en pose = 1; dele på to sider tælles én gang; tegnet flere gange uden "2x" tælles som tegningen.
   Delenes navne er Claudes egne ud fra tegningerne – **erstattes med PlaymoDB-navne** (Thomas kopierer sættets PlaymoDB-side ind i samtalen;
@@ -87,7 +88,9 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
     30 51 0250 = 1 sæt; 30 09 6900 røde plugs = 1 ("en pose", antal ukendt); 30 28 6200 = 1; 30 28 6220 = 2.
   - **4439 Barbartårn** (PlaymoDB "Barbarian Assault Tower", 2005) tilføjet 15-11: række 494–539, 46 numre (63 stk.), alle = PlaymoDB.
     30 51 2920 sider = 1 sæt; 30 62 6752 = 1; 30 21 0700 grå clips = 1 (måske flere). Flammer 30 07 6930 = 3.
-  - **Alle 7 sæt har PlaymoDB-navne (engelsk).** Manualer er ikke tilføjet som rækker. **Delenavnene skal oversættes til salgsteksten senere** (Thomas 15-11).
+  - **3155 Nessie** (PlaymoDB "Nessie", 2002) tilføjet 15-11: række 540–555, 16 numre, alle = PlaymoDB. 30 20 0200 = 3 (tegnet 3 gange).
+    Undervandsmotor 7350 sælges separat – ikke med.
+  - **Alle 8 sæt har PlaymoDB-navne (engelsk).** Manualer er ikke tilføjet som rækker. **Delenavnene skal oversættes til salgsteksten senere** (Thomas 15-11).
 - Sætnavne (søgeresuméer 14-11; 4343/4439 fra PlaymoDB 15-11): 4343 Dyreklinik, 4439 Barbartårn, 5142 Prinsesseslot, 5135 Piratskib ("Pirate Prize Ship", 2011–2015), 5139 Soldaterfort ("Soldiers Fort with Dungeon", 2011–2014),
   3315 Sort ridder, 3319 Dragebaronens tropper (svag kilde).
 - Åbent (ikke hastende): lignende skib til 5135 (3940?) – Thomas sender evt. 3940-manualen. Skrog: 30 23 2852 = 30 22 8412 (PlaymoDB).
