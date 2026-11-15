@@ -1,12 +1,12 @@
 # Område: Lego (CTS-appen + regnearket cts-app)
 
-Status pr. 15-11-2026: app v22 + maskinrum 2.3.2 (Playmobil i appen) lagt ud 15-11; v20 + 2.3.0 bekræftet hos Thomas. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
+Status pr. 15-11-2026: app v23 + maskinrum 2.4.0 (Lego-sortering + Playmobil) lagt ud 15-11; v20 + 2.3.0 bekræftet hos Thomas. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
 
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
   Hjemmeskærms-app på iPhone (iOS 27.2). Offline: service worker (`sw.js`), lokal kopi + udbakke i IndexedDB (`js/lokal.js`, `js/data.js`).
-  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v22, lagt ud 15-11; v20 bekræftet på iPhone 15-11; versionen står nederst under Mere).
-- **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.3.2**, lagt ud 15-11 – Thomas kopierer ind; 2.3.0 bekræftet hos Thomas; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
+  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v23, lagt ud 15-11; v20 bekræftet på iPhone 15-11; versionen står nederst under Mere).
+- **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.4.0**, lagt ud 15-11 – Thomas kopierer ind; 2.3.x bekræftet hos Thomas; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
   Webapp "Udfør som: Mig", adgang "Alle"; alle kald kræver API-nøgle (Script Properties).
 - **Faste kodetrin (altid sådan):** (1) åbn https://raw.githubusercontent.com/CTSDK/cts-app/main/apps-script/Code.gs, (2) Ctrl+Shift+R og tjek versionen,
   (3) Ctrl+A → Ctrl+C → Apps Script → Ctrl+A → Ctrl+V → Ctrl+S, (4) Implementer → Administrer implementeringer → blyanten → Ny version → Implementer,
@@ -21,7 +21,7 @@ Status pr. 15-11-2026: app v22 + maskinrum 2.3.2 (Playmobil i appen) lagt ud 15-
   Skriv formler mens arket er `en_US` (`medEngelsk_`); SUMIFS udvider ikke i ARRAYFORMULA (brug MAP+SUMIFS); LET-navne må ikke ligne celler;
   tekst som "7236-2" skrives med apostrof (`tekst_`).
 - **Tests:** `node tests/beregn.test.js`, `tests/listing.test.js`, `tests/sortering.test.js`, `tests/fragtbilag.test.js`; Playwright (server: `python3 -m http.server 8765`):
-  `tests/e2e.js`, `tests/stortkoeb.js`, `tests/forbindelse.js`, `tests/tilfoejdb.js`, `tests/retro-e2e.js`, `tests/pm-e2e.js`.
+  `tests/e2e.js`, `tests/stortkoeb.js`, `tests/forbindelse.js`, `tests/tilfoejdb.js`, `tests/retro-e2e.js`, `tests/pm-e2e.js`, `tests/lgs-e2e.js`.
 
 ## Regnearket cts-app
 - **Indkøb:** A SKU, B Købsdato, C Set nr., D Navn, E Værdi €, F Købspris, G Salg for, H OVP, I Sorteret, J Fotos, K Klar, L Stand, M Platform,
@@ -72,9 +72,17 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
 - **Fast måde at hente en liste (testet 15-11 på computer):** BrickLink → sættets Inventory → klik **List** → Ctrl+A, Ctrl+C → indsæt i samtalen.
   Claude laver den rene liste. Ikke "Udskriv til PDF" (bliver billeder). Rebrickable/BrickLink kan ikke åbnes fra sessionen.
 - **Talformat:** item-numre skrives med apostrof (tekst), ellers kan Sheets lave dem om (sket med Playmobil: "30 03 0600" blev en dato).
-- **Ved et køb (plan):** ét sorteringsark pr. køb (navn = købsdato) i købsmappen `CTS/Lager/<købsdato>/Sorteringslister/`, alle sæt i købet samlet,
-  hver linje med SKU (kolonne G "SKU · type"), opbygget som "Playmobil alle sæt". Siden viser SKU'erne øverst som valg. Salgstekst pr. SKU ud fra noterne + fotos.
-  Når alt er afkrydset: Komplet sættes; mangler/noter → Noter → listing. Sletning ved salg: system findes senere.
+- **I appen (v23 + maskinrum 2.4.0, bygget 15-11):** Nyt køb / Lager → **Klargør** → knap **"Sortér dele"** (viser status: ikke startet /
+  x af y / sorteret ✓ / ingen liste). Første tryk kopierer sættets rene liste ind i købets ark **"<købsdato> Sortering"** i
+  `CTS/Lager/<købsdato>/Sorteringslister/` (fane Dele: A SKU · B Item No · C Del · D Skal være · E Fundet · F ✓ · G Type · H Note). Sæt, der
+  tilføjes købet senere, kommer med, når der trykkes "Sortér dele" på dem. Kræver net første gang (lgStart); derefter udbakke (lgGem).
+  Samme regler som Playmobil (+/−/talfelt, ✓-regel, søg, note, kamera-ikon → `<SKU>-<ITEMNO>-<DEL>.NN.jpg` i Sorteringslister-mappen).
+  Samme item no i flere farver holdes adskilt (nøgle = SKU + item no + beskrivelse).
+  **"Færdig – overfør til klargøring"** (når alle ✓): viser først teksten → Overfør: Indkøb **Sorteret ✓**, **Komplet** ✓ hvis intet mangler,
+  og tilføjer til **Noter** (eksisterende noter bevares): `Missing: 1 x Black Brick 1 x 2 (3004)` + linje med del-noter. Tomt Fundet = ikke talt.
+  Ingen ren liste → besked "kopiér listen fra BrickLink og sæt den ind i samtalen". Kun nye sæt sorteres.
+  **Testet i browser med testdata** (`tests/lgs-e2e.js`). **Ikke testet hos Thomas.** Thomas' testkøb: **261110-6080** King's Castle (pris 1 kr).
+- **Senere (ikke besluttet):** SKU-sorteringsark slettes, når sættet er solgt; "Ny sorteringsliste" i appen (indsæt BrickLink-tekst fra telefonen).
 - **Test (15-11):** `CTS/Lego/Sorteringslister/Test sortering` (`187NNroSbDSO3h_Bar5j3bEoGBEthKG1HzWGZiLuE__o`, fane Dele, række 14–118, SKU TEST-6080)
   + testside https://claude.ai/artifact/2fqHt1ppFSatTcd8XpMwKy (rød). Testet i browser med falske data; **ikke testet mod arket af Thomas endnu.**
   **✓-regel (Thomas 15-11, begge sider):** + sætter ikke kryds selv. Når Fundet = Skal være, lyser fluebenet grønt omrids ("klar").

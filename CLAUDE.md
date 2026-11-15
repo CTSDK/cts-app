@@ -51,9 +51,9 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
 ## Næste (pr. 15-11-2026)
-0. **Lego-sortering (ny, besluttet 15-11):** afkrydsningslister som Playmobil, inde i appen. Mapper oprettet; resten ikke bygget. Se lego.md → Sortering.
-   Ren liste 6080 Kings Castle lavet. Thomas tester testsiden (TEST-6080) → prøver at kopiere et sæt fra BrickLink på telefonen → app + maskinrum bygges.
-0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" (8 sæt, PlaymoDB-navne). **App v22 + maskinrum 2.3.2** (Retro → Playmobil:
+0. **Lego-sortering: bygget 15-11 (app v23 + maskinrum 2.4.0), ikke testet hos Thomas.** Klargør → "Sortér dele" → Færdig → Sorteret/Komplet/Noter.
+   Thomas: kopiér 2.4.0 ind, test på 261110-6080. Nye sæt kræver ren liste (BrickLink → List → kopiér ind i samtalen). Se lego.md → Sortering.
+0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" (8 sæt, PlaymoDB-navne). **App v23 + maskinrum 2.4.0** (Retro → Playmobil:
    sortering, sætnavne, "+ Nyt sæt" fx Div, fotos pr. sæt og pr. del via kamera-ikon ved noten). Virker hos Thomas: noter, ✓, +, fotos af sæt. Ikke set endnu: fotos pr. del, Nyt sæt/Div, navne.
    Thomas sorterer videre (ca. 274/542 afkrydset) → samlet salgstekst. Lilla side virker stadig. Se retro.md.
 1. **Retro:** Thomas tester et rigtigt køb i appen (Retro → Registrér nyt køb → Klargør med fotos) → Claude tjekker arket "CTS Retro" og fotomappen.
@@ -68,8 +68,8 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
    (65 KB) op efter emne; slank hovednoten.
 
 ## Status pr. 15-11-2026
-- ✅ **App v20+** på Thomas' iPhone (v22 lagt ud; versionen står nederst under Mere). Retro: nyt køb, klargør, **Playmobil-sortering**.
-- ✅ **Maskinrum 2.3.x** hos Thomas (2.3.2 lagt ud): Gem bilag fra Gmail, Udfør bilagsplan, økonomi-ark, Opret Retro-ark, Playmobil (pm*).
+- ✅ **App v20+** på Thomas' iPhone (v23 lagt ud; versionen står nederst under Mere). Retro: nyt køb, klargør, **Playmobil-sortering**.
+- ✅ **Maskinrum 2.3.x** hos Thomas (2.4.0 lagt ud): Gem bilag fra Gmail, Udfør bilagsplan, økonomi-ark, Opret Retro-ark, Playmobil (pm*).
 - ✅ **CTS Økonomi** (`1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (196), Udgifter, Skat, Kontoplan, Bilagsplan. Lego-arket = priser/lager/salg.
 - ✅ **CTS Retro** (`1FQh_UuorscBSh59KYfhB4x6ufyJT5nNeRyA1renVpbc`) oprettet; ingen rigtige køb endnu.
 - ✅ Alle salg 2026 har bilagsnr (næste B169; 2025 næste B029). Frisk start: gamle regler (afregningsbilag m.m.) gælder ikke.

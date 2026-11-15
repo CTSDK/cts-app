@@ -65,9 +65,17 @@ console.log('retroPriser (JS + Code.gs):', priser.length, 'cases OK');
 for (const [ind, ud] of [['2026-11-08', '261108'], ['261108', '261108'], ['8-11-2026', ''], ['', '']]) {
   assert.strictEqual(R.retroDato(ind), ud); assert.strictEqual(ctx.retroDato_(ind), ud);
 }
-assert.ok(/^2\.3\.\d+$/.test(ctx.VERSION), 'VERSION 2.3.x');
+assert.ok(/^2\.4\.\d+$/.test(ctx.VERSION), 'VERSION 2.4.x');
 // --- Playmobil: "sæt · side" og fotonavn (Code.gs) – fotonavn skal være det samme som appen bruger (PM- + Retro.rens) ---
 assert.deepStrictEqual(Object.assign({}, ctx.pmSaetNavn_('5142 · s.22')), { saet: '5142', side: 's.22' });
 assert.deepStrictEqual(Object.assign({}, ctx.pmSaetNavn_('Div')), { saet: 'Div', side: '' });
 for (const n of ['Div', '5142', 'Løsdele æøå']) assert.strictEqual(ctx.pmFotoNavn_(n), 'PM-' + R.rens(n));
+// --- Lego-sortering: noter-tekst og fotonavn (Code.gs) ---
+const nt = ctx.lgNoteTekst_([
+  { nr: '3004', del: 'Black Brick 1 x 2', skal: 10, fundet: 9, note: '' },
+  { nr: '3005', del: 'Light Gray Brick 1 x 1', skal: 4, fundet: 4, note: 'en er misfarvet' },
+  { nr: '4491a', del: 'Black Horse Saddle with Clip', skal: 1, fundet: null, note: '' }]);
+assert.strictEqual(nt.tekst, 'Missing: 1 x Black Brick 1 x 2 (3004)\nLight Gray Brick 1 x 1 (3005): en er misfarvet');
+assert.strictEqual(nt.mangler, 1);
+assert.strictEqual(ctx.lgFotoNavn_('261110-6086', '3005', 'Light Gray Brick 1 x 1'), '261110-6086-3005-LIGHTGRAYBRICK1X1');
 console.log('retro: alle tests OK');

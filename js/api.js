@@ -320,6 +320,72 @@
         liste.push({ id: d.uploadId, navn: navn }); skriv(s);
         return { navn: navn, antalFotos: liste.length, gentaget: false, saet: saet, nr: dnr };
       },
+      // ----- Lego-sortering (samme regler som maskinrummet: lgHent_, lgStart_, lgGem_, lgFaerdig_, lgUploadFoto_) -----
+      lgHent: function (d) {
+        var s = laes(); genberegn(s); var g = lgL(s), dato = String(d.dato || '');
+        var dele = g.dele.filter(function (x) { return x.dato === dato; }).map(function (x) {
+          var c = Object.assign({}, x); delete c.dato; c.antalFotos = (g.fotos[x.sku + '|' + x.nr + '|' + x.del] || []).length; return c; });
+        var saet = s.ind.filter(function (r) { return r.dato === dato; }).map(function (r) {
+          var nr = String(r.setnr).replace(/-1$/, '');
+          return { sku: r.sku, setnr: r.setnr, navn: r.navn, sorteret: !!r.sorteret, komplet: !!r.komplet, harListe: !!LISTER[nr],
+            startet: dele.some(function (x) { return x.sku === r.sku; }) };
+        });
+        return { dato: dato, saet: saet, dele: dele };
+      },
+      lgStart: function (d) {
+        var s = laes(); genberegn(s); var g = lgL(s), r = s.ind.find(function (x) { return x.sku === d.sku; });
+        if (!r) throw srv('SKU ' + d.sku + ' findes ikke i Indkøb.');
+        var liste = LISTER[String(r.setnr).replace(/-1$/, '')];
+        if (!liste) throw srv('Ingen sorteringsliste for ' + r.setnr + ' ' + r.navn + '. Kopiér listen fra BrickLink (List) og sæt den ind i samtalen med Claude.');
+        if (!g.dele.some(function (x) { return x.sku === r.sku; })) {
+          liste.forEach(function (l) { g.raekke++; g.dele.push({ r: g.raekke, dato: r.dato, sku: r.sku, nr: l[0], del: l[1], skal: l[2], fundet: null, ok: false, type: l[3], note: '' }); });
+        }
+        skriv(s); return H.lgHent({ dato: r.dato });
+      },
+      lgGem: function (d) {
+        var s = laes(), g = lgL(s);
+        var x = g.dele.find(function (y) { return y.sku === d.sku && y.nr === String(d.nr || '').trim() && y.del === String(d.del || ''); });
+        if (!x) throw srv('Delen ' + d.nr + ' (' + d.del + ') i ' + d.sku + ' findes ikke i sorteringsarket.');
+        if (d.fundet !== undefined) {
+          var f = d.fundet === null || d.fundet === '' ? null : Number(d.fundet);
+          if (f !== null && !(f >= 0 && Math.floor(f) === f)) throw srv('Fundet skal være et helt tal (0 eller mere).');
+          x.fundet = f;
+        }
+        if (d.ok !== undefined) x.ok = d.ok === true;
+        if (d.note !== undefined) x.note = String(d.note || '');
+        skriv(s); var c = Object.assign({}, x); delete c.dato; return c;
+      },
+      lgFaerdig: function (d) {
+        var s = laes(); genberegn(s); var g = lgL(s), r = s.ind.find(function (x) { return x.sku === d.sku; });
+        if (!r) throw srv('SKU ' + d.sku + ' findes ikke i Indkøb.');
+        var dele = g.dele.filter(function (x) { return x.sku === r.sku; });
+        if (!dele.length) throw srv('Sættet er ikke startet i sorteringen.');
+        var tilbage = dele.filter(function (x) { return !x.ok; }).length;
+        if (tilbage) throw srv('Ikke alle dele er krydset af (' + tilbage + ' tilbage).');
+        var mangler = [], noter = [];
+        dele.forEach(function (x) {
+          var m = x.fundet === null ? 0 : x.skal - x.fundet;
+          if (m > 0) mangler.push(m + ' x ' + x.del + ' (' + x.nr + ')');
+          if (String(x.note).trim()) noter.push(x.del + ' (' + x.nr + '): ' + String(x.note).trim());
+        });
+        var t = []; if (mangler.length) t.push('Missing: ' + mangler.join(', ')); if (noter.length) t.push(noter.join('; '));
+        var tekst = t.join('\n'), komplet = !mangler.length;
+        if (d.vis === true) return { sku: r.sku, tekst: tekst, komplet: komplet, mangler: mangler.length };
+        if (tekst && String(r.noter || '').indexOf(tekst) < 0) r.noter = r.noter ? r.noter + '\n' + tekst : tekst;
+        r.sorteret = true; r.komplet = komplet;
+        genberegn(s); skriv(s); return r;
+      },
+      lgUploadFoto: function (d) {
+        var s = laes(), g = lgL(s);
+        if (!d.billede) throw srv('Intet billede.');
+        if (!g.dele.some(function (y) { return y.sku === d.sku && y.nr === d.nr && y.del === d.del; })) throw srv('Delen findes ikke i sorteringsarket.');
+        var k = d.sku + '|' + d.nr + '|' + d.del, liste = g.fotos[k] = g.fotos[k] || [];
+        var gl = liste.find(function (f) { return f.id === d.uploadId; });
+        if (gl) return { navn: gl.navn, antalFotos: liste.length, gentaget: true, sku: d.sku, nr: d.nr, del: d.del };
+        var R = rod.Retro, nr = liste.length + 1, navn = d.sku + '-' + R.rens(d.nr) + '-' + R.rens(d.del).slice(0, 30) + '.' + (nr < 10 ? '0' + nr : nr) + '.jpg';
+        liste.push({ id: d.uploadId, navn: navn }); skriv(s);
+        return { navn: navn, antalFotos: liste.length, gentaget: false, sku: d.sku, nr: d.nr, del: d.del };
+      },
       hentAlt: function () {
         var s = laes(); genberegn(s);
         return {
@@ -332,6 +398,10 @@
       }
     };
     function srv(t) { var e = new Error(t); e.fraServer = true; return e; }
+    // Test-data: rene sorteringslister (udsnit) – [Item No, Beskrivelse, Antal, Type]
+    var LISTER = { '6086': [['3004', 'Black Brick 1 x 2', 10, 'Del'], ['3004', 'Light Gray Brick 1 x 2', 89, 'Del'], ['3005', 'Light Gray Brick 1 x 1', 4, 'Del'],
+      ['4491a', 'Black Horse Saddle with Clip', 1, 'Del'], ['cas108', 'Crusader Axe - Blue Legs with Black Hips', 2, 'Minifigur']] };
+    function lgL(s) { s.lg = s.lg || { raekke: 1, dele: [], fotos: {} }; return s.lg; }
     // Test-data: et lille udsnit af "Playmobil alle sæt"
     function pmL(s) {
       if (!s.pm) {

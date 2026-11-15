@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/app.css?v=22">
+<link rel="stylesheet" href="css/app.css?v=23">
 </head>
 <body>
 <div id="testbanner" class="banner" hidden></div>
@@ -87,6 +87,28 @@
       <span class="kort-tekst"><b>Registrér salg</b><small>Kommer senere</small></span>
     </button>
   </nav>
+</section>
+
+<!-- ============ LEGO: SORTERING AF DELE ============ -->
+<section id="v-lgs" class="visning" hidden>
+  <header class="top"><button class="tilbage" id="lg-tilbage" aria-label="Tilbage til klargøring"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Sortér dele</h2></header>
+  <div class="indhold">
+    <div id="lg-info" class="lille"></div>
+    <div id="lg-saet" class="vaelg" role="group" aria-label="Vælg sæt i købet"></div>
+    <div class="pm-soeg">
+      <input id="lg-q" type="search" placeholder="Søg item no, del eller note" autocomplete="off" aria-label="Søg">
+      <button id="lg-ryd" class="knap" type="button">Ryd</button>
+    </div>
+    <div class="filtre" role="group" aria-label="Filter">
+      <button data-lgfilter="alle" class="til">Alle</button>
+      <button data-lgfilter="mangler">Mangler</button>
+      <button data-lgfilter="afkrydset">Afkrydset</button>
+    </div>
+    <div id="lg-status" class="lille"></div>
+    <div id="lg-besked" class="besked" hidden></div>
+    <div id="lg-liste" class="pm-liste"></div>
+    <button id="lg-faerdig" class="knap knap-gul" type="button" hidden>Færdig – overfør til klargøring</button>
+  </div>
 </section>
 
 <!-- ============ RETRO: PLAYMOBIL – SORTERING ============ -->
@@ -289,6 +311,7 @@
       <div class="navn" id="k3-navn"></div>
       <div class="lille" id="k3-info"></div>
     </div>
+    <button type="button" class="knap knap-sekundaer lg-start" id="k3-sorter"><span>Sortér dele</span><small id="k3-sorter-info"></small></button>
     <div id="k3-retform" class="post" hidden>
       <b>Ret sæt</b>
       <div class="vare-form">
@@ -431,7 +454,7 @@
       <span class="kort-tekst"><b>Indstillinger</b><small>Adresse og API-nøgle</small></span>
     </button>
   </nav>
-  <p class="hjaelp app-version">App-version 22</p>
+  <p class="hjaelp app-version">App-version 23</p>
 </section>
 
 <!-- ============ MENUBJÆLKE ============ -->
@@ -473,15 +496,25 @@
   </div>
 </div>
 
+<div id="lgf" class="dbny" role="dialog" aria-modal="true" aria-labelledby="lgf-titel" hidden>
+  <div class="dbny-panel">
+    <h2 id="lgf-titel">Overfør til klargøring</h2>
+    <p class="hjaelp" id="lgf-hvad"></p>
+    <pre id="lgf-tekst" class="lgf-tekst"></pre>
+    <div id="lgf-fejl" class="besked fejl" role="alert" hidden></div>
+    <div class="knapper"><button type="button" class="knap" id="lgf-annuller">Annullér</button><button type="button" class="knap knap-primaer" id="lgf-ok">Overfør</button></div>
+  </div>
+</div>
+
 <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="js/beregn.js?v=22"></script>
-<script src="js/retro.js?v=22"></script>
-<script src="js/api.js?v=22"></script>
-<script src="js/lokal.js?v=22"></script>
-<script src="js/data.js?v=22"></script>
-<script src="js/foto.js?v=22"></script>
-<script src="js/beskaer.js?v=22"></script>
-<script src="js/app.js?v=22"></script>
+<script src="js/beregn.js?v=23"></script>
+<script src="js/retro.js?v=23"></script>
+<script src="js/api.js?v=23"></script>
+<script src="js/lokal.js?v=23"></script>
+<script src="js/data.js?v=23"></script>
+<script src="js/foto.js?v=23"></script>
+<script src="js/beskaer.js?v=23"></script>
+<script src="js/app.js?v=23"></script>
 </body>
 </html>

@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '2.3.2';
+var VERSION = '2.4.0';
 
 // ---------- Faner ----------
 var FANE = {
@@ -1829,7 +1829,13 @@ var HANDLINGER = {
   pmHent: function () { return pmHent_(); },
   pmGem: function (d) { return medLaas_(function () { return pmGem_(d); }); },
   pmNytSaet: function (d) { return medLaas_(function () { return pmNytSaet_(d); }); },
-  pmUploadFoto: function (d) { return medLaas_(function () { return pmUploadFoto_(d); }); }
+  pmUploadFoto: function (d) { return medLaas_(function () { return pmUploadFoto_(d); }); },
+  // Lego-sortering (2.4.0): sorteringsark pr. køb ud fra de rene lister i CTS/Lego/Sorteringslister
+  lgHent: function (d) { return lgHent_(String(d.dato || '')); },
+  lgStart: function (d) { return medLaas_(function () { return lgStart_(d); }); },
+  lgGem: function (d) { return medLaas_(function () { return lgGem_(d); }); },
+  lgFaerdig: function (d) { return medLaas_(function () { return lgFaerdig_(d); }); },
+  lgUploadFoto: function (d) { return medLaas_(function () { return lgUploadFoto_(d); }); }
 };
 
 // ======================================================================
@@ -2939,5 +2945,178 @@ function pmUploadFoto_(d) {
   if (!dele.some(function (x) { return x.saet === saet && (!nr || x.nr === nr); })) throw fejl_((nr ? 'Delen ' + nr + ' i sæt ' : 'Sættet ') + saet + ' findes ikke i Playmobil-arket.');
   var r = gemFoto_(pmFotoMappe_(a.ss, true), pmFotoNavn_(saet, nr), d.billede, d.uploadId);
   r.saet = saet; r.nr = nr;
+  return r;
+}
+
+// ======================================================================
+//  LEGO-SORTERING (2.4.0)
+//  Rene lister (aldrig udfyldt): ét regneark pr. sæt i CTS/Lego/Sorteringslister, navn "<setnr> <navn>",
+//  fane "Liste": A Item No · B Beskrivelse (BrickLink) · C Antal · D Type (Del/Minifigur).
+//  Pr. køb: regnearket "<købsdato> Sortering" i købsmappen/Sorteringslister, fane "Dele" (data fra række 2):
+//  A SKU · B Item No · C Del · D Skal være · E Fundet · F ✓ · G Type · H Note. Et sæt kopieres ind første gang, der trykkes "Sortér dele".
+//  Fotos af dele: samme mappe, navn <SKU>-<ITEMNO>-<DEL>.NN.jpg
+// ======================================================================
+
+var LG_LISTER_STANDARD_ID = '1PsC1QepXfrHJKbfdNQJYR9RGjY77y4IR', LG_START = 2, LG_KOL = 8;
+var LG_OVERSKRIFT = ['SKU', 'Item No', 'Del (BrickLink)', 'Skal være', 'Fundet', '✓', 'Type', 'Note'];
+
+function lgListeMappe_() {
+  var id = PropertiesService.getScriptProperties().getProperty('LEGO_LISTER_ID') || LG_LISTER_STANDARD_ID;
+  try { return DriveApp.getFolderById(id); } catch (e) { throw fejl_('Mappen CTS/Lego/Sorteringslister kan ikke åbnes.'); }
+}
+// setnr → {id, navn} for alle rene lister (navn starter med sætnummeret)
+function lgListeOversigt_() {
+  var res = {}, it = lgListeMappe_().getFilesByType(MimeType.GOOGLE_SHEETS);
+  while (it.hasNext()) {
+    var f = it.next(), m = /^(\d+(?:-\d+)?)\s+(.+)$/.exec(f.getName());
+    if (m && !res[m[1]]) res[m[1]] = { id: f.getId(), navn: f.getName() };
+  }
+  return res;
+}
+function lgRenListe_(setnr, oversigt) {
+  oversigt = oversigt || lgListeOversigt_();
+  var nr = String(setnr).replace(/-1$/, ''), info = oversigt[nr] || oversigt[nr + '-1'];
+  if (!info) return null;
+  var ss = SpreadsheetApp.openById(info.id), sh = ss.getSheetByName('Liste') || ss.getSheets()[0];
+  if (sh.getLastRow() < 2) return { navn: info.navn, raekker: [] };
+  var v = sh.getRange(2, 1, sh.getLastRow() - 1, 4).getDisplayValues();
+  return { navn: info.navn, raekker: v.filter(function (r) { return String(r[0]).trim(); }).map(function (r) {
+    return { nr: String(r[0]).trim(), del: String(r[1]).trim(), skal: Number(r[2]) || 0, type: String(r[3]).trim() || 'Del' };
+  }) };
+}
+function lgUnderMappe_(dato, opret) {
+  var m = batchMappe_(dato, opret);
+  if (!m) return null;
+  var it = m.getFoldersByName('Sorteringslister');
+  if (it.hasNext()) return it.next();
+  return opret ? m.createFolder('Sorteringslister') : null;
+}
+function lgArk_(dato, opret) {
+  var mappe = lgUnderMappe_(dato, opret);
+  if (!mappe) return null;
+  var navn = dato + ' Sortering', it = mappe.getFilesByName(navn), ss;
+  if (it.hasNext()) ss = SpreadsheetApp.openById(it.next().getId());
+  else {
+    if (!opret) return null;
+    ss = SpreadsheetApp.create(navn);
+    DriveApp.getFileById(ss.getId()).moveTo(mappe);
+    var sh0 = ss.getSheets()[0];
+    sh0.setName('Dele');
+    sh0.getRange(1, 1, 1, LG_KOL).setValues([LG_OVERSKRIFT]).setFontWeight('bold');
+    sh0.setFrozenRows(1);
+    sh0.getRange('A:B').setNumberFormat('@');
+  }
+  return { ss: ss, sh: ss.getSheetByName('Dele') || ss.getSheets()[0], mappe: mappe };
+}
+function lgRaekke_(r, vis, val) {
+  return { r: r, sku: String(vis[0]).trim(), nr: String(vis[1]).trim(), del: String(vis[2]), skal: Number(val[3]) || 0,
+    fundet: val[4] === '' ? null : Number(val[4]), ok: val[5] === true, type: String(vis[6] || 'Del'), note: String(vis[7]) };
+}
+function lgLaes_(sh) {
+  var n = sh.getLastRow() - LG_START + 1;
+  if (n < 1) return [];
+  var rg = sh.getRange(LG_START, 1, n, LG_KOL), vis = rg.getDisplayValues(), val = rg.getValues(), res = [];
+  for (var i = 0; i < n; i++) { var x = lgRaekke_(LG_START + i, vis[i], val[i]); if (x.sku) res.push(x); }
+  return res;
+}
+function lgFotoNavn_(sku, nr, del) { return sku + '-' + retroRens_(nr) + '-' + retroRens_(del).slice(0, 30); }
+
+function lgHent_(dato) {
+  if (!dato) throw fejl_('Købsdato mangler.');
+  var b = hentBatch_(dato), a = lgArk_(dato, false), dele = a ? lgLaes_(a.sh) : [];
+  var t = a ? fotoTaelling_(a.mappe) : { antal: {} }, oversigt = lgListeOversigt_();
+  dele.forEach(function (d) { d.antalFotos = t.antal[lgFotoNavn_(d.sku, d.nr, d.del)] || 0; });
+  var saet = b.saet.map(function (s) {
+    var nr = String(s.setnr).replace(/-1$/, '');
+    return { sku: s.sku, setnr: s.setnr, navn: s.navn, sorteret: s.sorteret, komplet: s.komplet,
+      harListe: !!(oversigt[nr] || oversigt[nr + '-1']), startet: dele.some(function (d) { return d.sku === s.sku; }) };
+  });
+  return { dato: dato, saet: saet, dele: dele };
+}
+// d: {sku} – kopierer sættets rene liste ind i købets sorteringsark (kun første gang)
+function lgStart_(d) {
+  var f = findRaekke_(String(d.sku || '')), s = tilSaet_(f.r);
+  if (s.lagerstatus === 'Solgt') throw fejl_('Sættet er solgt.');
+  var liste = lgRenListe_(s.setnr);
+  if (!liste || !liste.raekker.length) throw fejl_('Ingen sorteringsliste for ' + s.setnr + ' ' + s.navn + '. Kopiér listen fra BrickLink (List) og sæt den ind i samtalen med Claude.');
+  var a = lgArk_(s.dato, true);
+  if (!lgLaes_(a.sh).some(function (x) { return x.sku === s.sku; })) {
+    var start = Math.max(a.sh.getLastRow() + 1, LG_START);
+    var rk = liste.raekker.map(function (x) { return [s.sku, x.nr, x.del, x.skal, '', false, x.type, '']; });
+    a.sh.getRange(start, 1, rk.length, 2).setNumberFormat('@');
+    a.sh.getRange(start, 1, rk.length, LG_KOL).setValues(rk);
+    a.sh.getRange(start, 6, rk.length, 1).insertCheckboxes();
+    SpreadsheetApp.flush();
+  }
+  return lgHent_(s.dato);
+}
+function lgFind_(sh, d) {
+  var sku = String(d.sku || ''), nr = String(d.nr || '').trim(), del = String(d.del || ''), r = Number(d.r);
+  function passer(x) { return x.sku === sku && x.nr === nr && x.del === del; }
+  if (r >= LG_START && r <= sh.getLastRow()) {
+    var rg = sh.getRange(r, 1, 1, LG_KOL), x = lgRaekke_(r, rg.getDisplayValues()[0], rg.getValues()[0]);
+    if (passer(x)) return x;
+  }
+  var fund = lgLaes_(sh).filter(passer);
+  if (fund.length !== 1) throw fejl_('Delen ' + nr + ' (' + del + ') i ' + sku + ' findes ikke i sorteringsarket.');
+  return fund[0];
+}
+// d: {dato, r, sku, nr, del, fundet?, ok?, note?}
+function lgGem_(d) {
+  var a = lgArk_(String(d.dato || ''), false);
+  if (!a) throw fejl_('Sorteringsarket for køb ' + d.dato + ' findes ikke.');
+  var x = lgFind_(a.sh, d);
+  if (d.fundet !== undefined) {
+    var f = d.fundet === null || d.fundet === '' ? '' : Number(d.fundet);
+    if (f !== '' && !(f >= 0 && Math.floor(f) === f)) throw fejl_('Fundet skal være et helt tal (0 eller mere).');
+    a.sh.getRange(x.r, 5).setValue(f);
+  }
+  if (d.ok !== undefined) a.sh.getRange(x.r, 6).setValue(d.ok === true);
+  if (d.note !== undefined) a.sh.getRange(x.r, 8).setNumberFormat('@').setValue(retroTekst_(d.note));
+  SpreadsheetApp.flush();
+  var rg = a.sh.getRange(x.r, 1, 1, LG_KOL), y = lgRaekke_(x.r, rg.getDisplayValues()[0], rg.getValues()[0]);
+  return y;
+}
+// Tekst til Noter: mangler (Skal − Fundet) + noter pr. del. Tomt Fundet = ikke talt (tæller ikke som mangel).
+function lgNoteTekst_(dele) {
+  var mangler = [], noter = [];
+  dele.forEach(function (x) {
+    var m = x.fundet === null ? 0 : x.skal - x.fundet;
+    if (m > 0) mangler.push(m + ' x ' + x.del + ' (' + x.nr + ')');
+    if (String(x.note).trim()) noter.push(x.del + ' (' + x.nr + '): ' + String(x.note).trim());
+  });
+  var t = [];
+  if (mangler.length) t.push('Missing: ' + mangler.join(', '));
+  if (noter.length) t.push(noter.join('; '));
+  return { tekst: t.join('\n'), mangler: mangler.length };
+}
+// d: {sku, vis} – vis=true: kun forhåndsvisning. Ellers: Sorteret ✓, Komplet ✓ hvis intet mangler, tekst tilføjes Noter.
+function lgFaerdig_(d) {
+  var f = findRaekke_(String(d.sku || '')), s = tilSaet_(f.r), a = lgArk_(s.dato, false);
+  if (!a) throw fejl_('Sættet er ikke startet i sorteringen.');
+  var dele = lgLaes_(a.sh).filter(function (x) { return x.sku === s.sku; });
+  if (!dele.length) throw fejl_('Sættet er ikke startet i sorteringen.');
+  var mangl = dele.filter(function (x) { return !x.ok; }).length;
+  if (mangl) throw fejl_('Ikke alle dele er krydset af (' + mangl + ' tilbage).');
+  var n = lgNoteTekst_(dele), komplet = n.mangler === 0;
+  if (d.vis === true) return { sku: s.sku, tekst: n.tekst, komplet: komplet, mangler: n.mangler };
+  var gl = String(f.r.v[K.NOTER - 1] || ''), ny = gl;
+  if (n.tekst && gl.indexOf(n.tekst) < 0) ny = gl ? gl + '\n' + n.tekst : n.tekst;
+  f.ark.getRange(f.r.raekke, K.SORTERET).setValue(true);
+  f.ark.getRange(f.r.raekke, K.KOMPLET).setValue(komplet);
+  f.ark.getRange(f.r.raekke, K.NOTER).setValue(ny);
+  SpreadsheetApp.flush();
+  var res = tilSaet_(findRaekke_(s.sku).r), mappe = batchMappe_(s.dato, false);
+  res.antalFotos = mappe ? (fotoTaelling_(mappe).antal[s.sku] || 0) : 0;
+  return res;
+}
+// d: {sku, nr, del, billede, uploadId}
+function lgUploadFoto_(d) {
+  if (!d.billede) throw fejl_('Intet billede.');
+  var f = findRaekke_(String(d.sku || '')), s = tilSaet_(f.r), a = lgArk_(s.dato, false);
+  if (!a) throw fejl_('Sættet er ikke startet i sorteringen.');
+  lgFind_(a.sh, d);
+  var r = gemFoto_(a.mappe, lgFotoNavn_(s.sku, String(d.nr || ''), String(d.del || '')), d.billede, d.uploadId);
+  r.sku = s.sku; r.nr = String(d.nr || ''); r.del = String(d.del || '');
   return r;
 }

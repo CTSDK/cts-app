@@ -49,9 +49,10 @@
   function gaa(navn) {
     if (kameraer[aktiv] && navn !== aktiv) kameraer[aktiv].stop();
     if (aktiv === 'pm' && navn !== 'pm') pmSendAlt();
+    if (aktiv === 'lgs' && navn !== 'lgs') lgSendAlt();
     document.querySelectorAll('.visning').forEach(function (v) { v.hidden = v.id !== 'v-' + navn; });
     aktiv = navn;
-    var fane = { forside: 'hjem', retro: 'hjem', rk1: 'hjem', rk2: 'hjem', pm: 'hjem', koeb2: 'koeb1', koeb3: k3 && k3.fra === 'lager' ? 'lager' : 'koeb1', indstillinger: 'mere', udbakke: 'mere' }[navn] || navn;
+    var fane = { forside: 'hjem', retro: 'hjem', rk1: 'hjem', rk2: 'hjem', pm: 'hjem', lgs: 'koeb1', koeb2: 'koeb1', koeb3: k3 && k3.fra === 'lager' ? 'lager' : 'koeb1', indstillinger: 'mere', udbakke: 'mere' }[navn] || navn;
     document.querySelectorAll('[data-fane]').forEach(function (b) { b.classList.toggle('til', b.getAttribute('data-fane') === fane); });
     window.scrollTo(0, 0);
     if (navn === 'hjem') tjekForbindelse();
@@ -300,7 +301,22 @@
     var alle = k3Saet();
     vaelgSaet(sku || (alle[0] && alle[0].sku));
     Data.opdaterFotos(k3.dato);
+    Data.lgHent(k3.dato).then(function () { if (aktiv === 'koeb3') k3SorterInfo(); });
   }
+  // Knappen "Sortér dele" på klargøringen: status for sættets sortering
+  function k3SorterInfo() {
+    var s = findSaet(k3.sku), el = $('k3-sorter-info'); if (!s) return;
+    var lk = Data.lgKoeb(k3.dato), ls = lk.saet.find(function (x) { return x.sku === s.sku; });
+    var dele = lk.dele.filter(function (d) { return d.sku === s.sku; });
+    el.textContent = s.sorteret ? 'Sorteret ✓' + (s.komplet ? ' · komplet' : '')
+      : dele.length ? dele.filter(function (d) { return d.ok; }).length + ' af ' + dele.length + ' dele krydset af'
+      : ls && !ls.harListe ? 'Ingen sorteringsliste for ' + s.setnr + ' endnu' : ls ? 'Ikke startet' : '';
+  }
+  $('k3-sorter').addEventListener('click', async function () {
+    if (!findSaet(k3.sku)) return;
+    if (erAendret()) await gem(false, true);
+    aabnLg(k3.dato, k3.sku);
+  });
   $('k3-tilbage').addEventListener('click', function () { gaa(k3.fra); });
 
   // Store køb (over 12 sæt): søgefelt i stedet for alle knapper, så det valgte sæt står øverst
@@ -343,6 +359,7 @@
     $('k3-komplet').checked = !!s.komplet;
     $('k3-sorteret').checked = !!s.sorteret;
     $('k3-noter').value = s.noter || '';
+    k3SorterInfo();
     $('k3-status').textContent = '';
     $('k3-retform').hidden = true;
     tegnFotos(); visKrav(); visKoebStatus(); visListing();
@@ -1227,10 +1244,172 @@
     toast('Sæt "' + navn + '" oprettes' + (Data.status().online ? ' …' : ' – sendes, når der er net'));
   });
 
+  // ================= Lego: sortering af dele (pr. køb) =================
+  // Samme regler som Playmobil (+ sætter ikke ✓, grøn kant ved fuldt antal, ✓ = færdig, markør tilbage i søgefeltet).
+  // Første gang et sæt åbnes, kopierer maskinrummet sættets rene liste ind i købets sorteringsark (kræver net).
+  var lgv = { dato: null, sku: null, filter: 'alle', pend: {}, timere: {}, redigerer: false, starter: false };
+  function lgNoegle(d) { return d.sku + '|' + d.nr + '|' + d.del; }
+  function lgDele() {
+    return Data.lgKoeb(lgv.dato).dele.filter(function (d) { return d.sku === lgv.sku; })
+      .map(function (d) { var p = lgv.pend[lgNoegle(d)]; return p ? Object.assign(d, p, { gemmer: true }) : d; });
+  }
+  function lgAendr(d, felter, ms) {
+    var k = lgNoegle(d);
+    lgv.pend[k] = Object.assign(lgv.pend[k] || {}, felter);
+    clearTimeout(lgv.timere[k]);
+    lgv.timere[k] = setTimeout(function () { lgSend(d); }, ms || 600);
+  }
+  function lgSend(d) {
+    var k = lgNoegle(d), f = lgv.pend[k];
+    clearTimeout(lgv.timere[k]); delete lgv.timere[k];
+    if (!f) return;
+    delete lgv.pend[k];
+    Data.tilfoej('lgGem', Object.assign({ dato: lgv.dato, r: d.r, sku: d.sku, nr: d.nr, del: d.del }, f), { sku: d.sku, nr: d.nr });
+  }
+  function lgSendAlt() { if (lgv.dato) Data.lgKoeb(lgv.dato).dele.forEach(function (d) { if (lgv.pend[lgNoegle(d)]) lgSend(d); }); }
+  document.addEventListener('visibilitychange', function () { if (document.hidden) lgSendAlt(); });
+  function lgBesked(t, fejl) { var b = $('lg-besked'); b.hidden = !t; b.textContent = t || ''; b.className = 'besked' + (fejl ? ' fejl' : ''); }
+
+  async function aabnLg(dato, sku) {
+    lgv.dato = String(dato); lgv.sku = sku; lgv.redigerer = false; $('lg-q').value = '';
+    gaa('lgs');
+    lgBesked('');
+    lgTegn();
+    await lgSikrStartet();
+    Data.lgHent(lgv.dato);
+  }
+  async function lgSikrStartet() {
+    if (lgDele().length || lgv.starter) return;
+    if (Data.status().online === false) { lgBesked('Første gang et sæt sorteres, skal der være net (listen hentes fra Drive).', true); return; }
+    lgv.starter = true; lgBesked('Henter sorteringslisten …');
+    try { await Data.lgStart(lgv.sku); lgBesked(''); }
+    catch (e) { lgBesked(e.message, true); }
+    finally { lgv.starter = false; lgTegn(); }
+  }
+  $('lg-tilbage').addEventListener('click', function () { lgSendAlt(); aabnKlargoering(lgv.dato, lgv.sku, k3.fra); });
+  function lgOpdater() { if (!lgv.redigerer) lgTegn(); else lgTegnStatus(); }
+  function lgFiltrer(dele) {
+    var q = pmNorm($('lg-q').value);
+    return dele.filter(function (d) {
+      if (lgv.filter === 'mangler' && d.ok) return false;
+      if (lgv.filter === 'afkrydset' && !d.ok) return false;
+      return !q || pmNorm(d.nr + d.del + d.note).indexOf(q) >= 0;
+    });
+  }
+  function lgTegnStatus() {
+    var dele = lgDele(), saet = findSaet(lgv.sku) || Data.lager().find(function (x) { return x.sku === lgv.sku; }) || {};
+    $('lg-info').textContent = 'Køb ' + lgv.dato + ' · ' + lgv.sku + (saet.navn ? ' ' + saet.navn : '') + (saet.sorteret ? ' · sorteret ✓' : '') + (Data.status().lgFejl ? ' · ' + Data.status().lgFejl : '');
+    var ok = dele.filter(function (d) { return d.ok; }).length, q = pmNorm($('lg-q').value);
+    $('lg-status').textContent = dele.length ? ok + ' af ' + dele.length + ' afkrydset' + (q ? ' · ' + lgFiltrer(dele).length + ' træf' : '') : '';
+    var venter = Object.keys(lgv.pend).length || Data.poster().some(function (p) { return p.type === 'lgGem' && p.data.sku === lgv.sku && p.status !== 'fejl'; });
+    $('lg-faerdig').hidden = !(dele.length && ok === dele.length);
+    $('lg-faerdig').disabled = !!venter;
+    $('lg-faerdig').textContent = venter ? 'Gemmer … (vent et øjeblik)' : 'Færdig – overfør til klargøring';
+  }
+  function lgTegnSaet() {
+    var lk = Data.lgKoeb(lgv.dato), c = $('lg-saet'); c.innerHTML = '';
+    var vis = lk.saet.filter(function (x) { return x.startet || x.sku === lgv.sku; });
+    if (!vis.some(function (x) { return x.sku === lgv.sku; })) { var s0 = findSaet(lgv.sku); if (s0) vis.push({ sku: s0.sku, setnr: s0.setnr, navn: s0.navn, sorteret: s0.sorteret }); }
+    vis.forEach(function (x) {
+      var b = document.createElement('button'); b.type = 'button';
+      b.innerHTML = '<b>' + esc(x.sku) + '</b><small>' + esc(x.navn || '') + '</small>';
+      b.className = (x.sku === lgv.sku ? 'til ' : '') + (x.sorteret ? 'faerdig' : '');
+      b.setAttribute('aria-pressed', x.sku === lgv.sku ? 'true' : 'false');
+      b.addEventListener('click', async function () {
+        if (x.sku === lgv.sku) return;
+        lgSendAlt(); lgv.sku = x.sku; $('lg-q').value = ''; lgBesked(''); lgTegn(); window.scrollTo(0, 0);
+        await lgSikrStartet();
+      });
+      c.appendChild(b);
+    });
+  }
+  function lgTegn() {
+    lgTegnSaet();
+    lgTegnStatus();
+    var alle = lgDele(), liste = lgFiltrer(alle), q = pmNorm($('lg-q').value), c = $('lg-liste');
+    c.innerHTML = '';
+    if (!liste.length) { c.innerHTML = alle.length ? '<p class="hjaelp">Ingen dele passer.</p>' : ''; return; }
+    liste.forEach(function (d) {
+      var el = document.createElement('div'), mangler = d.fundet === null || d.fundet === undefined ? null : d.skal - d.fundet;
+      el.className = 'pm-del' + (d.ok ? ' done' : '') + (q ? ' soeg' : '');
+      el.innerHTML = '<div class="info"><div class="nr"></div><div class="navn"></div><div class="meta"></div></div>' +
+        '<div class="pm-taeller"><button type="button" aria-label="En mindre">−</button><input type="number" inputmode="numeric" min="0" aria-label="Fundet"><button type="button" aria-label="En mere">+</button><span class="af"></span></div>' +
+        '<button type="button" class="pm-chk" aria-label="Færdig">✓</button>' +
+        '<div class="pm-noterad"><input class="note" type="text" placeholder="Note …" aria-label="Note">' +
+        '<label class="pm-foto" aria-label="Tag foto af delen">' + KAMERA_SVG + '<span class="pm-antal" hidden></span><input type="file" accept="image/*" capture="environment" hidden></label></div>';
+      el.querySelector('.nr').innerHTML = esc(d.nr) + (d.type === 'Minifigur' ? '<span class="type">Minifigur</span>' : '');
+      el.querySelector('.navn').textContent = d.del;
+      el.querySelector('.meta').innerHTML = 'skal være ' + d.skal + (mangler > 0 ? ' · <span class="miss">mangler ' + mangler + '</span>' : '') + (d.gemmer || d.ventende ? ' · gemmer …' : '');
+      var noteFelt = el.querySelector('.note'), tal = el.querySelector('.pm-taeller input'), knp = el.querySelectorAll('.pm-taeller button'), chk = el.querySelector('.pm-chk');
+      noteFelt.value = d.note || '';
+      noteFelt.addEventListener('focus', function () { lgv.redigerer = true; });
+      noteFelt.addEventListener('blur', function () { lgv.redigerer = false; lgSend(d); lgTegn(); });
+      noteFelt.addEventListener('input', function () { lgAendr(d, { note: noteFelt.value }, 900); });
+      tal.value = d.fundet === null || d.fundet === undefined ? '' : d.fundet;
+      el.querySelector('.af').textContent = '/ ' + d.skal;
+      chk.setAttribute('aria-pressed', d.ok ? 'true' : 'false');
+      if (!d.ok && d.fundet === d.skal) chk.classList.add('klar');
+      knp[0].addEventListener('click', function () { lgAendr(d, { fundet: Math.max(0, (d.fundet || 0) - 1) }); lgTegn(); });
+      knp[1].addEventListener('click', function () { lgAendr(d, { fundet: (d.fundet || 0) + 1 }); lgTegn(); });
+      tal.addEventListener('focus', function () { lgv.redigerer = true; });
+      tal.addEventListener('blur', function () { lgv.redigerer = false; lgTegn(); });
+      tal.addEventListener('input', function () { var t = tal.value.trim(); lgAendr(d, { fundet: t === '' ? null : Math.max(0, Math.floor(Number(t)) || 0) }); });
+      chk.addEventListener('click', function () {
+        var ok = !d.ok;
+        lgAendr(d, { ok: ok }, 200);
+        if (ok) { $('lg-q').value = ''; lgv.redigerer = false; lgTegn(); window.scrollTo(0, 0); $('lg-q').focus(); }
+        else lgTegn();
+      });
+      var fk = el.querySelector('.pm-foto'), fi = fk.querySelector('input'), fa = fk.querySelector('.pm-antal');
+      var df = Data.lgDelFotos(d), n = df.iDrive + df.venter;
+      if (n) { fa.hidden = false; fa.textContent = n; fk.classList.toggle('venter', df.venter > 0); }
+      fi.addEventListener('change', async function () {
+        var filer = Array.prototype.slice.call(this.files || []); this.value = '';
+        if (beskaerer) return;
+        beskaerer = true;
+        try {
+          for (var i = 0; i < filer.length; i++) {
+            try { await beskaerOgSend(await Foto.filTilRaa(filer[i]), d.sku + '|' + d.nr + '|' + d.del, 'lgUploadFoto', { sku: d.sku, nr: d.nr, del: d.del, dato: lgv.dato }); }
+            catch (e) { toast('Foto: ' + e.message); }
+          }
+        } finally { beskaerer = false; lgTegn(); }
+      });
+      c.appendChild(el);
+    });
+  }
+  $('lg-q').addEventListener('input', function () { lgTegn(); window.scrollTo(0, 0); });
+  $('lg-ryd').addEventListener('click', function () { $('lg-q').value = ''; lgTegn(); $('lg-q').focus(); });
+  document.querySelectorAll('[data-lgfilter]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      lgv.filter = b.getAttribute('data-lgfilter');
+      document.querySelectorAll('[data-lgfilter]').forEach(function (x) { x.classList.toggle('til', x === b); });
+      lgTegn();
+    });
+  });
+  // Færdig → vis hvad der skrives i Indkøb (Sorteret, Komplet, Noter) → Overfør (udbakke)
+  $('lg-faerdig').addEventListener('click', async function () {
+    lgSendAlt();
+    $('lgf-fejl').hidden = true; $('lgf-tekst').textContent = 'Henter …'; $('lgf-hvad').textContent = ''; $('lgf-ok').disabled = true; $('lgf').hidden = false;
+    try {
+      var v = await Api.kald('lgFaerdig', { sku: lgv.sku, vis: true }, 2);
+      $('lgf-hvad').textContent = lgv.sku + ': Sorteret ✓' + (v.komplet ? ' · Komplet ✓' : ' · ikke komplet (' + v.mangler + ' del(e) mangler)') + (v.tekst ? ' · tilføjes til Noter:' : ' · intet at tilføje til Noter.');
+      $('lgf-tekst').textContent = v.tekst || '';
+      $('lgf-tekst').hidden = !v.tekst;
+      $('lgf-ok').disabled = false;
+    } catch (e) { $('lgf-tekst').textContent = ''; $('lgf-fejl').textContent = e.message + (e.fraServer ? '' : ' (kræver net)'); $('lgf-fejl').hidden = false; }
+  });
+  $('lgf-annuller').addEventListener('click', function () { $('lgf').hidden = true; });
+  $('lgf-ok').addEventListener('click', async function () {
+    $('lgf').hidden = true;
+    await Data.tilfoej('lgFaerdig', { sku: lgv.sku }, { sku: lgv.sku });
+    toast('Overfører til klargøring …');
+  });
+
   // ================= Udbakke =================
   var TYPENAVN = { tilfoejDb: 'Nyt sæt i DB', opretBatch: 'Nyt køb', gemKlargoering: 'Klargøring', uploadFoto: 'Foto', registrerSalg: 'Salg', saetListet: 'Listet',
     retroOpretKoeb: 'Retro: nyt køb', retroGemTing: 'Retro: klargøring', retroUploadFoto: 'Retro: foto',
-    pmGem: 'Playmobil', pmNytSaet: 'Playmobil: nyt sæt', pmUploadFoto: 'Playmobil: foto' };
+    pmGem: 'Playmobil', pmNytSaet: 'Playmobil: nyt sæt', pmUploadFoto: 'Playmobil: foto',
+    lgGem: 'Lego-sortering', lgFaerdig: 'Lego: sorteret', lgUploadFoto: 'Lego: foto af del' };
   function tegnUdbakke() {
     var c = $('u-liste'); c.innerHTML = '';
     var p = Data.poster();
@@ -1241,6 +1420,7 @@
         : x.type === 'registrerSalg' ? x.data.koeber + ' · ' + x.data.varer.map(function (v) { return v.sku; }).join(', ')
         : x.type === 'tilfoejDb' ? x.data.setnr + ' ' + x.data.navn
         : x.type === 'pmGem' ? x.data.saet + ' · ' + (x.data.nr || 'note')
+        : x.type === 'lgGem' || x.type === 'lgUploadFoto' ? x.data.sku + ' · ' + x.data.nr
         : x.type === 'pmNytSaet' ? x.data.navn
         : x.type === 'pmUploadFoto' ? 'Sæt ' + x.data.saet
         : x.type === 'retroOpretKoeb' ? 'Køb ' + x.meta.dato + ' · ' + R.udvid(x.data.ting).length + ' ting · ' + B.kr(x.data.pris) + ' kr' + (x.data.tilfoej ? ' (tilføjet)' : '')
@@ -1269,9 +1449,12 @@
     if (aktiv === 'rk1') rk1Opdater();
     if (aktiv === 'rk2') opdaterRk2();
     if (aktiv === 'pm') pmOpdater();
+    if (aktiv === 'lgs') lgOpdater();
+    if (aktiv === 'koeb3') k3SorterInfo();
   });
   Data.paaHaendelse(function (type, info) {
     if (type === 'batchGemt') toast(info.afvig ? 'Batch ' + info.dato + ' gemt – men Sheets regnede anderledes for ' + info.afvig + ' sæt. Tjek arket.' : 'Batch ' + info.dato + ' gemt i Sheets ✓');
+    if (type === 'lgFaerdig') { toast('Overført ✓ ' + info.sku + ' er sorteret' + (info.komplet ? ' og komplet' : ' (ikke komplet – se Noter)')); if (aktiv === 'koeb3') vaelgSaet(k3.sku); }
     if (type === 'pmSaetOprettet') toast('Sæt "' + info.navn + '" oprettet i Playmobil-arket ✓');
     if (type === 'retroKoebGemt') toast('Retro-køb ' + info.dato + ' gemt i Sheets ✓');
     if (type === 'altSendt') toast('Alt er sendt til Sheets ✓');
@@ -1281,5 +1464,5 @@
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () { /* ignorer */ });
   Data.start();
   gaa('hjem');
-  window.CTS = { gaa: gaa }; // til test
+  window.CTS = { gaa: gaa, aabnKlargoering: function (d, s) { aabnKlargoering(d, s, 'forside'); } }; // til test
 })();

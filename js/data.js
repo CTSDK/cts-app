@@ -18,6 +18,8 @@
   var retro = nyRetro();
   // Playmobil (under Retro): lokal kopi af arket "Playmobil alle sæt"
   var pm = { dele: [], fotos: {}, navne: {}, hentet: 0 };
+  // Lego-sortering: købsdato → { saet, dele, hentet } (kopi af købets sorteringsark)
+  var lg = {};
 
   function fyr() { lyttere.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }
   function haendelse(type, info) { haendelser.forEach(function (fn) { try { fn(type, info); } catch (e) { console.error(e); } }); }
@@ -29,6 +31,7 @@
       listings = (await Lokal.hent('listings')) || { saet: {}, doc: {} };
       retro = (await Lokal.hent('retro')) || nyRetro();
       pm = (await Lokal.hent('pm')) || pm;
+      lg = (await Lokal.hent('lg')) || {};
       udbakke = (await Lokal.udbakke.alle()) || [];
       udbakke.forEach(function (p) { if (p.status === 'sender') p.status = 'venter'; });
     } catch (e) { status.fejl = 'Lokal lagring virker ikke: ' + e.message; }
@@ -217,6 +220,21 @@
       if (rt) { rt.antalFotos = svar.antalFotos; rt.fotos = true; }
       (sendteFotos[p.data.sku] = sendteFotos[p.data.sku] || []).push({ thumb: p.meta.thumb, navn: svar.navn });
       await Lokal.saet('retro', retro);
+    } else if (p.type === 'lgGem') {
+      var lk = lg[String(p.data.dato)];
+      if (lk) { var li = lk.dele.findIndex(function (x) { return lgNoegle(x) === lgNoegle(svar); }); if (li >= 0) { svar.antalFotos = lk.dele[li].antalFotos; lk.dele[li] = svar; } }
+      await Lokal.saet('lg', lg);
+    } else if (p.type === 'lgUploadFoto') {
+      var lf = lg[String(p.data.dato)];
+      if (lf) { var ld = lf.dele.find(function (x) { return lgNoegle(x) === lgNoegle(p.data); }); if (ld) ld.antalFotos = svar.antalFotos; }
+      (sendteFotos[p.data.sku + '|' + p.data.nr + '|' + p.data.del] = sendteFotos[p.data.sku + '|' + p.data.nr + '|' + p.data.del] || []).push({ thumb: p.meta.thumb, navn: svar.navn });
+      await Lokal.saet('lg', lg);
+    } else if (p.type === 'lgFaerdig') {
+      erstat(svar);
+      var ls = lg[String(svar.dato)];
+      if (ls) ls.saet.forEach(function (x) { if (x.sku === svar.sku) { x.sorteret = svar.sorteret; x.komplet = svar.komplet; } });
+      await Promise.all([Lokal.saet('lager', kopi.lager), Lokal.saet('lg', lg)]);
+      haendelse('lgFaerdig', { sku: svar.sku, komplet: svar.komplet });
     } else if (p.type === 'pmGem') {
       pmErstat(svar);
       await Lokal.saet('pm', pm);
@@ -438,6 +456,36 @@
     } catch (e) { if (e.fraServer) status.pmFejl = e.message; fyr(); return false; }
   }
 
+  // ---------------- Lego-sortering ----------------
+  function lgNoegle(d) { return d.sku + '|' + d.nr + '|' + d.del; }
+  function lgGemKopi(d) { lg[String(d.dato)] = { saet: d.saet || [], dele: d.dele || [], hentet: Date.now() }; status.lgFejl = ''; return Lokal.saet('lg', lg); }
+  // Ny kopi af købets sorteringsark (kun med net)
+  async function lgHent(dato) {
+    try { var d = await Api.kald('lgHent', { dato: String(dato) }, 2); await lgGemKopi(d); fyr(); return true; }
+    catch (e) { if (e.fraServer) { status.lgFejl = e.message; fyr(); } return false; }
+  }
+  // Start sortering af et sæt (kopierer den rene liste ind) – kræver net
+  async function lgStart(sku) {
+    var d = await Api.kald('lgStart', { sku: sku }, 2);
+    await lgGemKopi(d); fyr(); return d;
+  }
+  function lgKoeb(dato) {
+    var k = lg[String(dato)] || { saet: [], dele: [], hentet: 0 };
+    var dele = k.dele.map(function (d) { return Object.assign({}, d, { ventende: false }); });
+    var idx = {}; dele.forEach(function (d) { idx[lgNoegle(d)] = d; });
+    udbakke.forEach(function (p) {
+      if (p.type !== 'lgGem' || p.status === 'fejl' || String(p.data.dato) !== String(dato)) return;
+      var d = idx[lgNoegle(p.data)]; if (!d) return;
+      ['fundet', 'ok', 'note'].forEach(function (x) { if (p.data[x] !== undefined) d[x] = p.data[x]; });
+      d.ventende = true;
+    });
+    return { saet: k.saet, dele: dele, hentet: k.hentet };
+  }
+  function lgDelFotos(d) {
+    var k = lgNoegle(d), v = udbakke.filter(function (p) { return p.type === 'lgUploadFoto' && lgNoegle(p.data) === k && p.status !== 'fejl'; }).length;
+    return { iDrive: d.antalFotos || 0, venter: v };
+  }
+
   window.addEventListener('online', function () { status.online = true; fyr(); koer(); });
   window.addEventListener('offline', function () { status.online = false; fyr(); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) koer(); });
@@ -451,7 +499,8 @@
     listing: function (sku) { return listings.saet[sku] || null; }, listingDoc: function (dato) { return listings.doc[String(dato)] || ''; },
     retroKoeb: retroKoeb, retroKoebFindes: retroKoebFindes, retroMaerker: retroMaerker, retroKode: retroKode,
     retroHentMaerker: retroHentMaerker, retroOpdaterKoeb: retroOpdaterKoeb,
-    pmDele: pmDele, pmFotos: pmFotos, pmDelFotos: pmDelFotos, pmHent: pmHent, pmNavn: function (s) { return (pm.navne || {})[s] || ''; }, pmHentet: function () { return pm.hentet; },
+    pmDele: pmDele, pmFotos: pmFotos, pmDelFotos: pmDelFotos,
+    lgHent: lgHent, lgStart: lgStart, lgKoeb: lgKoeb, lgDelFotos: lgDelFotos, pmHent: pmHent, pmNavn: function (s) { return (pm.navne || {})[s] || ''; }, pmHentet: function () { return pm.hentet; },
     hentetTid: function () { return kopi.hentet; }, kurs: function (aar) { return Number(kopi.kurs[String(aar)]) || 7.46; }, sendteFotos: function (sku) { return sendteFotos[sku] || []; }
   };
 })(this);
