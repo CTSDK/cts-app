@@ -52,8 +52,8 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
 (kolonne I) + Thomas' input: "sæt X, Y, Z … med disse mangler – stort set alle næsten komplette". Kun noget vi har nu; evt. små mængder senere her.
 - **Drive:** `CTS/Retro/Playmobil` (id `1GMWYxrs8T8cvRCSUxSWs5MaaExXHgxXQ`, flyttet fra CTS/Playmobil 15-11). Manual-PDF'er ligger hos Thomas.
 - **Regneark "Playmobil alle sæt"** (eneste kilde): `1pEB0STX0_rDlWOzGswuZyo2ot3zCztb99Ezueoi1NEc`, fane **Dele** (sheetId 449130092).
-  Række 1 søgefelt B1 (leder i A+B+G), række 2–12 træf, række 13 overskrift. **Række 14–393 = 380 rækker:** 3315 (14–25), 3319 (26–56),
-  5135 (57–141), 5139 (142–218), 5142 (219–393); inden for sæt i samme orden som de gamle ark.
+  Række 1 søgefelt B1 (leder i A+B+G), række 2–12 træf, række 13 overskrift. **Række 14–539 = 526 rækker:** 3315 (14–25), 3319 (26–56),
+  5135 (57–141), 5139 (142–218), 5142 (219–393), 4343 (394–493), 4439 (494–539); inden for sæt i samme orden som de gamle ark.
   Kolonner: A Varenr. · B Del · C Skal være · **D Fundet** · E Mangler (formel) · **F ✓** · **G Sæt · side** (fx "5142 · s.22") · H tom · **I Note**.
   Dansk ark (`;` i formler). "Fundet" tomt = ikke talt.
 - 15-11: samlet fra de 4 gamle ark (5142, 5135, 5139, små sæt). Tjek i arket: 0 forskelle i A–D, F, G, I for alle rækker. Søgning testet ("5139" = 77 træf).
@@ -82,10 +82,18 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   - **5142 ✓ 15-11:** 170 numre = PlaymoDB. Extra-numre: 30 21 1123=30 22 9122, 30 21 2203=30 29 5500, 30 25 5053=30 20 2392, 30 25 6602=30 22 8762.
     30 65 2223 "Tanzplatte-Schloss II" = sandsynligvis PlaymoDB's 30 22 8982 + tandhjul 30 46 6630/6640/6650/6660 (Claudes vurdering, står i navnet).
     PlaymoDB-stavefejl rettet: "Indow"→"Window", "swam"→"swan". PlaymoDB-sætnavn: "Princess Fantasy Castle".
-  - **Alle 5 sæt har nu PlaymoDB-navne.** Manualer er ikke tilføjet som rækker.
-- Sætnavne (søgeresuméer 14-11): 5142 Prinsesseslot, 5135 Piratskib ("Pirate Prize Ship", 2011–2015), 5139 Soldaterfort ("Soldiers Fort with Dungeon", 2011–2014),
+  - **4343 Dyreklinik** (PlaymoDB "Animal Clinic", 2007) tilføjet 15-11: række 394–493, 100 numre (141 stk.). Manualen har ingen stykliste –
+    numre fra byggetrin (læst af hjælpe-agent). 30 65 8822 (manual) = PlaymoDB 30 66 7350. Antal-valg (Thomas' ja): 30 51 5430, 30 61 8660,
+    30 51 0250 = 1 sæt; 30 09 6900 røde plugs = 1 ("en pose", antal ukendt); 30 28 6200 = 1; 30 28 6220 = 2.
+  - **4439 Barbartårn** (PlaymoDB "Barbarian Assault Tower", 2005) tilføjet 15-11: række 494–539, 46 numre (63 stk.), alle = PlaymoDB.
+    30 51 2920 sider = 1 sæt; 30 62 6752 = 1; 30 21 0700 grå clips = 1 (måske flere). Flammer 30 07 6930 = 3.
+  - **Alle 7 sæt har PlaymoDB-navne (engelsk).** Manualer er ikke tilføjet som rækker. **Delenavnene skal oversættes til salgsteksten senere** (Thomas 15-11).
+- Sætnavne (søgeresuméer 14-11; 4343/4439 fra PlaymoDB 15-11): 4343 Dyreklinik, 4439 Barbartårn, 5142 Prinsesseslot, 5135 Piratskib ("Pirate Prize Ship", 2011–2015), 5139 Soldaterfort ("Soldiers Fort with Dungeon", 2011–2014),
   3315 Sort ridder, 3319 Dragebaronens tropper (svag kilde).
 - Åbent (ikke hastende): lignende skib til 5135 (3940?) – Thomas sender evt. 3940-manualen. Skrog: 30 23 2852 = 30 22 8412 (PlaymoDB).
+- **Nyt sæt tilføjes:** Thomas sender manual-PDF + kopierer PlaymoDB-siden ind → hjælpe-agent (sonnet) læser manualens numre/antal →
+  Claude sammenligner, viser forslag (navne, usikre antal) → efter ja: indsæt rækker *før* sidste række (flyt den sidste tilbage bagefter),
+  kopiér format/E-formel/✓-validering fra række 14, skriv A (med apostrof = tekst), B, C, F=FALSK, G "sæt · s.N". Tjek grænser + søgeformlens område.
 - Sådan: Thomas sorterer på siden, eller skriver fx "fundet 30 22 9002: 1" / "afkryds 30 25 6590" (sig sættet, hvis nummeret findes i flere sæt).
   Claude læser rækken først, skriver D/F og bekræfter i én linje.
 
