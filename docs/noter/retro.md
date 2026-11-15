@@ -68,7 +68,10 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   Senere: samme side inde i appen under Retro (kommer med Lego-maskinrumsopdateringen).
 - Status 15-11: **211 af 380 afkrydset** – 3315: 8/12 · 3319: 13/31 · 5135: 63/85 · 5139: 41/77 · 5142: 86/175.
 - Regler for antal (fra manualerne): et sæt/en pose = 1; dele på to sider tælles én gang; tegnet flere gange uden "2x" tælles som tegningen.
-  Delenes navne er Claudes egne ud fra tegningerne – rettes når Thomas giver bedre navne.
+  Delenes navne er Claudes egne ud fra tegningerne – **erstattes med PlaymoDB-navne** (Thomas kopierer sættets PlaymoDB-side ind i samtalen;
+  Claude holder den op mod arket/manualen, viser forslag, skriver efter ja). Format: "navn (farve)" som PlaymoDB. PlayMoDB kan ikke åbnes fra sessionen.
+  - **3315 ✓ 15-11:** 12 navne fra PlaymoDB. 30 20 1002 (2x i manualen) = "Arm greave, wing shape at shoulder" (PlaymoDB: extra part; samme del også som 30 09 1660).
+    Manualen 30 89 7202 er ikke tilføjet som række (ikke besluttet). Næste: 3319, 5135, 5139, 5142.
 - Sætnavne (søgeresuméer 14-11): 5142 Prinsesseslot, 5135 Piratskib ("Pirate Prize Ship", 2011–2015), 5139 Soldaterfort ("Soldiers Fort with Dungeon", 2011–2014),
   3315 Sort ridder, 3319 Dragebaronens tropper (svag kilde).
 - Åbent (ikke hastende): lignende skib til 5135 (3940?) – Thomas sender evt. 3940-manualen. Skrog-nr. uafklaret (eBay 30 22 8412 / manual 30 23 2852).
