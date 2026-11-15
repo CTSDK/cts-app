@@ -74,10 +74,13 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
     Manualen 30 89 7202 er ikke tilføjet som række (ikke besluttet).
   - **3319 ✓ 15-11:** alle 31 numre = PlaymoDB (32 inkl. manual 30 89 6862). PlaymoDB-navn på sættet: "Dragon Baron".
     Tilføjelser efter PlaymoDB-navnet (Thomas' ja): " – m. drage" på flag, hestedække og de 3 skjolde.
-  - Næste: 5135, 5139, 5142.
+  - **5135 ✓ 15-11:** 81 numre = PlaymoDB. 4 manual-numre står hos PlaymoDB som "extra" (samme del, andet nr.):
+    30 23 2842=30 22 8422, 30 23 2852=30 22 8412 (skroget), 30 25 3892=30 05 2120, 30 80 3203=30 89 4650 – står i navnet.
+    " – m. kranie" på 2 flag, " – m. kranie og sabler" på storsejlet (fra manualens tegning). PlaymoDB-sætnavn: "Pirates Ship".
+  - Næste: 5139, 5142.
 - Sætnavne (søgeresuméer 14-11): 5142 Prinsesseslot, 5135 Piratskib ("Pirate Prize Ship", 2011–2015), 5139 Soldaterfort ("Soldiers Fort with Dungeon", 2011–2014),
   3315 Sort ridder, 3319 Dragebaronens tropper (svag kilde).
-- Åbent (ikke hastende): lignende skib til 5135 (3940?) – Thomas sender evt. 3940-manualen. Skrog-nr. uafklaret (eBay 30 22 8412 / manual 30 23 2852).
+- Åbent (ikke hastende): lignende skib til 5135 (3940?) – Thomas sender evt. 3940-manualen. Skrog: 30 23 2852 = 30 22 8412 (PlaymoDB).
 - Sådan: Thomas sorterer på siden, eller skriver fx "fundet 30 22 9002: 1" / "afkryds 30 25 6590" (sig sættet, hvis nummeret findes i flere sæt).
   Claude læser rækken først, skriver D/F og bekræfter i én linje.
 
