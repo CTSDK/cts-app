@@ -63,20 +63,24 @@ Kun fakta, ingen AI. Noter oversættes med Google Oversæt; "Sort: …" og [teks
   "manual" → "building instructions". Thomas' eksempel er test i `tests/listing.test.js`.
 - Vejledning/Komplet er false for alle importerede sæt – Thomas krydser af ved gennemgang.
 
-## Sortering af dele (besluttet 15-11-2026, ikke bygget endnu)
-Samme måde som Playmobil (antal, −/+, ✓, note pr. del), men **inde i CTS-appen**. Bygges efter Playmobil.
-- **Ren liste pr. sæt (fast, for altid):** `CTS/Lego/Sorteringslister/<setnr> <navn>/` (fx "6080 Kings Castle"), aldrig udfyldt.
-  Drive: `CTS/Lego` id `1h7F5fm2OiiomWoMF4laPlxByHyVcSwlY`, `Sorteringslister` id `1PsC1QepXfrHJKbfdNQJYR9RGjY77y4IR`,
-  `Indbakke` id `1p8qHGBSXto0_I2DZR8qXUh2ek35tiqBt` (oprettet 15-11, tomme).
-- **Kilde:** Thomas henter selv listen fra Rebrickable eller BrickLink og lægger filen i `Indbakke` → Claude gør den klar (ren liste i sættets mappe).
-  Navn tages fra filen, ikke fra hukommelsen. Filformat ikke set endnu.
-- Reservedele og minifigurer kommer med; Thomas lader dem stå tomme, når de ikke betyder noget.
-- **Optælling pr. SKU:** ny kopi af den rene liste, når et sæt sorteres; gemmes også i Google Sheets (ikke kun på telefonen).
-- **Når alt er afkrydset:** appen sætter Komplet; mangler (og noter) lægges i Noter → kommer med i listing.
-- **Idé til senere (ikke besluttet):** SKU-optællingen ligger i købsmappen (ved fotos og salgstekst) i en undermappe "Sorteringslister" og slettes,
-  når sættet er solgt. Systemet for automatisk sletning skal findes.
-- Første test: 6080 Kings Castle fra telefonen.
-- Åbne spørgsmål, før der bygges: hvordan filen fra Rebrickable/BrickLink ser ud (kolonner, farver, reservedele), og hvor i appen siden ligger (Lager → sæt → Sortér?).
+## Sortering af dele (besluttet 15-11-2026; test bygget, app ikke bygget)
+Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde i CTS-appen**.
+- **Ren liste pr. sæt (fast, for altid, aldrig udfyldt):** ét regneark pr. sæt i `CTS/Lego/Sorteringslister` (id `1PsC1QepXfrHJKbfdNQJYR9RGjY77y4IR`),
+  navn "<setnr> <navn>" (sorteres efter nummer). Fane **Liste**: A Item No (tekst) · B Beskrivelse (BrickLinks navn inkl. farve, uændret engelsk) · C Antal · D Type (Del/Minifigur).
+  Med: Regular Items (dele + minifigurer som hele figurer). **Ikke med:** Counterparts og Alternate Items.
+  - **6080 Kings Castle** `1qOf7Ual_TOh5WetzWOK3UAsBGM6EfldnzHqY08p61LU`: 99 dele (627 stk.) + 6 minifigurer (12). Tjekket mod BrickLinks Summary og mod Thomas' kopierede tekst (105/105 ens).
+- **Fast måde at hente en liste (testet 15-11 på computer):** BrickLink → sættets Inventory → klik **List** → Ctrl+A, Ctrl+C → indsæt i samtalen.
+  Claude laver den rene liste. Ikke "Udskriv til PDF" (bliver billeder). Rebrickable/BrickLink kan ikke åbnes fra sessionen.
+- **Talformat:** item-numre skrives med apostrof (tekst), ellers kan Sheets lave dem om (sket med Playmobil: "30 03 0600" blev en dato).
+- **Ved et køb (plan):** ét sorteringsark pr. køb (navn = købsdato) i købsmappen `CTS/Lager/<købsdato>/Sorteringslister/`, alle sæt i købet samlet,
+  hver linje med SKU (kolonne G "SKU · type"), opbygget som "Playmobil alle sæt". Siden viser SKU'erne øverst som valg. Salgstekst pr. SKU ud fra noterne + fotos.
+  Når alt er afkrydset: Komplet sættes; mangler/noter → Noter → listing. Sletning ved salg: system findes senere.
+- **Test (15-11):** `CTS/Lego/Sorteringslister/Test sortering` (`187NNroSbDSO3h_Bar5j3bEoGBEthKG1HzWGZiLuE__o`, fane Dele, række 14–118, SKU TEST-6080)
+  + testside https://claude.ai/artifact/2fqHt1ppFSatTcd8XpMwKy (rød). Testet i browser med falske data; **ikke testet mod arket af Thomas endnu.**
+  Når testen er færdig, slettes testarket og testsiden.
+- **App-plan (ikke bygget):** (1) "Ny sorteringsliste": Thomas kopierer fra BrickLink på iPad/iPhone og indsætter i appen → appen laver den rene liste selv
+  (formatet fra telefonen er ikke set endnu – Thomas prøver fx 6085/6086 fra telefonen og indsætter i samtalen først);
+  (2) sorteringsark pr. køb oprettes ud fra købets sæt; (3) sorteringssiden i appen. Kræver ny maskinrumskode + app-version.
 
 ## Kendte forhold / næste i Lego
 - Tom række 12 i Salg 2026 (var række 5; sandsynligvis fra importen) – ikke rørt; spørg før sletning.

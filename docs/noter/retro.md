@@ -57,6 +57,7 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   Kolonner: A Varenr. · B Del · C Skal være · **D Fundet** · E Mangler (formel) · **F ✓** · **G Sæt · side** (fx "5142 · s.22") · H tom · **I Note**.
   Dansk ark (`;` i formler). "Fundet" tomt = ikke talt.
 - 15-11: samlet fra de 4 gamle ark (5142, 5135, 5139, små sæt). Tjek i arket: 0 forskelle i A–D, F, G, I for alle rækker. Søgning testet ("5139" = 77 træf).
+  36 varenumre ("30 0M ÅÅÅÅ") var gemt som datoer i de gamle ark – rettet til tekst 15-11.
   De gamle ark ligger i Drive-papirkurven (kan gendannes i 30 dage); de gamle sorteringssider er slettet.
 - **Sorteringsside:** https://claude.ai/artifact/K3mYEi5WeYVy57NDCw1n3j (lilla, "Playmobil alle sæt"). Valg af sæt øverst, søg (varenr./del/note),
   −/+/talfelt/✓/note, filtre Alle/Mangler/Afkrydset. Gemmer D/F/I pr. række. Peger på det nye ark fra 15-11 – **ikke testet mod det nye ark endnu.**

@@ -52,7 +52,7 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 
 ## Næste (pr. 14-11-2026)
 0. **Lego-sortering (ny, besluttet 15-11):** afkrydsningslister som Playmobil, inde i appen. Mapper oprettet; resten ikke bygget. Se lego.md → Sortering.
-   Thomas lægger først en liste (fx 6080 Kings Castle) i `CTS/Lego/Sorteringslister/Indbakke` → Claude laver den rene liste → app + maskinrum bygges → test fra telefonen.
+   Ren liste 6080 Kings Castle lavet. Thomas tester testsiden (TEST-6080) → prøver at kopiere et sæt fra BrickLink på telefonen → app + maskinrum bygges.
 0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" + lilla sorteringsside (15-11, tjekket 0 forskelle). Thomas tester siden → sorterer videre → samlet salgstekst. Se retro.md.
 1. **Retro:** Thomas tester et rigtigt køb i appen (Retro → Registrér nyt køb → Klargør med fotos) → Claude tjekker arket "CTS Retro" og fotomappen.
    Derefter Retro trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Se retro.md.
