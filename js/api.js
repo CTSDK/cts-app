@@ -282,7 +282,7 @@
         var s = laes(), p = pmL(s), fotos = {};
         skriv(s);
         p.dele.forEach(function (d) { fotos[d.saet] = (p.fotos[d.saet] || []).length; });
-        return { dele: p.dele, fotos: fotos };
+        return { dele: p.dele, fotos: fotos, navne: { '3315': 'Sort ridder', '5135': 'Piratskib', '5142': 'Prinsesseslot' } };
       },
       pmGem: function (d) {
         var s = laes(), p = pmL(s), nr = String(d.nr || '').trim(), saet = String(d.saet || '').trim();

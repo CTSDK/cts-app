@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '2.3.0';
+var VERSION = '2.3.1';
 
 // ---------- Faner ----------
 var FANE = {
@@ -2853,6 +2853,13 @@ function pmArk_() {
   if (!sh) throw fejl_('Fanen "' + PM_FANE + '" findes ikke i Playmobil-arket.');
   return { ss: ss, sh: sh };
 }
+// Fanen "Sæt" (2.3.1): A sætnummer, B navn – vises under nummeret i appen. Mangler fanen, er der bare ingen navne.
+function pmNavne_(ss) {
+  var sh = ss.getSheetByName('Sæt'), res = {};
+  if (!sh || sh.getLastRow() < 2) return res;
+  sh.getRange(2, 1, sh.getLastRow() - 1, 2).getDisplayValues().forEach(function (r) { var k = String(r[0]).trim(); if (k && r[1]) res[k] = String(r[1]).trim(); });
+  return res;
+}
 function pmSaetNavn_(g) { g = String(g || ''); var k = g.indexOf('·'); return { saet: (k >= 0 ? g.slice(0, k) : g).trim(), side: k >= 0 ? g.slice(k + 1).trim() : '' }; }
 function pmFotoNavn_(saet) { return 'PM-' + (retroRens_(saet) || 'SAET'); }
 function pmFotoMappe_(ss, opret) {
@@ -2877,7 +2884,7 @@ function pmLaes_(sh) {
 function pmHent_() {
   var a = pmArk_(), dele = pmLaes_(a.sh), m = pmFotoMappe_(a.ss, false), t = m ? fotoTaelling_(m) : { antal: {} }, fotos = {};
   dele.forEach(function (d) { fotos[d.saet] = t.antal[pmFotoNavn_(d.saet)] || 0; });
-  return { dele: dele, fotos: fotos };
+  return { dele: dele, fotos: fotos, navne: pmNavne_(a.ss) };
 }
 // Find rækken: først det rækkenummer appen kender, ellers søg på varenr. + sæt (rækker kan flytte sig, når et sæt tilføjes)
 function pmFind_(sh, d) {

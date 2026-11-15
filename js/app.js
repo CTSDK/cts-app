@@ -1102,7 +1102,7 @@
     $('pm-status').textContent = iSaet.filter(function (d) { return d.ok; }).length + ' af ' + iSaet.length + ' afkrydset' + (q ? ' · ' + pmFiltrer(dele).length + ' træf' : '');
     if (pm.saet !== 'alle') {
       var f = Data.pmFotos(pm.saet);
-      $('pm-fototitel').textContent = 'Fotos af sæt ' + pm.saet + ' · ' + f.iDrive + ' i Drive' + (f.venter ? ', ' + f.venter + ' venter' : '');
+      $('pm-fototitel').textContent = 'Fotos af sæt ' + pm.saet + (Data.pmNavn(pm.saet) ? ' ' + Data.pmNavn(pm.saet) : '') + ' · ' + f.iDrive + ' i Drive' + (f.venter ? ', ' + f.venter + ' venter' : '');
       tegnFotoListe($('pm-fotos'), pmFotoSku(pm.saet), 'pmUploadFoto');
     }
   }
@@ -1121,7 +1121,8 @@
     var c = $('pm-saet'); c.innerHTML = '';
     ['alle'].concat(saet).forEach(function (s) {
       var b = document.createElement('button'); b.type = 'button';
-      b.textContent = s === 'alle' ? 'Alle sæt' : s;
+      var navn = s === 'alle' ? '' : Data.pmNavn(s);
+      b.innerHTML = '<b>' + esc(s === 'alle' ? 'Alle sæt' : s) + '</b>' + (navn ? '<small>' + esc(navn) + '</small>' : '');
       b.className = s === pm.saet ? 'til' : '';
       b.setAttribute('aria-pressed', s === pm.saet ? 'true' : 'false');
       b.addEventListener('click', function () {

@@ -27,7 +27,8 @@ fs.mkdirSync(UD, { recursive: true });
   await page.click('#v-retro [data-gaa="pm"]');
   await page.waitForSelector('#v-pm:not([hidden])');
   await page.waitForSelector('#pm-liste .pm-del');
-  assert.deepStrictEqual(await page.$$eval('#pm-saet button', b => b.map(x => x.textContent)), ['Alle sæt', '3315', '5135', '5142']);
+  assert.deepStrictEqual(await page.$$eval('#pm-saet button b', b => b.map(x => x.textContent)), ['Alle sæt', '3315', '5135', '5142']);
+  assert.deepStrictEqual(await page.$$eval('#pm-saet button small', b => b.map(x => x.textContent)), ['Sort ridder', 'Piratskib', 'Prinsesseslot']);
 
   // Alle sæt = kun visning
   assert.ok(await page.isVisible('#pm-ro'));
@@ -99,7 +100,7 @@ fs.mkdirSync(UD, { recursive: true });
   assert.ok(div && div.nr === '' && div.skal === null, 'Div oprettet som note-linje');
   assert.strictEqual(pm.dele[pm.dele.length - 1].saet, '5142', 'sidste række er stadig 5142');
   assert.ok((await page.getAttribute('#pm-saet button.til', 'aria-pressed')) === 'true');
-  assert.strictEqual(await page.textContent('#pm-saet button.til'), 'Div');
+  assert.strictEqual(await page.textContent('#pm-saet button.til'), 'Div', 'Div uden navn under');
   assert.strictEqual(await page.locator('#pm-liste .pm-del .pm-chk').count(), 0, 'ingen ✓ på Div');
   await page.locator('#pm-liste .pm-del .note').fill('3 hjelme, 1 hest, diverse våben');
   await page.locator('#pm-liste .pm-del .note').blur();

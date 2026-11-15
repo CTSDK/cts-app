@@ -17,7 +17,7 @@
   function nyRetro() { return { ting: [], log: {}, maerker: [] }; }
   var retro = nyRetro();
   // Playmobil (under Retro): lokal kopi af arket "Playmobil alle sæt"
-  var pm = { dele: [], fotos: {}, hentet: 0 };
+  var pm = { dele: [], fotos: {}, navne: {}, hentet: 0 };
 
   function fyr() { lyttere.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }
   function haendelse(type, info) { haendelser.forEach(function (fn) { try { fn(type, info); } catch (e) { console.error(e); } }); }
@@ -426,7 +426,7 @@
   async function pmHent() {
     try {
       var d = await Api.kald('pmHent', {}, 2);
-      pm = { dele: d.dele || [], fotos: d.fotos || {}, hentet: Date.now() };
+      pm = { dele: d.dele || [], fotos: d.fotos || {}, navne: d.navne || {}, hentet: Date.now() };
       status.pmFejl = '';
       await Lokal.saet('pm', pm); fyr(); return true;
     } catch (e) { if (e.fraServer) status.pmFejl = e.message; fyr(); return false; }
@@ -445,7 +445,7 @@
     listing: function (sku) { return listings.saet[sku] || null; }, listingDoc: function (dato) { return listings.doc[String(dato)] || ''; },
     retroKoeb: retroKoeb, retroKoebFindes: retroKoebFindes, retroMaerker: retroMaerker, retroKode: retroKode,
     retroHentMaerker: retroHentMaerker, retroOpdaterKoeb: retroOpdaterKoeb,
-    pmDele: pmDele, pmFotos: pmFotos, pmHent: pmHent, pmHentet: function () { return pm.hentet; },
+    pmDele: pmDele, pmFotos: pmFotos, pmHent: pmHent, pmNavn: function (s) { return (pm.navne || {})[s] || ''; }, pmHentet: function () { return pm.hentet; },
     hentetTid: function () { return kopi.hentet; }, kurs: function (aar) { return Number(kopi.kurs[String(aar)]) || 7.46; }, sendteFotos: function (sku) { return sendteFotos[sku] || []; }
   };
 })(this);

@@ -272,3 +272,8 @@ body.laast { overflow: hidden; }
 .pm-del .info { grid-column: 1; }
 .pm-del .pm-taeller { grid-column: 1; }
 .pm-del .pm-chk { grid-column: 2; grid-row: 1 / span 2; }
+#pm-saet { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
+#pm-saet button { min-height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; line-height: 1.15; }
+#pm-saet button b { font: 600 13px var(--mono); }
+#pm-saet button small { font: 500 12px -apple-system, system-ui, sans-serif; color: var(--daempet); text-align: center; overflow-wrap: anywhere; }
+#pm-saet button.til small { color: var(--navy-lys); }
