@@ -47,6 +47,30 @@ Status pr. 08-11-2026: **trin 1 bygget og installeret hos Thomas (app v19 + mask
 - Begrænsning: appen kender kun køb lavet/hentet på telefonen; findes købsdatoen i arket fra anden enhed → fejl i udbakken.
 - Tests: `node tests/retro.test.js`, `node tests/retro-e2e.js` (Playwright, mock).
 
+## Playmobil (under Retro, fra 15-11-2026)
+Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **samlet i ét salg**. Salgsteksten laves til sidst ud fra noterne
+(kolonne I) + Thomas' input: "sæt X, Y, Z … med disse mangler – stort set alle næsten komplette". Kun noget vi har nu; evt. små mængder senere her.
+- **Drive:** `CTS/Retro/Playmobil` (id `1GMWYxrs8T8cvRCSUxSWs5MaaExXHgxXQ`, flyttet fra CTS/Playmobil 15-11). Manual-PDF'er ligger hos Thomas.
+- **Regneark "Playmobil alle sæt"** (eneste kilde): `1pEB0STX0_rDlWOzGswuZyo2ot3zCztb99Ezueoi1NEc`, fane **Dele** (sheetId 449130092).
+  Række 1 søgefelt B1 (leder i A+B+G), række 2–12 træf, række 13 overskrift. **Række 14–393 = 380 rækker:** 3315 (14–25), 3319 (26–56),
+  5135 (57–141), 5139 (142–218), 5142 (219–393); inden for sæt i samme orden som de gamle ark.
+  Kolonner: A Varenr. · B Del · C Skal være · **D Fundet** · E Mangler (formel) · **F ✓** · **G Sæt · side** (fx "5142 · s.22") · H tom · **I Note**.
+  Dansk ark (`;` i formler). "Fundet" tomt = ikke talt.
+- 15-11: samlet fra de 4 gamle ark (5142, 5135, 5139, små sæt). Tjek i arket: 0 forskelle i A–D, F, G, I for alle rækker. Søgning testet ("5139" = 77 træf).
+  De gamle ark ligger i Drive-papirkurven (kan gendannes i 30 dage); de gamle sorteringssider er slettet.
+- **Sorteringsside:** https://claude.ai/artifact/K3mYEi5WeYVy57NDCw1n3j (lilla, "Playmobil alle sæt"). Valg af sæt øverst, søg (varenr./del/note),
+  −/+/talfelt/✓/note, filtre Alle/Mangler/Afkrydset. Gemmer D/F/I pr. række. Peger på det nye ark fra 15-11 – **ikke testet mod det nye ark endnu.**
+  Senere: samme side inde i appen under Retro (kommer med Lego-maskinrumsopdateringen).
+- Status 15-11: **211 af 380 afkrydset** – 3315: 8/12 · 3319: 13/31 · 5135: 63/85 · 5139: 41/77 · 5142: 86/175.
+- Regler for antal (fra manualerne): et sæt/en pose = 1; dele på to sider tælles én gang; tegnet flere gange uden "2x" tælles som tegningen.
+  Delenes navne er Claudes egne ud fra tegningerne – rettes når Thomas giver bedre navne.
+- Sætnavne (søgeresuméer 14-11): 5142 Prinsesseslot, 5135 Piratskib ("Pirate Prize Ship", 2011–2015), 5139 Soldaterfort ("Soldiers Fort with Dungeon", 2011–2014),
+  3315 Sort ridder, 3319 Dragebaronens tropper (svag kilde).
+- Åbent (ikke hastende): lignende skib til 5135 (3940?) – Thomas sender evt. 3940-manualen. Skrog-nr. uafklaret (eBay 30 22 8412 / manual 30 23 2852).
+- Sådan: Thomas sorterer på siden, eller skriver fx "fundet 30 22 9002: 1" / "afkryds 30 25 6590" (sig sættet, hvis nummeret findes i flere sæt).
+  Claude læser rækken først, skriver D/F og bekræfter i én linje.
+
 ## Næste i Retro
+- **Playmobil:** Thomas åbner den lilla side, trykker Tillad, prøver +/✓/note → tjekker arket. Sortering fortsætter (169 rækker). Til sidst: samlet salgstekst.
 - Thomas: test et rigtigt køb i appen → Claude tjekker CTS Retro (Indkøbslog, Indkøb, Mærker) og fotomappen CTS/Retro/Lager.
 - Trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Trin 3: Salg + klargøringshold.

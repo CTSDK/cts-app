@@ -7,8 +7,7 @@ Thomas koder ikke selv: forklar i almindeligt dansk, ét trin ad gangen, med pr�
 | Område | Hvad | Note |
 |---|---|---|
 | **Lego** | Køb, klargøring, lager, salg af LEGO. CTS-appen + regnearket *cts-app* | `docs/noter/lego.md` |
-| **Retro Design** | Salg af andre ting end LEGO – håndteres anderledes. Ikke beskrevet endnu | `docs/noter/retro.md` |
-| **Playmobil** | Sortering/tjek af Playmobil-sæt (5142 Prinsesseslot, 5135 Piratskib, 5139 Soldaterfort, små sæt 3315 + 3319). Eget regneark i CTS/Playmobil – ikke appen, ikke Lego | `docs/noter/playmobil.md` |
+| **Retro Design** | Salg af andre ting end LEGO (brødskærere, lamper …) + **Playmobil** (børnenes gamle sæt, sorteres og sælges samlet) | `docs/noter/retro.md` |
 | *Vejledning* | Sådan arbejder Thomas med Claude (start, afslut, hukommelse) | `docs/SAADAN.md` |
 | **Økonomi** | Overordnet for hele CTS: Lego + Retro + andre udgifter (Claude, emballage, Excel …), skat | `docs/noter/okonomi.md` |
 
@@ -52,8 +51,9 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
 ## Næste (pr. 14-11-2026)
-0. **Playmobil:** Små sæt 3315+3319 (fælles ark + side 14-11, ikke testet mod arket). Nyt sæt 5139 Soldaterfort (regneark + sorteringsside 14-11, ikke testet). Thomas tester den nye sorteringsside til 5142 (gemmer i Google Sheets) → sortering fortsætter (101 numre). 5135 Piratskib: regneark + sorteringsside lavet 14-11. Begge sider har notefelt (kolonne I), ikke testet mod arket.
-   Lignende skibe: venter på Thomas' valg (3940-manual eller netværksadgang). Se playmobil.md.
+0. **Lego-sortering (ny, besluttet 15-11):** afkrydsningslister som Playmobil, inde i appen. Mapper oprettet; resten ikke bygget. Se lego.md → Sortering.
+   Thomas lægger først en liste (fx 6080 Kings Castle) i `CTS/Lego/Sorteringslister/Indbakke` → Claude laver den rene liste → app + maskinrum bygges → test fra telefonen.
+0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" + lilla sorteringsside (15-11, tjekket 0 forskelle). Thomas tester siden → sorterer videre → samlet salgstekst. Se retro.md.
 1. **Retro:** Thomas tester et rigtigt køb i appen (Retro → Registrér nyt køb → Klargør med fotos) → Claude tjekker arket "CTS Retro" og fotomappen.
    Derefter Retro trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Se retro.md.
 2. **Løbende bilag:** nyt i `Bilag/Indbakke` (Gmail → Gem bilag, eller direkte i Drive; samtaler via GoFullPage) → Claude laver Bilagsplan → Thomas kører Udfør bilagsplan.

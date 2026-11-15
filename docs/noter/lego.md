@@ -63,6 +63,21 @@ Kun fakta, ingen AI. Noter oversættes med Google Oversæt; "Sort: …" og [teks
   "manual" → "building instructions". Thomas' eksempel er test i `tests/listing.test.js`.
 - Vejledning/Komplet er false for alle importerede sæt – Thomas krydser af ved gennemgang.
 
+## Sortering af dele (besluttet 15-11-2026, ikke bygget endnu)
+Samme måde som Playmobil (antal, −/+, ✓, note pr. del), men **inde i CTS-appen**. Bygges efter Playmobil.
+- **Ren liste pr. sæt (fast, for altid):** `CTS/Lego/Sorteringslister/<setnr> <navn>/` (fx "6080 Kings Castle"), aldrig udfyldt.
+  Drive: `CTS/Lego` id `1h7F5fm2OiiomWoMF4laPlxByHyVcSwlY`, `Sorteringslister` id `1PsC1QepXfrHJKbfdNQJYR9RGjY77y4IR`,
+  `Indbakke` id `1p8qHGBSXto0_I2DZR8qXUh2ek35tiqBt` (oprettet 15-11, tomme).
+- **Kilde:** Thomas henter selv listen fra Rebrickable eller BrickLink og lægger filen i `Indbakke` → Claude gør den klar (ren liste i sættets mappe).
+  Navn tages fra filen, ikke fra hukommelsen. Filformat ikke set endnu.
+- Reservedele og minifigurer kommer med; Thomas lader dem stå tomme, når de ikke betyder noget.
+- **Optælling pr. SKU:** ny kopi af den rene liste, når et sæt sorteres; gemmes også i Google Sheets (ikke kun på telefonen).
+- **Når alt er afkrydset:** appen sætter Komplet; mangler (og noter) lægges i Noter → kommer med i listing.
+- **Idé til senere (ikke besluttet):** SKU-optællingen ligger i købsmappen (ved fotos og salgstekst) i en undermappe "Sorteringslister" og slettes,
+  når sættet er solgt. Systemet for automatisk sletning skal findes.
+- Første test: 6080 Kings Castle fra telefonen.
+- Åbne spørgsmål, før der bygges: hvordan filen fra Rebrickable/BrickLink ser ud (kolonner, farver, reservedele), og hvor i appen siden ligger (Lager → sæt → Sortér?).
+
 ## Kendte forhold / næste i Lego
 - Tom række 12 i Salg 2026 (var række 5; sandsynligvis fra importen) – ikke rørt; spørg før sletning.
 - Køb 261028: fotos slettet 07-11 (for lav opløsning) – Thomas tager dem om med v16.
