@@ -77,6 +77,9 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
   Når alt er afkrydset: Komplet sættes; mangler/noter → Noter → listing. Sletning ved salg: system findes senere.
 - **Test (15-11):** `CTS/Lego/Sorteringslister/Test sortering` (`187NNroSbDSO3h_Bar5j3bEoGBEthKG1HzWGZiLuE__o`, fane Dele, række 14–118, SKU TEST-6080)
   + testside https://claude.ai/artifact/2fqHt1ppFSatTcd8XpMwKy (rød). Testet i browser med falske data; **ikke testet mod arket af Thomas endnu.**
+  **✓-regel (Thomas 15-11, begge sider):** + sætter ikke kryds selv. Når Fundet = Skal være, lyser fluebenet grønt omrids ("klar").
+  Først når Thomas trykker ✓, bliver det grønt = færdig. ✓ kan også trykkes, når der mangler dele: så er delen færdig, og manglen (Skal−Fundet)
+  er selve noten – tom note = intet andet at notere. Efter ✓ ryddes søgefeltet, og markøren springer op i det, så næste nummer kan tastes.
   Når testen er færdig, slettes testarket og testsiden.
 - **App-plan (ikke bygget):** (1) "Ny sorteringsliste": Thomas kopierer fra BrickLink på iPad/iPhone og indsætter i appen → appen laver den rene liste selv
   (formatet fra telefonen er ikke set endnu – Thomas prøver fx 6085/6086 fra telefonen og indsætter i samtalen først);

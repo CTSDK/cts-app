@@ -61,6 +61,9 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   De gamle ark ligger i Drive-papirkurven (kan gendannes i 30 dage); de gamle sorteringssider er slettet.
 - **Sorteringsside:** https://claude.ai/artifact/K3mYEi5WeYVy57NDCw1n3j (lilla, "Playmobil alle sæt"). Valg af sæt øverst, søg (varenr./del/note),
   −/+/talfelt/✓/note, filtre Alle/Mangler/Afkrydset. Gemmer D/F/I pr. række. Peger på det nye ark fra 15-11 – **ikke testet mod det nye ark endnu.**
+  **✓-regel (Thomas 15-11, begge sider):** + sætter ikke kryds selv. Når Fundet = Skal være, lyser fluebenet grønt omrids ("klar").
+  Først når Thomas trykker ✓, bliver det grønt = færdig. ✓ kan også trykkes, når der mangler dele: så er delen færdig, og manglen (Skal−Fundet)
+  er selve noten – tom note = intet andet at notere. Efter ✓ ryddes søgefeltet, og markøren springer op i det, så næste nummer kan tastes.
   Senere: samme side inde i appen under Retro (kommer med Lego-maskinrumsopdateringen).
 - Status 15-11: **211 af 380 afkrydset** – 3315: 8/12 · 3319: 13/31 · 5135: 63/85 · 5139: 41/77 · 5142: 86/175.
 - Regler for antal (fra manualerne): et sæt/en pose = 1; dele på to sider tælles én gang; tegnet flere gange uden "2x" tælles som tegningen.
