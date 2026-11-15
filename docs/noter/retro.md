@@ -77,7 +77,12 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   - **5135 ✓ 15-11:** 81 numre = PlaymoDB. 4 manual-numre står hos PlaymoDB som "extra" (samme del, andet nr.):
     30 23 2842=30 22 8422, 30 23 2852=30 22 8412 (skroget), 30 25 3892=30 05 2120, 30 80 3203=30 89 4650 – står i navnet.
     " – m. kranie" på 2 flag, " – m. kranie og sabler" på storsejlet (fra manualens tegning). PlaymoDB-sætnavn: "Pirates Ship".
-  - Næste: 5139, 5142.
+  - **5139 ✓ 15-11:** 76 numre = PlaymoDB; 30 63 1244 = PlaymoDB extra "Hat, tricorne, with hole for feather". PlaymoDB-listen er ikke komplet
+    (80/78) og har 3 ekstra (30 22 8052 sæk cream, 30 06 3540 + 30 62 6863 hatte) – ikke tilføjet. PlaymoDB-sætnavn: "Soldiers Fort with Dungeon".
+  - **5142 ✓ 15-11:** 170 numre = PlaymoDB. Extra-numre: 30 21 1123=30 22 9122, 30 21 2203=30 29 5500, 30 25 5053=30 20 2392, 30 25 6602=30 22 8762.
+    30 65 2223 "Tanzplatte-Schloss II" = sandsynligvis PlaymoDB's 30 22 8982 + tandhjul 30 46 6630/6640/6650/6660 (Claudes vurdering, står i navnet).
+    PlaymoDB-stavefejl rettet: "Indow"→"Window", "swam"→"swan". PlaymoDB-sætnavn: "Princess Fantasy Castle".
+  - **Alle 5 sæt har nu PlaymoDB-navne.** Manualer er ikke tilføjet som rækker.
 - Sætnavne (søgeresuméer 14-11): 5142 Prinsesseslot, 5135 Piratskib ("Pirate Prize Ship", 2011–2015), 5139 Soldaterfort ("Soldiers Fort with Dungeon", 2011–2014),
   3315 Sort ridder, 3319 Dragebaronens tropper (svag kilde).
 - Åbent (ikke hastende): lignende skib til 5135 (3940?) – Thomas sender evt. 3940-manualen. Skrog: 30 23 2852 = 30 22 8412 (PlaymoDB).
