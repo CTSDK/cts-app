@@ -73,9 +73,10 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   På note-linjer (fx Div) gælder ikonet hele sættet. Arkets id: konstant
   PM_STANDARD_ID i Code.gs (kan overstyres med Script Property PLAYMOBIL_ID).
   **Sætnavne** (v21/2.3.1): fanen **"Sæt"** i arket (A nr., B navn) → vises under nummeret på knapperne. Nye navne skrives bare i fanen.
-  Testet i browser med testdata (`tests/pm-e2e.js`). Hos Thomas: noter + ✓ virker (3315). **Ikke testet hos Thomas: + (hesten nåede ikke arket
-  – Claude rettede den til 1 efter Thomas' ønske), Nyt sæt, fotos (sæt og del), sætnavne.**
-- Status 15-11: **211 af 380 afkrydset** – 3315: 8/12 · 3319: 13/31 · 5135: 63/85 · 5139: 41/77 · 5142: 86/175.
+  Testet i browser med testdata (`tests/pm-e2e.js`). **Hos Thomas 15-11 virker:** noter, ✓, + og **fotos af sæt** (Fotos-mappe id
+  `1jbdX824Irc5XpEBbblUx02bIrzOv8cDa`: PM-3155.01, PM-4343.01–03). **Ikke set hos Thomas endnu:** fotos pr. del (v22), Nyt sæt/Div, sætnavne
+  (kræver at 2.3.2 er kopieret ind og app v22).
+- Status 15-11 aften (ca.): **274 af 542 afkrydset** – 3315: 10/12 · 3319: 13/31 · 5135: 63/85 · 5139: 40/77 · 5142: 86/175 · 4343: 41/100 · 4439: 19/46 · 3155: 2/16.
 - Regler for antal (fra manualerne): et sæt/en pose = 1; dele på to sider tælles én gang; tegnet flere gange uden "2x" tælles som tegningen.
   Delenes navne er Claudes egne ud fra tegningerne – **erstattes med PlaymoDB-navne** (Thomas kopierer sættets PlaymoDB-side ind i samtalen;
   Claude holder den op mod arket/manualen, viser forslag, skriver efter ja). Format: "navn (farve)" som PlaymoDB. PlayMoDB kan ikke åbnes fra sessionen.
@@ -109,6 +110,7 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   Claude læser rækken først, skriver D/F og bekræfter i én linje.
 
 ## Næste i Retro
-- **Playmobil:** Thomas åbner den lilla side, trykker Tillad, prøver +/✓/note → tjekker arket. Sortering fortsætter (169 rækker). Til sidst: samlet salgstekst.
+- **Playmobil:** Thomas sorterer videre i appen (Retro → Playmobil). Tjek: foto af en del (v22), "+ Nyt sæt" Div, sætnavne. Når alt er sorteret:
+  samlet salgstekst ud fra noterne (delnavne oversættes) + Thomas' input.
 - Thomas: test et rigtigt køb i appen → Claude tjekker CTS Retro (Indkøbslog, Indkøb, Mærker) og fotomappen CTS/Retro/Lager.
 - Trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Trin 3: Salg + klargøringshold.
