@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/app.css?v=19">
+<link rel="stylesheet" href="css/app.css?v=20">
 </head>
 <body>
 <div id="testbanner" class="banner" hidden></div>
@@ -74,6 +74,10 @@
       <span class="ikon ikon-gul"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
       <span class="kort-tekst"><b>Registrér nyt køb</b><small>Dato, pris og ting</small></span>
     </button>
+    <button class="kort" data-gaa="pm">
+      <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="3.5"/><path d="M6 21v-5a6 6 0 0 1 12 0v5M9 21v-4M15 21v-4"/></svg></span>
+      <span class="kort-tekst"><b>Playmobil</b><small>Sortering af dele, noter og fotos</small></span>
+    </button>
     <button class="kort" disabled>
       <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7"/></svg></span>
       <span class="kort-tekst"><b>Lager</b><small>Kommer senere</small></span>
@@ -83,6 +87,45 @@
       <span class="kort-tekst"><b>Registrér salg</b><small>Kommer senere</small></span>
     </button>
   </nav>
+</section>
+
+<!-- ============ RETRO: PLAYMOBIL – SORTERING ============ -->
+<section id="v-pm" class="visning" hidden>
+  <header class="top"><button class="tilbage" data-gaa="retro" aria-label="Tilbage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h2>Playmobil</h2></header>
+  <div class="indhold">
+    <div id="pm-info" class="lille"></div>
+    <div id="pm-saet" class="vaelg" role="group" aria-label="Vælg sæt"></div>
+    <div class="pm-soeg">
+      <input id="pm-q" type="search" placeholder="Søg varenr., del eller note" autocomplete="off" aria-label="Søg">
+      <button id="pm-ryd" class="knap" type="button">Ryd</button>
+    </div>
+    <div class="filtre" id="pm-filtre" role="group" aria-label="Filter">
+      <button data-pmfilter="alle" class="til">Alle</button>
+      <button data-pmfilter="mangler">Mangler</button>
+      <button data-pmfilter="afkrydset">Afkrydset</button>
+    </div>
+    <div id="pm-status" class="lille"></div>
+    <div id="pm-ro" class="besked pm-ro" hidden>Kun visning. Vælg et sæt øverst for at sortere, skrive noter og tage fotos.</div>
+    <details id="pm-fotoboks" class="pm-fotoboks" hidden>
+      <summary id="pm-fototitel">Fotos af sættet</summary>
+      <div class="kamera">
+        <video id="pm-video" playsinline muted autoplay></video>
+        <div class="kamera-tom" id="pm-kamera-tom">Kameraet er slukket</div>
+      </div>
+      <div class="knapper">
+        <button id="pm-start" class="knap">Start kamera</button>
+        <button id="pm-tag" class="knap knap-primaer" disabled>Tag foto</button>
+      </div>
+      <label class="knap knap-sekundaer fil-knap">Tag foto med telefonens kamera
+        <input id="pm-fil" type="file" accept="image/*" capture="environment" hidden>
+      </label>
+      <div id="pm-kamerainfo" class="hjaelp"></div>
+      <div id="pm-kamerafejl" class="besked fejl" role="alert"></div>
+      <div id="pm-fotos" class="fotos" aria-live="polite"></div>
+    </details>
+    <div id="pm-liste" class="pm-liste"></div>
+    <button id="pm-nyt" class="knap knap-sekundaer" type="button">+ Nyt sæt (fx "Div" – løsdele)</button>
+  </div>
 </section>
 
 <!-- ============ RETRO: NYT KØB – SIDE 1 ============ -->
@@ -388,7 +431,7 @@
       <span class="kort-tekst"><b>Indstillinger</b><small>Adresse og API-nøgle</small></span>
     </button>
   </nav>
-  <p class="hjaelp app-version">App-version 19</p>
+  <p class="hjaelp app-version">App-version 20</p>
 </section>
 
 <!-- ============ MENUBJÆLKE ============ -->
@@ -419,15 +462,26 @@
   </div>
 </div>
 
+<div id="pmny" class="dbny" role="dialog" aria-modal="true" aria-labelledby="pmny-titel" hidden>
+  <div class="dbny-panel">
+    <h2 id="pmny-titel">Nyt Playmobil-sæt</h2>
+    <p class="hjaelp">Sættet får én linje med note og fotos – fx "Div" til løsdele. Navnet står i arket "Playmobil alle sæt".</p>
+    <label for="pmny-navn">Navn</label>
+    <input id="pmny-navn" autocomplete="off" placeholder="Fx Div">
+    <div id="pmny-fejl" class="besked fejl" role="alert" hidden></div>
+    <div class="knapper"><button type="button" class="knap" id="pmny-annuller">Annullér</button><button type="button" class="knap knap-primaer" id="pmny-gem">Opret sæt</button></div>
+  </div>
+</div>
+
 <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="js/beregn.js?v=19"></script>
-<script src="js/retro.js?v=19"></script>
-<script src="js/api.js?v=19"></script>
-<script src="js/lokal.js?v=19"></script>
-<script src="js/data.js?v=19"></script>
-<script src="js/foto.js?v=19"></script>
-<script src="js/beskaer.js?v=19"></script>
-<script src="js/app.js?v=19"></script>
+<script src="js/beregn.js?v=20"></script>
+<script src="js/retro.js?v=20"></script>
+<script src="js/api.js?v=20"></script>
+<script src="js/lokal.js?v=20"></script>
+<script src="js/data.js?v=20"></script>
+<script src="js/foto.js?v=20"></script>
+<script src="js/beskaer.js?v=20"></script>
+<script src="js/app.js?v=20"></script>
 </body>
 </html>

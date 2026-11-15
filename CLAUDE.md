@@ -50,10 +50,11 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - **Del aldrig regneark/mapper med "alle med linket"** – id'erne står på GitHub (offentligt).
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
-## Næste (pr. 14-11-2026)
+## Næste (pr. 15-11-2026)
 0. **Lego-sortering (ny, besluttet 15-11):** afkrydsningslister som Playmobil, inde i appen. Mapper oprettet; resten ikke bygget. Se lego.md → Sortering.
    Ren liste 6080 Kings Castle lavet. Thomas tester testsiden (TEST-6080) → prøver at kopiere et sæt fra BrickLink på telefonen → app + maskinrum bygges.
-0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" (8 sæt, PlaymoDB-navne) + lilla sorteringsside. "Div" (løsdele: note + fotos) laves i appen senere. Thomas tester siden → sorterer videre → samlet salgstekst. Se retro.md.
+0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" (8 sæt, PlaymoDB-navne). **App v20 + maskinrum 2.3.0 lagt ud 15-11** (Retro → Playmobil:
+   sortering, "+ Nyt sæt" fx Div, fotos pr. sæt) – testet med testdata; Thomas kopierer Code.gs ind og tester på iPhone. Lilla side virker stadig. Se retro.md. Thomas tester siden → sorterer videre → samlet salgstekst. Se retro.md.
 1. **Retro:** Thomas tester et rigtigt køb i appen (Retro → Registrér nyt køb → Klargør med fotos) → Claude tjekker arket "CTS Retro" og fotomappen.
    Derefter Retro trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Se retro.md.
 2. **Løbende bilag:** nyt i `Bilag/Indbakke` (Gmail → Gem bilag, eller direkte i Drive; samtaler via GoFullPage) → Claude laver Bilagsplan → Thomas kører Udfør bilagsplan.

@@ -65,8 +65,12 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   Først når Thomas trykker ✓, bliver det grønt = færdig. ✓ kan også trykkes, når der mangler dele: så er delen færdig, og manglen (Skal−Fundet)
   er selve noten – tom note = intet andet at notere. Efter ✓ ryddes søgefeltet, og markøren springer op i det, så næste nummer kan tastes.
   "Alle sæt"/"Alle SKU" er kun visning; sortering og noter kun under ét valgt sæt/SKU.
-  Senere: samme side inde i appen under Retro (kommer med Lego-maskinrumsopdateringen). Appen skal også kunne **"Nyt sæt"**
-  (Thomas laver selv en ny linje) – fx **"Div" = løsdele**: kun note + fotos, ingen antal/✓ (Thomas 15-11). Ikke bygget; ikke i arket endnu.
+- **I appen (v20 + maskinrum 2.3.0, bygget 15-11):** Hjem → Retro Design → **Playmobil**. Samme regler som den lilla side (sæt øverst,
+  "Alle sæt" kun visning, søg, −/+/talfelt, ✓-regel, note pr. del). Gemmer via maskinrummet (pmHent/pmGem) og udbakken (virker offline).
+  **"+ Nyt sæt"**: navn (fx "Div" = løsdele) → én linje "Note og fotos" (ingen antal/✓), indsat før sidste række (pmNytSaet).
+  **Fotos pr. sæt** (fotoboks når ét sæt er valgt): `CTS/Retro/Playmobil/Fotos/PM-<SÆT>.NN.jpg` (pmUploadFoto). Arkets id: konstant
+  PM_STANDARD_ID i Code.gs (kan overstyres med Script Property PLAYMOBIL_ID).
+  **Testet i browser med testdata** (`tests/pm-e2e.js`: ✓-regel, kun visning, nyt sæt Div, note, foto, offline). **Ikke testet hos Thomas endnu.**
 - Status 15-11: **211 af 380 afkrydset** – 3315: 8/12 · 3319: 13/31 · 5135: 63/85 · 5139: 41/77 · 5142: 86/175.
 - Regler for antal (fra manualerne): et sæt/en pose = 1; dele på to sider tælles én gang; tegnet flere gange uden "2x" tælles som tegningen.
   Delenes navne er Claudes egne ud fra tegningerne – **erstattes med PlaymoDB-navne** (Thomas kopierer sættets PlaymoDB-side ind i samtalen;

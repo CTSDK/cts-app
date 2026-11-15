@@ -16,6 +16,8 @@
   // Retro Design: lokal kopi af de køb/ting, telefonen kender, og kendte mærker (producent → kode)
   function nyRetro() { return { ting: [], log: {}, maerker: [] }; }
   var retro = nyRetro();
+  // Playmobil (under Retro): lokal kopi af arket "Playmobil alle sæt"
+  var pm = { dele: [], fotos: {}, hentet: 0 };
 
   function fyr() { lyttere.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }
   function haendelse(type, info) { haendelser.forEach(function (fn) { try { fn(type, info); } catch (e) { console.error(e); } }); }
@@ -26,6 +28,7 @@
       kopi.db = v[0] || null; kopi.salg = v[1] || {}; kopi.lager = v[2] || []; kopi.log = v[3] || {}; kopi.hentet = v[4] || 0; kopi.kurs = v[5] || {};
       listings = (await Lokal.hent('listings')) || { saet: {}, doc: {} };
       retro = (await Lokal.hent('retro')) || nyRetro();
+      pm = (await Lokal.hent('pm')) || pm;
       udbakke = (await Lokal.udbakke.alle()) || [];
       udbakke.forEach(function (p) { if (p.status === 'sender') p.status = 'venter'; });
     } catch (e) { status.fejl = 'Lokal lagring virker ikke: ' + e.message; }
@@ -214,6 +217,17 @@
       if (rt) { rt.antalFotos = svar.antalFotos; rt.fotos = true; }
       (sendteFotos[p.data.sku] = sendteFotos[p.data.sku] || []).push({ thumb: p.meta.thumb, navn: svar.navn });
       await Lokal.saet('retro', retro);
+    } else if (p.type === 'pmGem') {
+      pmErstat(svar);
+      await Lokal.saet('pm', pm);
+    } else if (p.type === 'pmNytSaet') {
+      pm.dele = svar.dele || pm.dele; pm.fotos = svar.fotos || pm.fotos; pm.hentet = Date.now();
+      await Lokal.saet('pm', pm);
+      haendelse('pmSaetOprettet', { navn: p.data.navn });
+    } else if (p.type === 'pmUploadFoto') {
+      pm.fotos[p.data.saet] = svar.antalFotos;
+      (sendteFotos[p.data.sku] = sendteFotos[p.data.sku] || []).push({ thumb: p.meta.thumb, navn: svar.navn });
+      await Lokal.saet('pm', pm);
     } else if (p.type === 'uploadFoto') {
       var r = kopi.lager.find(function (x) { return x.sku === p.data.sku; });
       if (r) { r.antalFotos = svar.antalFotos; r.fotos = true; }
@@ -380,6 +394,44 @@
     } catch (e) { return false; }
   }
 
+  // ---------------- Playmobil ----------------
+  function pmNoegle(d) { return String(d.saet) + '|' + String(d.nr); }
+  function pmErstat(x) {
+    var k = pmNoegle(x), i = pm.dele.findIndex(function (d) { return pmNoegle(d) === k; });
+    if (i >= 0) pm.dele[i] = x;
+  }
+  // Visning = kopi + det der venter i udbakken (sidste ændring vinder)
+  function pmDele() {
+    var dele = pm.dele.map(function (d) { return Object.assign({}, d, { ventende: false }); });
+    var idx = {}; dele.forEach(function (d) { idx[pmNoegle(d)] = d; });
+    udbakke.forEach(function (p) {
+      if (p.status === 'fejl') return;
+      if (p.type === 'pmGem') {
+        var d = idx[pmNoegle(p.data)]; if (!d) return;
+        ['fundet', 'ok', 'note'].forEach(function (k) { if (p.data[k] !== undefined) d[k] = p.data[k]; });
+        d.ventende = true;
+      } else if (p.type === 'pmNytSaet' && !dele.some(function (d) { return d.saet.toLowerCase() === String(p.data.navn).toLowerCase(); })) {
+        var ny = { r: 0, nr: '', del: 'Note og fotos', skal: null, fundet: null, ok: false, saet: p.data.navn, side: '', note: '', ventende: true };
+        dele.push(ny); idx[pmNoegle(ny)] = ny;
+      }
+    });
+    return dele;
+  }
+  function pmFotos(saet) {
+    var n = pm.fotos[saet] || 0;
+    var v = udbakke.filter(function (p) { return p.type === 'pmUploadFoto' && p.data.saet === saet && p.status !== 'fejl'; }).length;
+    return { iDrive: n, venter: v };
+  }
+  // Ny kopi fra Sheets (kun med net). Fejl fra maskinrummet gemmes i status.pmFejl.
+  async function pmHent() {
+    try {
+      var d = await Api.kald('pmHent', {}, 2);
+      pm = { dele: d.dele || [], fotos: d.fotos || {}, hentet: Date.now() };
+      status.pmFejl = '';
+      await Lokal.saet('pm', pm); fyr(); return true;
+    } catch (e) { if (e.fraServer) status.pmFejl = e.message; fyr(); return false; }
+  }
+
   window.addEventListener('online', function () { status.online = true; fyr(); koer(); });
   window.addEventListener('offline', function () { status.online = false; fyr(); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) koer(); });
@@ -393,6 +445,7 @@
     listing: function (sku) { return listings.saet[sku] || null; }, listingDoc: function (dato) { return listings.doc[String(dato)] || ''; },
     retroKoeb: retroKoeb, retroKoebFindes: retroKoebFindes, retroMaerker: retroMaerker, retroKode: retroKode,
     retroHentMaerker: retroHentMaerker, retroOpdaterKoeb: retroOpdaterKoeb,
+    pmDele: pmDele, pmFotos: pmFotos, pmHent: pmHent, pmHentet: function () { return pm.hentet; },
     hentetTid: function () { return kopi.hentet; }, kurs: function (aar) { return Number(kopi.kurs[String(aar)]) || 7.46; }, sendteFotos: function (sku) { return sendteFotos[sku] || []; }
   };
 })(this);

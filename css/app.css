@@ -242,3 +242,33 @@ body.laast { overflow: hidden; }
 .rsku { font-size: 12px; background: var(--kort); border: 1.5px solid var(--kant); border-radius: 10px; padding: 6px 8px; }
 
 .app-version { text-align: center; margin: 24px 0; }
+
+/* Playmobil – sortering (v20) */
+.pm-soeg { display: flex; gap: 8px; }
+.pm-soeg input { flex: 1; min-width: 0; border-color: var(--navy); }
+.pm-soeg .knap { min-height: 48px; }
+.pm-ro { background: var(--navy-lys); color: var(--tekst); }
+.pm-fotoboks { background: var(--kort); border-radius: 14px; padding: 10px 12px; }
+.pm-fotoboks summary { font-weight: 600; cursor: pointer; min-height: 32px; }
+.pm-fotoboks > * + * { margin-top: 8px; }
+.pm-liste { display: flex; flex-direction: column; gap: 6px; }
+.pm-del { background: var(--kort); border: 1.5px solid var(--kort); border-radius: 12px; padding: 8px 10px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; }
+.pm-del.done { border-color: var(--groen); }
+.pm-del.soeg { background: #FFF6D1; }
+.pm-del .nr { font: 600 14px var(--mono); }
+.pm-del .navn { overflow-wrap: anywhere; font-size: 15px; }
+.pm-del .meta { font-size: 12px; color: var(--daempet); }
+.pm-del .meta .miss { color: var(--roed); font-weight: 600; }
+.pm-del .note { grid-column: 1 / -1; min-height: 40px; font-size: 14px; padding: 6px 10px; border-radius: 10px; }
+.pm-del .note:not(:placeholder-shown) { border-color: #B26B00; }
+.pm-taeller { display: flex; align-items: center; gap: 4px; }
+.pm-taeller button { width: 40px; height: 40px; border-radius: 10px; border: 0; background: var(--chip); font-size: 20px; font-weight: 600; cursor: pointer; }
+.pm-taeller input { width: 52px; min-height: 40px; padding: 4px; text-align: center; font-family: var(--mono); }
+.pm-taeller .af { font-size: 12px; color: var(--daempet); min-width: 30px; font-family: var(--mono); }
+.pm-chk { width: 44px; height: 44px; border-radius: 12px; border: 2px solid var(--kant); background: var(--kort); color: var(--kant); font-size: 22px; font-weight: 700; cursor: pointer; }
+.pm-chk.klar { border-color: var(--groen); color: var(--groen); box-shadow: 0 0 0 3px var(--groen-bg); }
+.pm-chk[aria-pressed="true"] { background: var(--groen); border-color: var(--groen); color: #fff; }
+.pm-del.laast button, .pm-del.laast input { opacity: .55; }
+.pm-del .info { grid-column: 1; }
+.pm-del .pm-taeller { grid-column: 1; }
+.pm-del .pm-chk { grid-column: 2; grid-row: 1 / span 2; }

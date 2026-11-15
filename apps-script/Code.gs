@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '2.2.1';
+var VERSION = '2.3.0';
 
 // ---------- Faner ----------
 var FANE = {
@@ -1824,7 +1824,12 @@ var HANDLINGER = {
   retroOpretKoeb: function (d) { return medLaas_(function () { return retroOpretKoeb_(d); }); },
   retroHentKoeb: function (d) { return retroHentKoeb_(d.dato); },
   retroGemTing: function (d) { return medLaas_(function () { return retroGemTing_(d); }); },
-  retroUploadFoto: function (d) { return medLaas_(function () { return retroUploadFoto_(d); }); }
+  retroUploadFoto: function (d) { return medLaas_(function () { return retroUploadFoto_(d); }); },
+  // Playmobil (under Retro) – regnearket "Playmobil alle sæt" (2.3.0)
+  pmHent: function () { return pmHent_(); },
+  pmGem: function (d) { return medLaas_(function () { return pmGem_(d); }); },
+  pmNytSaet: function (d) { return medLaas_(function () { return pmNytSaet_(d); }); },
+  pmUploadFoto: function (d) { return medLaas_(function () { return pmUploadFoto_(d); }); }
 };
 
 // ======================================================================
@@ -2829,5 +2834,103 @@ function retroUploadFoto_(d) {
   var mappe = retroKoebMappe_(ss, String(f.v[RK.DATO - 1]), true);
   var r = gemFoto_(mappe, sku, d.billede, d.uploadId);
   f.ark.getRange(f.raekke, RK.FOTOS).setValue(true);
+  return r;
+}
+
+// ======================================================================
+//  PLAYMOBIL (under Retro) – regnearket "Playmobil alle sæt" (2.3.0)
+//  Fane "Dele": række 1–12 søgefelt, 13 overskrift, data fra række 14.
+//  A varenr · B del · C skal være · D fundet · E mangler (formel) · F ✓ · G "sæt · side" · H tom · I note.
+//  Fotos: mappen "Fotos" ved siden af regnearket (CTS/Retro/Playmobil/Fotos), navn PM-<SÆT>.NN.jpg
+// ======================================================================
+
+var PM_STANDARD_ID = '1pEB0STX0_rDlWOzGswuZyo2ot3zCztb99Ezueoi1NEc', PM_FANE = 'Dele', PM_START = 14, PM_KOL = 9;
+
+function pmArk_() {
+  var id = PropertiesService.getScriptProperties().getProperty('PLAYMOBIL_ID') || PM_STANDARD_ID, ss;
+  try { ss = SpreadsheetApp.openById(id); } catch (e) { throw fejl_('Regnearket "Playmobil alle sæt" kan ikke åbnes.'); }
+  var sh = ss.getSheetByName(PM_FANE);
+  if (!sh) throw fejl_('Fanen "' + PM_FANE + '" findes ikke i Playmobil-arket.');
+  return { ss: ss, sh: sh };
+}
+function pmSaetNavn_(g) { g = String(g || ''); var k = g.indexOf('·'); return { saet: (k >= 0 ? g.slice(0, k) : g).trim(), side: k >= 0 ? g.slice(k + 1).trim() : '' }; }
+function pmFotoNavn_(saet) { return 'PM-' + (retroRens_(saet) || 'SAET'); }
+function pmFotoMappe_(ss, opret) {
+  var it = DriveApp.getFileById(ss.getId()).getParents();
+  if (!it.hasNext()) throw fejl_('Playmobil-arket ligger ikke i en mappe.');
+  var p = it.next(), f = p.getFoldersByName('Fotos');
+  if (f.hasNext()) return f.next();
+  return opret ? p.createFolder('Fotos') : null;
+}
+function pmRaekke_(r, vis, val) {
+  var g = pmSaetNavn_(vis[6]);
+  return { r: r, nr: String(vis[0]).trim(), del: String(vis[1]), skal: val[2] === '' ? null : Number(val[2]),
+    fundet: val[3] === '' ? null : Number(val[3]), ok: val[5] === true, saet: g.saet, side: g.side, note: String(vis[8]) };
+}
+function pmLaes_(sh) {
+  var n = sh.getLastRow() - PM_START + 1;
+  if (n < 1) return [];
+  var rg = sh.getRange(PM_START, 1, n, PM_KOL), vis = rg.getDisplayValues(), val = rg.getValues(), res = [];
+  for (var i = 0; i < n; i++) { var x = pmRaekke_(PM_START + i, vis[i], val[i]); if (x.saet) res.push(x); }
+  return res;
+}
+function pmHent_() {
+  var a = pmArk_(), dele = pmLaes_(a.sh), m = pmFotoMappe_(a.ss, false), t = m ? fotoTaelling_(m) : { antal: {} }, fotos = {};
+  dele.forEach(function (d) { fotos[d.saet] = t.antal[pmFotoNavn_(d.saet)] || 0; });
+  return { dele: dele, fotos: fotos };
+}
+// Find rækken: først det rækkenummer appen kender, ellers søg på varenr. + sæt (rækker kan flytte sig, når et sæt tilføjes)
+function pmFind_(sh, d) {
+  var nr = String(d.nr || '').trim(), saet = String(d.saet || '').trim(), r = Number(d.r);
+  function passer(x) { return x.nr === nr && x.saet === saet; }
+  if (r >= PM_START && r <= sh.getLastRow()) {
+    var rg = sh.getRange(r, 1, 1, PM_KOL), x = pmRaekke_(r, rg.getDisplayValues()[0], rg.getValues()[0]);
+    if (passer(x)) return x;
+  }
+  var fund = pmLaes_(sh).filter(passer);
+  if (fund.length !== 1) throw fejl_('Delen ' + (nr || '(uden nr.)') + ' i sæt ' + saet + ' findes ikke' + (fund.length ? ' entydigt' : '') + ' i Playmobil-arket.');
+  return fund[0];
+}
+// d: {r, nr, saet, fundet?, ok?, note?} – kun felter der er med, skrives
+function pmGem_(d) {
+  var a = pmArk_(), x = pmFind_(a.sh, d);
+  if (d.fundet !== undefined) {
+    var f = d.fundet === null || d.fundet === '' ? '' : Number(d.fundet);
+    if (f !== '' && !(f >= 0 && Math.floor(f) === f)) throw fejl_('Fundet skal være et helt tal (0 eller mere).');
+    a.sh.getRange(x.r, 4).setValue(f);
+  }
+  if (d.ok !== undefined) a.sh.getRange(x.r, 6).setValue(d.ok === true);
+  if (d.note !== undefined) a.sh.getRange(x.r, 9).setNumberFormat('@').setValue(retroTekst_(d.note));
+  SpreadsheetApp.flush();
+  var rg = a.sh.getRange(x.r, 1, 1, PM_KOL);
+  return pmRaekke_(x.r, rg.getDisplayValues()[0], rg.getValues()[0]);
+}
+// Nyt sæt (fx "Div" = løsdele): én linje med kun note (+ fotos). Indsættes før sidste række, så formler og farver følger med.
+function pmNytSaet_(d) {
+  var navn = String(d.navn || '').trim();
+  if (!navn) throw fejl_('Skriv et navn på sættet.');
+  if (navn.indexOf('·') >= 0 || /^[=+\-@]/.test(navn)) throw fejl_('Navnet må ikke indeholde "·" eller starte med = + - @.');
+  var a = pmArk_(), sh = a.sh;
+  if (pmLaes_(sh).some(function (x) { return x.saet.toLowerCase() === navn.toLowerCase(); })) throw fejl_('Sættet "' + navn + '" findes allerede.');
+  var L = sh.getLastRow();
+  if (L < PM_START) throw fejl_('Playmobil-arket har ingen rækker.');
+  sh.insertRowsBefore(L, 1);
+  sh.getRange(L + 1, 1, 1, PM_KOL).copyTo(sh.getRange(L, 1, 1, PM_KOL));   // den gamle sidste række rykker én op
+  sh.getRange(L + 1, 1, 1, 4).setNumberFormat('@').setValues([['', 'Note og fotos', '', '']]);
+  sh.getRange(L + 1, 6).setValue(false);
+  sh.getRange(L + 1, 7).setNumberFormat('@').setValue(navn);
+  sh.getRange(L + 1, 9).setValue('');
+  SpreadsheetApp.flush();
+  return pmHent_();
+}
+// d: {saet, billede (base64), uploadId}
+function pmUploadFoto_(d) {
+  var saet = String(d.saet || '').trim();
+  if (!saet) throw fejl_('Sæt mangler.');
+  if (!d.billede) throw fejl_('Intet billede.');
+  var a = pmArk_();
+  if (!pmLaes_(a.sh).some(function (x) { return x.saet === saet; })) throw fejl_('Sættet ' + saet + ' findes ikke i Playmobil-arket.');
+  var r = gemFoto_(pmFotoMappe_(a.ss, true), pmFotoNavn_(saet), d.billede, d.uploadId);
+  r.saet = saet;
   return r;
 }

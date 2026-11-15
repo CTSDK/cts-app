@@ -277,6 +277,48 @@
         t.fotos = true; skriv(s);
         return { navn: navn, antalFotos: liste.length, gentaget: false };
       },
+      // ----- Playmobil (samme regler som maskinrummet: pmHent_, pmGem_, pmNytSaet_, pmUploadFoto_) -----
+      pmHent: function () {
+        var s = laes(), p = pmL(s), fotos = {};
+        skriv(s);
+        p.dele.forEach(function (d) { fotos[d.saet] = (p.fotos[d.saet] || []).length; });
+        return { dele: p.dele, fotos: fotos };
+      },
+      pmGem: function (d) {
+        var s = laes(), p = pmL(s), nr = String(d.nr || '').trim(), saet = String(d.saet || '').trim();
+        var fund = p.dele.filter(function (x) { return x.nr === nr && x.saet === saet; });
+        if (fund.length !== 1) throw srv('Delen ' + (nr || '(uden nr.)') + ' i sæt ' + saet + ' findes ikke i Playmobil-arket.');
+        var x = fund[0];
+        if (d.fundet !== undefined) {
+          var f = d.fundet === null || d.fundet === '' ? null : Number(d.fundet);
+          if (f !== null && !(f >= 0 && Math.floor(f) === f)) throw srv('Fundet skal være et helt tal (0 eller mere).');
+          x.fundet = f;
+        }
+        if (d.ok !== undefined) x.ok = d.ok === true;
+        if (d.note !== undefined) x.note = String(d.note || '');
+        skriv(s); return x;
+      },
+      pmNytSaet: function (d) {
+        var s = laes(), p = pmL(s), navn = String(d.navn || '').trim();
+        if (!navn) throw srv('Skriv et navn på sættet.');
+        if (navn.indexOf('·') >= 0) throw srv('Navnet må ikke indeholde "·".');
+        if (p.dele.some(function (x) { return x.saet.toLowerCase() === navn.toLowerCase(); })) throw srv('Sættet "' + navn + '" findes allerede.');
+        var sidste = p.dele.pop();
+        p.dele.push({ r: sidste.r, nr: '', del: 'Note og fotos', skal: null, fundet: null, ok: false, saet: navn, side: '', note: '' });
+        sidste.r++; p.dele.push(sidste);
+        skriv(s); return H.pmHent();
+      },
+      pmUploadFoto: function (d) {
+        var s = laes(), p = pmL(s), saet = String(d.saet || '').trim();
+        if (!p.dele.some(function (x) { return x.saet === saet; })) throw srv('Sættet ' + saet + ' findes ikke i Playmobil-arket.');
+        if (!d.billede) throw srv('Intet billede.');
+        var liste = p.fotos[saet] = p.fotos[saet] || [], kode = 'PM-' + rod.Retro.rens(saet);
+        var gl = liste.find(function (f) { return f.id === d.uploadId; });
+        if (gl) return { navn: gl.navn, antalFotos: liste.length, gentaget: true, saet: saet };
+        var nr = liste.length + 1, navn = kode + '.' + (nr < 10 ? '0' + nr : nr) + '.jpg';
+        liste.push({ id: d.uploadId, navn: navn }); skriv(s);
+        return { navn: navn, antalFotos: liste.length, gentaget: false, saet: saet };
+      },
       hentAlt: function () {
         var s = laes(); genberegn(s);
         return {
@@ -289,6 +331,23 @@
       }
     };
     function srv(t) { var e = new Error(t); e.fraServer = true; return e; }
+    // Test-data: et lille udsnit af "Playmobil alle sæt"
+    function pmL(s) {
+      if (!s.pm) {
+        var r = 14, d = [];
+        function del(nr, navn, skal, saet, side, fundet, ok, note) { d.push({ r: r++, nr: nr, del: navn, skal: skal, fundet: fundet === undefined ? null : fundet, ok: !!ok, saet: saet, side: side, note: note || '' }); }
+        del('30 24 8540', 'Horse saddle (blue)', 1, '3315', 's.1', 0, false);
+        del('30 67 1760', 'Horse (new-style), left foot forward (black)', 1, '3315', 's.1', 2, true);
+        del('30 20 1002', 'Arm greave, wing shape at shoulder', 2, '3315', 's.2');
+        del('30 24 7480', 'Sword, long, curvy handle (grey)', 1, '3315', 's.2');
+        del('30 00 9612', 'Pirate, bald with yellow headband, blue vest over white shirt', 1, '5135', 's.13', 1, true, 'mangler bandana');
+        del('30 28 2120', 'Loop to secure sail (black)', 20, '5135', 's.16', 13, false);
+        del('30 24 7480', 'Sword, long, curvy handle (grey)', 1, '5135', 's.16');
+        del('30 89 5932', 'Butterfly (yellow)', 1, '5142', 's.26');
+        s.pm = { dele: d, fotos: {} };
+      }
+      return s.pm;
+    }
     function retroL(s) { s.retro = s.retro || { log: [], ting: [], maerker: [], fotos: {} }; return s.retro; }
     async function kald(handling, data) {
       await vent(150);

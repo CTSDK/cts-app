@@ -1,12 +1,12 @@
 # Område: Lego (CTS-appen + regnearket cts-app)
 
-Status pr. 08-11-2026 (app v19 + maskinrum 2.2.1 kører hos Thomas). Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
+Status pr. 15-11-2026: app v20 + maskinrum 2.3.0 (Playmobil i appen) lagt ud 15-11 – Thomas skal kopiere koden ind; v19 + 2.2.1 er sidst testet. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
 
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
   Hjemmeskærms-app på iPhone (iOS 27.2). Offline: service worker (`sw.js`), lokal kopi + udbakke i IndexedDB (`js/lokal.js`, `js/data.js`).
-  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v19, ✅ på Thomas' iPhone 08-11; versionen står nederst under Mere).
-- **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.2.1**, kører hos Thomas; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
+  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v20, lagt ud 15-11, ikke bekræftet på iPhone; versionen står nederst under Mere).
+- **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.3.0**, lagt ud 15-11 – Thomas kopierer ind; 2.2.1 kørte før; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
   Webapp "Udfør som: Mig", adgang "Alle"; alle kald kræver API-nøgle (Script Properties).
 - **Faste kodetrin (altid sådan):** (1) åbn https://raw.githubusercontent.com/CTSDK/cts-app/main/apps-script/Code.gs, (2) Ctrl+Shift+R og tjek versionen,
   (3) Ctrl+A → Ctrl+C → Apps Script → Ctrl+A → Ctrl+V → Ctrl+S, (4) Implementer → Administrer implementeringer → blyanten → Ny version → Implementer,
@@ -21,7 +21,7 @@ Status pr. 08-11-2026 (app v19 + maskinrum 2.2.1 kører hos Thomas). Beskriver h
   Skriv formler mens arket er `en_US` (`medEngelsk_`); SUMIFS udvider ikke i ARRAYFORMULA (brug MAP+SUMIFS); LET-navne må ikke ligne celler;
   tekst som "7236-2" skrives med apostrof (`tekst_`).
 - **Tests:** `node tests/beregn.test.js`, `tests/listing.test.js`, `tests/sortering.test.js`, `tests/fragtbilag.test.js`; Playwright (server: `python3 -m http.server 8765`):
-  `tests/e2e.js`, `tests/stortkoeb.js`, `tests/forbindelse.js`, `tests/tilfoejdb.js`.
+  `tests/e2e.js`, `tests/stortkoeb.js`, `tests/forbindelse.js`, `tests/tilfoejdb.js`, `tests/retro-e2e.js`, `tests/pm-e2e.js`.
 
 ## Regnearket cts-app
 - **Indkøb:** A SKU, B Købsdato, C Set nr., D Navn, E Værdi €, F Købspris, G Salg for, H OVP, I Sorteret, J Fotos, K Klar, L Stand, M Platform,

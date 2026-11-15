@@ -48,9 +48,10 @@
   var aktiv = 'hjem';
   function gaa(navn) {
     if (kameraer[aktiv] && navn !== aktiv) kameraer[aktiv].stop();
+    if (aktiv === 'pm' && navn !== 'pm') pmSendAlt();
     document.querySelectorAll('.visning').forEach(function (v) { v.hidden = v.id !== 'v-' + navn; });
     aktiv = navn;
-    var fane = { forside: 'hjem', retro: 'hjem', rk1: 'hjem', rk2: 'hjem', koeb2: 'koeb1', koeb3: k3 && k3.fra === 'lager' ? 'lager' : 'koeb1', indstillinger: 'mere', udbakke: 'mere' }[navn] || navn;
+    var fane = { forside: 'hjem', retro: 'hjem', rk1: 'hjem', rk2: 'hjem', pm: 'hjem', koeb2: 'koeb1', koeb3: k3 && k3.fra === 'lager' ? 'lager' : 'koeb1', indstillinger: 'mere', udbakke: 'mere' }[navn] || navn;
     document.querySelectorAll('[data-fane]').forEach(function (b) { b.classList.toggle('til', b.getAttribute('data-fane') === fane); });
     window.scrollTo(0, 0);
     if (navn === 'hjem') tjekForbindelse();
@@ -62,6 +63,7 @@
     if (navn === 'salg') visSalg();
     if (navn === 'retro') Data.retroHentMaerker();
     if (navn === 'rk1') visRk1();
+    if (navn === 'pm') visPm();
   }
   document.addEventListener('click', function (e) {
     var g = e.target.closest('[data-gaa]');
@@ -405,17 +407,17 @@
   // Foto → beskæring → udbakke. SKU låses, når fotoet tages.
   var kameraer = {}; // visning → {ui, stop}
   var beskaerer = false;
-  async function beskaerOgSend(raa, sku, type) {
+  async function beskaerOgSend(raa, sku, type, ekstra) {
     var r = await Beskaer.aabn(raa);
     if (!r) return false;
     var jpg = Foto.beskaerTilJpg(raa, r);
     var thumb = await Foto.miniature(jpg.dataUrl);
     var uploadId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-    await Data.tilfoej(type, { sku: sku, billede: jpg.base64, uploadId: uploadId }, { sku: sku, thumb: thumb });
+    await Data.tilfoej(type, Object.assign({ sku: sku, billede: jpg.base64, uploadId: uploadId }, ekstra || {}), { sku: sku, thumb: thumb });
     return true;
   }
   // p = id-forstavelse ('k3' / 'rk2'): <p>-video, -start, -tag, -fil, -kamera-tom, -kamerainfo, -kamerafejl
-  function lavKamera(p, type, skuFn) {
+  function lavKamera(p, type, skuFn, ekstraFn) {
     var video = $(p + '-video');
     function info() {
       // Viser den opløsning, iPhonen faktisk giver live-kameraet (til test af fotokvalitet)
@@ -449,7 +451,7 @@
       try {
         var raa = Foto.tagRaa(video);
         beskaerer = true;
-        await beskaerOgSend(raa, sku, type);
+        await beskaerOgSend(raa, sku, type, ekstraFn && ekstraFn());
       } catch (e) { $(p + '-kamerafejl').textContent = e.message; }
       finally { beskaerer = false; }
     });
@@ -459,7 +461,7 @@
       beskaerer = true;
       try {
         for (var i = 0; i < filer.length; i++) {
-          try { await beskaerOgSend(await Foto.filTilRaa(filer[i]), sku, type); }
+          try { await beskaerOgSend(await Foto.filTilRaa(filer[i]), sku, type, ekstraFn && ekstraFn()); }
           catch (e) { $(p + '-kamerafejl').textContent = e.message; }
         }
       } finally { beskaerer = false; }
@@ -1055,9 +1057,162 @@
     $('rk2-info').textContent = rk2Info(findTing(rk2.sku));
   }
 
+  // ================= Playmobil (under Retro) =================
+  // Samme regler som den lilla sorteringsside: + sætter ikke kryds; når Fundet = Skal være, får ✓ grøn kant ("klar");
+  // tryk ✓ = færdig (også når der mangler dele – manglen er noten). Efter ✓ ryddes søgefeltet, og markøren står i det.
+  // "Alle sæt" er kun visning. Ændringer samles pr. del i et øjeblik og lægges så i udbakken (pmGem).
+  var pm = { saet: 'alle', filter: 'alle', pend: {}, timere: {}, redigerer: false };
+  function pmNoegle(d) { return d.saet + '|' + d.nr; }
+  function pmNorm(t) { return String(t).toLowerCase().replace(/\s+/g, ''); }
+  function pmFotoSku(saet) { return 'PM-' + (R.rens(saet) || 'SAET'); }
+  function pmNoteLinje(d) { return d.skal === null && !d.nr; }
+  function pmDele() {
+    return Data.pmDele().map(function (d) { var p = pm.pend[pmNoegle(d)]; return p ? Object.assign(d, p, { gemmer: true }) : d; });
+  }
+  function pmAendr(d, felter, ms) {
+    var k = pmNoegle(d);
+    pm.pend[k] = Object.assign(pm.pend[k] || {}, felter);
+    clearTimeout(pm.timere[k]);
+    pm.timere[k] = setTimeout(function () { pmSend(d); }, ms || 600);
+  }
+  function pmSend(d) {
+    var k = pmNoegle(d), f = pm.pend[k];
+    clearTimeout(pm.timere[k]); delete pm.timere[k];
+    if (!f) return;
+    delete pm.pend[k];
+    Data.tilfoej('pmGem', Object.assign({ r: d.r, nr: d.nr, saet: d.saet }, f), { saet: d.saet, nr: d.nr });
+  }
+  function pmSendAlt() { Data.pmDele().forEach(function (d) { if (pm.pend[pmNoegle(d)]) pmSend(d); }); }
+  document.addEventListener('visibilitychange', function () { if (document.hidden) pmSendAlt(); });
+
+  function visPm() {
+    pm.redigerer = false;
+    pmTegn();
+    if (Data.status().online !== false) Data.pmHent();
+  }
+  function pmOpdater() { if (!pm.redigerer) pmTegn(); else pmTegnStatus(); }
+  function pmTegnStatus() {
+    var dele = pmDele(), i = $('pm-info'), t = Data.pmHentet();
+    i.className = 'lille' + (Data.status().pmFejl ? ' ikke-off' : '');
+    i.textContent = Data.status().pmFejl ? 'Maskinrummet: ' + Data.status().pmFejl
+      : !dele.length ? 'Listen er ikke hentet endnu – åbn siden med net.'
+      : 'Arket "Playmobil alle sæt"' + (t ? ' · hentet ' + new Date(t).toLocaleString('da-DK', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }) : '');
+    var iSaet = dele.filter(function (d) { return (pm.saet === 'alle' || d.saet === pm.saet) && !pmNoteLinje(d); });
+    var q = pmNorm($('pm-q').value);
+    $('pm-status').textContent = iSaet.filter(function (d) { return d.ok; }).length + ' af ' + iSaet.length + ' afkrydset' + (q ? ' · ' + pmFiltrer(dele).length + ' træf' : '');
+    if (pm.saet !== 'alle') {
+      var f = Data.pmFotos(pm.saet);
+      $('pm-fototitel').textContent = 'Fotos af sæt ' + pm.saet + ' · ' + f.iDrive + ' i Drive' + (f.venter ? ', ' + f.venter + ' venter' : '');
+      tegnFotoListe($('pm-fotos'), pmFotoSku(pm.saet), 'pmUploadFoto');
+    }
+  }
+  function pmFiltrer(dele) {
+    var q = pmNorm($('pm-q').value);
+    return dele.filter(function (d) {
+      if (pm.saet !== 'alle' && d.saet !== pm.saet) return false;
+      if (pm.filter === 'mangler' && d.ok) return false;
+      if (pm.filter === 'afkrydset' && !d.ok) return false;
+      return !q || pmNorm(d.nr + d.del + d.note).indexOf(q) >= 0;
+    });
+  }
+  function pmTegnSaet(dele) {
+    var saet = []; dele.forEach(function (d) { if (saet.indexOf(d.saet) < 0) saet.push(d.saet); });
+    if (pm.saet !== 'alle' && saet.indexOf(pm.saet) < 0) pm.saet = 'alle';
+    var c = $('pm-saet'); c.innerHTML = '';
+    ['alle'].concat(saet).forEach(function (s) {
+      var b = document.createElement('button'); b.type = 'button';
+      b.textContent = s === 'alle' ? 'Alle sæt' : s;
+      b.className = s === pm.saet ? 'til' : '';
+      b.setAttribute('aria-pressed', s === pm.saet ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        if (s === pm.saet) return;
+        pmSendAlt();
+        if (kameraer.pm) kameraer.pm.stop();
+        pm.saet = s; $('pm-fotoboks').open = false; pmTegn(); window.scrollTo(0, 0);
+      });
+      c.appendChild(b);
+    });
+  }
+  function pmTegn() {
+    var alle = pmDele(), laast = pm.saet === 'alle';
+    pmTegnSaet(alle);
+    $('pm-ro').hidden = !laast;
+    $('pm-fotoboks').hidden = laast;
+    pmTegnStatus();
+    var liste = pmFiltrer(alle), q = pmNorm($('pm-q').value), c = $('pm-liste');
+    c.innerHTML = '';
+    if (!liste.length) { c.innerHTML = '<p class="hjaelp">' + (alle.length ? 'Ingen dele passer.' : '') + '</p>'; return; }
+    liste.forEach(function (d) {
+      var el = document.createElement('div');
+      var note = pmNoteLinje(d), mangler = d.fundet === null || d.fundet === undefined || note ? null : d.skal - d.fundet;
+      el.className = 'pm-del' + (d.ok ? ' done' : '') + (q ? ' soeg' : '') + (laast ? ' laast' : '');
+      el.innerHTML = '<div class="info"><div class="nr"></div><div class="navn"></div><div class="meta"></div></div>' +
+        (note ? '' : '<div class="pm-taeller"><button type="button" aria-label="En mindre">−</button><input type="number" inputmode="numeric" min="0" aria-label="Fundet"><button type="button" aria-label="En mere">+</button><span class="af"></span></div>' +
+          '<button type="button" class="pm-chk" aria-label="Færdig">✓</button>') +
+        '<input class="note" type="text" placeholder="Note …" aria-label="Note">';
+      el.querySelector('.nr').textContent = d.nr || d.saet;
+      el.querySelector('.navn').textContent = d.del;
+      el.querySelector('.meta').innerHTML = 'Sæt ' + esc(d.saet) + (d.side ? ' · ' + esc(d.side) : '') + (note ? '' : ' · skal være ' + d.skal) +
+        (mangler > 0 ? ' · <span class="miss">mangler ' + mangler + '</span>' : '') + (d.gemmer || d.ventende ? ' · gemmer …' : '');
+      var noteFelt = el.querySelector('.note');
+      noteFelt.value = d.note || '';
+      noteFelt.addEventListener('focus', function () { pm.redigerer = true; });
+      noteFelt.addEventListener('blur', function () { pm.redigerer = false; pmSend(d); pmTegn(); });
+      noteFelt.addEventListener('input', function () { pmAendr(d, { note: noteFelt.value }, 900); });
+      if (!note) {
+        var knp = el.querySelectorAll('.pm-taeller button'), tal = el.querySelector('.pm-taeller input'), chk = el.querySelector('.pm-chk');
+        tal.value = d.fundet === null || d.fundet === undefined ? '' : d.fundet;
+        el.querySelector('.af').textContent = '/ ' + d.skal;
+        chk.setAttribute('aria-pressed', d.ok ? 'true' : 'false');
+        if (!d.ok && d.fundet === d.skal) chk.classList.add('klar');
+        knp[0].addEventListener('click', function () { pmAendr(d, { fundet: Math.max(0, (d.fundet || 0) - 1) }); pmTegn(); });
+        knp[1].addEventListener('click', function () { pmAendr(d, { fundet: (d.fundet || 0) + 1 }); pmTegn(); });
+        tal.addEventListener('focus', function () { pm.redigerer = true; });
+        tal.addEventListener('blur', function () { pm.redigerer = false; pmTegn(); });
+        tal.addEventListener('input', function () { var t = tal.value.trim(); pmAendr(d, { fundet: t === '' ? null : Math.max(0, Math.floor(Number(t)) || 0) }); });
+        chk.addEventListener('click', function () {
+          var ok = !d.ok;
+          pmAendr(d, { ok: ok }, 200);
+          if (ok) { $('pm-q').value = ''; pm.redigerer = false; pmTegn(); window.scrollTo(0, 0); $('pm-q').focus(); }
+          else pmTegn();
+        });
+      }
+      if (laast) el.querySelectorAll('button, input').forEach(function (x) { x.disabled = true; });
+      c.appendChild(el);
+    });
+  }
+  $('pm-q').addEventListener('input', function () { pmTegn(); window.scrollTo(0, 0); });
+  $('pm-ryd').addEventListener('click', function () { $('pm-q').value = ''; pmTegn(); $('pm-q').focus(); });
+  document.querySelectorAll('[data-pmfilter]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      pm.filter = b.getAttribute('data-pmfilter');
+      document.querySelectorAll('[data-pmfilter]').forEach(function (x) { x.classList.toggle('til', x === b); });
+      pmTegn();
+    });
+  });
+  $('pm-fotoboks').addEventListener('toggle', function () { if (!this.open && kameraer.pm) kameraer.pm.stop(); });
+  kameraer.pm = lavKamera('pm', 'pmUploadFoto', function () { return pmFotoSku(pm.saet); }, function () { return { saet: pm.saet }; });
+  // Nyt sæt (fx "Div" = løsdele): én linje med note + fotos
+  $('pm-nyt').addEventListener('click', function () { $('pmny-navn').value = ''; $('pmny-fejl').hidden = true; $('pmny').hidden = false; $('pmny-navn').focus(); });
+  $('pmny-annuller').addEventListener('click', function () { $('pmny').hidden = true; });
+  $('pmny-gem').addEventListener('click', async function () {
+    var navn = $('pmny-navn').value.trim(), f = $('pmny-fejl');
+    f.hidden = true;
+    var fejl = !navn ? 'Skriv et navn.' : navn.indexOf('·') >= 0 ? 'Navnet må ikke indeholde "·".'
+      : Data.pmDele().some(function (d) { return d.saet.toLowerCase() === navn.toLowerCase(); }) ? 'Sættet "' + navn + '" findes allerede.' : '';
+    if (fejl) { f.textContent = fejl; f.hidden = false; return; }
+    await Data.tilfoej('pmNytSaet', { navn: navn }, { navn: navn });
+    $('pmny').hidden = true;
+    pm.saet = navn; pm.filter = 'alle';
+    document.querySelectorAll('[data-pmfilter]').forEach(function (x) { x.classList.toggle('til', x.getAttribute('data-pmfilter') === 'alle'); });
+    pmTegn();
+    toast('Sæt "' + navn + '" oprettes' + (Data.status().online ? ' …' : ' – sendes, når der er net'));
+  });
+
   // ================= Udbakke =================
   var TYPENAVN = { tilfoejDb: 'Nyt sæt i DB', opretBatch: 'Nyt køb', gemKlargoering: 'Klargøring', uploadFoto: 'Foto', registrerSalg: 'Salg', saetListet: 'Listet',
-    retroOpretKoeb: 'Retro: nyt køb', retroGemTing: 'Retro: klargøring', retroUploadFoto: 'Retro: foto' };
+    retroOpretKoeb: 'Retro: nyt køb', retroGemTing: 'Retro: klargøring', retroUploadFoto: 'Retro: foto',
+    pmGem: 'Playmobil', pmNytSaet: 'Playmobil: nyt sæt', pmUploadFoto: 'Playmobil: foto' };
   function tegnUdbakke() {
     var c = $('u-liste'); c.innerHTML = '';
     var p = Data.poster();
@@ -1067,6 +1222,9 @@
       var hvad = x.type === 'opretBatch' ? 'Batch ' + x.data.dato + ' · ' + x.data.saet.length + ' sæt · ' + B.kr(x.data.pris) + ' kr'
         : x.type === 'registrerSalg' ? x.data.koeber + ' · ' + x.data.varer.map(function (v) { return v.sku; }).join(', ')
         : x.type === 'tilfoejDb' ? x.data.setnr + ' ' + x.data.navn
+        : x.type === 'pmGem' ? x.data.saet + ' · ' + (x.data.nr || 'note')
+        : x.type === 'pmNytSaet' ? x.data.navn
+        : x.type === 'pmUploadFoto' ? 'Sæt ' + x.data.saet
         : x.type === 'retroOpretKoeb' ? 'Køb ' + x.meta.dato + ' · ' + R.udvid(x.data.ting).length + ' ting · ' + B.kr(x.data.pris) + ' kr' + (x.data.tilfoej ? ' (tilføjet)' : '')
         : x.data.sku;
       d.innerHTML = '<div class="post-top"><span class="navn">' + TYPENAVN[x.type] + '</span><span class="mono">' + esc(hvad) + '</span></div>' +
@@ -1092,9 +1250,11 @@
     if (aktiv === 'udbakke') tegnUdbakke();
     if (aktiv === 'rk1') rk1Opdater();
     if (aktiv === 'rk2') opdaterRk2();
+    if (aktiv === 'pm') pmOpdater();
   });
   Data.paaHaendelse(function (type, info) {
     if (type === 'batchGemt') toast(info.afvig ? 'Batch ' + info.dato + ' gemt – men Sheets regnede anderledes for ' + info.afvig + ' sæt. Tjek arket.' : 'Batch ' + info.dato + ' gemt i Sheets ✓');
+    if (type === 'pmSaetOprettet') toast('Sæt "' + info.navn + '" oprettet i Playmobil-arket ✓');
     if (type === 'retroKoebGemt') toast('Retro-køb ' + info.dato + ' gemt i Sheets ✓');
     if (type === 'altSendt') toast('Alt er sendt til Sheets ✓');
     if (type === 'salgGemt') toast('Salg gemt i Sheets ✓ ' + info.antal + ' vare(r)' + (info.fortjeneste !== null && info.fortjeneste !== undefined ? ' · fortjeneste ' + B.kr(info.fortjeneste) + ' kr' : ''));

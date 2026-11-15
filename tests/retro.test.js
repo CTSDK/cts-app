@@ -65,5 +65,9 @@ console.log('retroPriser (JS + Code.gs):', priser.length, 'cases OK');
 for (const [ind, ud] of [['2026-11-08', '261108'], ['261108', '261108'], ['8-11-2026', ''], ['', '']]) {
   assert.strictEqual(R.retroDato(ind), ud); assert.strictEqual(ctx.retroDato_(ind), ud);
 }
-assert.ok(/^2\.2\.\d+$/.test(ctx.VERSION), 'VERSION 2.2.x');
+assert.ok(/^2\.3\.\d+$/.test(ctx.VERSION), 'VERSION 2.3.x');
+// --- Playmobil: "sæt · side" og fotonavn (Code.gs) – fotonavn skal være det samme som appen bruger (PM- + Retro.rens) ---
+assert.deepStrictEqual(Object.assign({}, ctx.pmSaetNavn_('5142 · s.22')), { saet: '5142', side: 's.22' });
+assert.deepStrictEqual(Object.assign({}, ctx.pmSaetNavn_('Div')), { saet: 'Div', side: '' });
+for (const n of ['Div', '5142', 'Løsdele æøå']) assert.strictEqual(ctx.pmFotoNavn_(n), 'PM-' + R.rens(n));
 console.log('retro: alle tests OK');
