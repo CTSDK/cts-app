@@ -105,9 +105,12 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
   når CVR findes (betaling, handelsbetingelser, fragt, moms – skal undersøges). Senere: søgemaskine-/AI-optimering, fælles fragtaftale.
 - **Idé (diskuteres):** salg registreres automatisk ud fra eBay-mails/fakturaer – se okonomi.md.
 
-## Tilbudsovervågning (privat repo `cts-tilbud`, bygget 17-11-2026)
-Planlagt Claude-opgave 06:05 + 17:05 (dansk tid) → ntfy-push på iPhone. Formål: indkøb til videresalg, fokus "udgår snart" (≥15 %),
-ellers ≥20 %, GWP, udvalgte sæt (test: 10351). Regelbog `kriterier.md`, kilder `kilder.json`, hukommelse `historik.json`, script `hent.py`.
-Status: bygget og testet offline. **Ikke testet:** kilderne og ntfy (netværket lukket – Claude kunne ikke ændre miljøet, afvist af systemet).
-Mangler: Thomas åbner netværket + sætter NTFY_TOPIC i miljøet (README i cts-tilbud) → Claude tester kilder → filer til main → planlagt opgave → måling af forbrug.
-Kanalnavnet står aldrig i GitHub.
+## Tilbudsovervågning (privat repo `cts-tilbud`, 17-11-2026)
+Formål: indkøb til videresalg, fokus "udgår snart" (≥15 %), ellers ≥20 %, GWP, udvalgte sæt (test: 10351). Push via ntfy-appen
+(Thomas abonnerer; kanalnavnet står kun i miljøvariablen NTFY_TOPIC i Default-miljøet – aldrig i GitHub). Filer på `main`.
+- ✅ Kilder testet 17-11: Brick Fanatics RSS (hovedkilde), Brickset RSS, BR kampagnebannere. ❌ LEGO.com, Amazon.de, Proshop, Komplett,
+  PriceRunner (bot-blokering), Bilka (JavaScript). Default-miljøet har nu de 11 værter + ntfy.sh tilladt.
+- ✅ ntfy: testbesked modtaget af ntfy.sh (200). Thomas har abonneret.
+- ❌ Planlagt opgave "LEGO-tilbudsvagt" (trig_01JBoYUuS58FGg1eN1nv8bPP) oprettet fra samtalen, men kørslen fik ikke repoet med
+  (privat, ingen adgang) → **slået fra**. Prøvekørslen kostede ca. 0,09 $ (opstart alene). Løsning: Thomas opretter rutinen på claude.ai
+  med repoet `CTSDK/cts-tilbud` valgt; derefter slettes den gamle.
