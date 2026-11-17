@@ -104,3 +104,10 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
   stand, fotos, listings DE/EN) kan bruges. Forslag: trin 1 = katalog-side (opdateres automatisk fra arket, køb via link til eBay); trin 2 = egen webshop
   når CVR findes (betaling, handelsbetingelser, fragt, moms – skal undersøges). Senere: søgemaskine-/AI-optimering, fælles fragtaftale.
 - **Idé (diskuteres):** salg registreres automatisk ud fra eBay-mails/fakturaer – se okonomi.md.
+
+## Tilbudsovervågning (privat repo `cts-tilbud`, bygget 17-11-2026)
+Planlagt Claude-opgave 06:05 + 17:05 (dansk tid) → ntfy-push på iPhone. Formål: indkøb til videresalg, fokus "udgår snart" (≥15 %),
+ellers ≥20 %, GWP, udvalgte sæt (test: 10351). Regelbog `kriterier.md`, kilder `kilder.json`, hukommelse `historik.json`, script `hent.py`.
+Status: bygget og testet offline. **Ikke testet:** kilderne og ntfy (netværket lukket – Claude kunne ikke ændre miljøet, afvist af systemet).
+Mangler: Thomas åbner netværket + sætter NTFY_TOPIC i miljøet (README i cts-tilbud) → Claude tester kilder → filer til main → planlagt opgave → måling af forbrug.
+Kanalnavnet står aldrig i GitHub.
