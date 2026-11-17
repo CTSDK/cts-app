@@ -111,6 +111,9 @@ Formål: indkøb til videresalg, fokus "udgår snart" (≥15 %), ellers ≥20 %,
 - ✅ Kilder testet 17-11: Brick Fanatics RSS (hovedkilde), Brickset RSS, BR kampagnebannere. ❌ LEGO.com, Amazon.de, Proshop, Komplett,
   PriceRunner (bot-blokering), Bilka (JavaScript). Default-miljøet har nu de 11 værter + ntfy.sh tilladt.
 - ✅ ntfy: testbesked modtaget af ntfy.sh (200). Thomas har abonneret.
-- ❌ Planlagt opgave "LEGO-tilbudsvagt" (trig_01JBoYUuS58FGg1eN1nv8bPP) oprettet fra samtalen, men kørslen fik ikke repoet med
-  (privat, ingen adgang) → **slået fra**. Prøvekørslen kostede ca. 0,09 $ (opstart alene). Løsning: Thomas opretter rutinen på claude.ai
-  med repoet `CTSDK/cts-tilbud` valgt; derefter slettes den gamle.
+- ✅ Planlagt opgave **"LEGO-tilbudsvagt"** (oprettet af Thomas i Claude-appen → Planlagte; repo CTSDK/cts-tilbud, miljø Default, Sonnet, push i Claude-appen slået til).
+  Kører kl. 06:05 dansk tid. Kun Thomas kan redigere den (Planlagte → opgaven → rediger). Historik gemmes på grenen `claude/historik`
+  (planlagte opgaver må kun pushe til `claude/`-grene).
+- ✅ Første kørsel 17-11 kl. 11.53: 27 fund vurderet, 2 beskeder sendt (Insiders Weekend/udgående sæt, BR −20 %). Forbrug ca. 0,16 $ (listepris).
+- Næste: Thomas vurderer beskederne og forbruget → evt. 2. kørsel kl. 17:05; evt. fjerne ubrugte forbindelser (Gmail, Drive m.fl.) fra opgaven
+  for billigere opstart; ønskeliste-ark (ONSKELISTE_ARK_ID) når Thomas vil; kurs €→kr. i kriterier.md.
