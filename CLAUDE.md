@@ -26,6 +26,7 @@ Store, opdelelige opgaver kan sendes til hjælpe-agenter (de læser samme noter)
   hele opgaven udføres uden flere spørgsmål. Spørg ikke igen om dele af en godkendt opgave.
 - **Anbefal kun det, der virker.** Råd om programmer/apps/fremgangsmåder skal være tjekket (kilde vist) – ellers sig tydeligt "ikke tjekket".
   (08-11: Ctrl+P i Messenger gav ikke hele tråden.)
+- **Knapper og menuer skrives med de danske navne**, som Thomas ser dem (fx "Rediger", "Gem") – ikke engelske.
 - Thomas' ASUS: F5 er lysstyrke – brug **Ctrl+Shift+R** til genindlæsning.
 
 ## Arbejdsform
