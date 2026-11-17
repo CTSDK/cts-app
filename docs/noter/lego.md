@@ -114,6 +114,8 @@ Formål: indkøb til videresalg, fokus "udgår snart" (≥15 %), ellers ≥20 %,
 - ✅ Planlagt opgave **"LEGO-tilbudsvagt"** (oprettet af Thomas i Claude-appen → Planlagte; repo CTSDK/cts-tilbud, miljø Default, Sonnet, push i Claude-appen slået til).
   Kører kl. 06:05 dansk tid. Kun Thomas kan redigere den (Planlagte → opgaven → rediger). Historik gemmes på grenen `claude/historik`
   (planlagte opgaver må kun pushe til `claude/`-grene).
-- ✅ Første kørsel 17-11 kl. 11.53: 27 fund vurderet, 2 beskeder sendt (Insiders Weekend/udgående sæt, BR −20 %). Forbrug ca. 0,16 $ (listepris).
-- Næste: Thomas vurderer beskederne og forbruget → evt. 2. kørsel kl. 17:05; evt. fjerne ubrugte forbindelser (Gmail, Drive m.fl.) fra opgaven
-  for billigere opstart; ønskeliste-ark (ONSKELISTE_ARK_ID) når Thomas vil; kurs €→kr. i kriterier.md.
+- Forbrug (målt 17-11 kl. 17:05, efter forenkling til `hent.py start/slut`): 5 skridt, ca. 222.000 genlæste + 20.000 nye tokens + 470 skrevet
+  (med nye fund). Hvert skridt ≈ 45.000 genlæste tokens (fast opstart) – antal skridt er det, der tæller. Forventet uden nye fund: 3 skridt ≈ 140.000.
+  Forbindelser fjernet fra opgaven (gjorde ingen forskel). Kørsler: 06:05, 12:05, 17:05.
+- Sæt overvåges via tabellen i `kriterier.md` (12 sæt, Thomas' danske navne); kolonnen "Andre navne" udfylder Thomas selv (engelske navne, adskilt med ;).
+- Næste: Thomas vurderer beskeder/forbrug; mulig besparelse: sæt ROUTINE_PROMPT.md direkte ind som opgavens prompt (−1 skridt ≈ −45.000 tokens); ønskeliste-ark (ONSKELISTE_ARK_ID) når Thomas vil; kurs €→kr. i kriterier.md.
