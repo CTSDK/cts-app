@@ -1323,6 +1323,27 @@
       c.appendChild(b);
     });
   }
+  // Billeder af dele fra BrickLink (v24). Farve-id'er: BrickLink Color Guide, kopieret af Thomas 18-11-2026 (Modulex udeladt).
+  var BL_FARVER = {"White":1,"Very Light Gray":49,"Very Light Bluish Gray":99,"Light Gray":9,"Light Bluish Gray":86,"Dark Gray":10,"Dark Bluish Gray":85,"Black":11,"Dark Red":59,"Red":5,"Reddish Orange":167,"Dark Salmon":231,"Salmon":25,"Coral":220,"Light Salmon":26,"Sand Red":58,"Dark Brown":120,"Umber":168,"Brown":8,"Reddish Brown":88,"Light Brown":91,"Medium Brown":240,"Fabuland Brown":106,"Dark Tan":69,"Tan":2,"Light Nougat":90,"Medium Tan":241,"Nougat":28,"Medium Nougat":150,"Dark Nougat":225,"Sienna":169,"Fabuland Orange":160,"Earth Orange":29,"Dark Orange":68,"Rust":27,"Neon Orange":165,"Orange":4,"Medium Orange":31,"Light Orange":32,"Bright Light Orange":110,"Warm Yellowish Orange":172,"Very Light Orange":96,"Dark Yellow":161,"Ochre Yellow":173,"Yellow":3,"Light Yellow":33,"Bright Light Yellow":103,"Neon Yellow":236,"Lemon":171,"Neon Green":166,"Light Lime":35,"Yellowish Green":158,"Medium Lime":76,"Lime":34,"Fabuland Lime":248,"Olive Green":155,"Dark Olive Green":242,"Dark Green":80,"Green":6,"Bright Green":36,"Medium Green":37,"Light Green":38,"Sand Green":48,"Dark Turquoise":39,"Light Turquoise":40,"Aqua":41,"Light Aqua":152,"Dark Blue":63,"Blue":7,"Dark Azure":153,"Little Robots Blue":247,"Maersk Blue":72,"Medium Azure":156,"Sky Blue":87,"Medium Blue":42,"Bright Light Blue":105,"Light Blue":62,"Sand Blue":55,"Dark Royal Blue":109,"Violet":43,"Royal Blue":97,"Medium Violet":73,"Lilac":245,"Blue Violet":174,"Light Lilac":246,"Light Violet":44,"Dark Purple":89,"Purple":24,"Light Purple":93,"Magenta":71,"Medium Lavender":157,"Lavender":154,"Clikits Lavender":227,"Sand Purple":54,"Dark Pink":47,"Bright Pink":104,"Pink":23,"Rose Pink":56,"Warm Pink":175,"Medium Dark Pink":94,"Trans-Clear":12,"Trans-Brown":13,"Trans-Black":251,"Trans-Red":17,"Trans-Neon Orange":18,"Trans-Orange":98,"Trans-Light Orange":164,"Trans-Neon Yellow":121,"Trans-Yellow":19,"Trans-Neon Green":16,"Trans-Bright Green":108,"Trans-Light Green":221,"Trans-Light Bright Green":226,"Trans-Green":20,"Trans-Dark Blue":14,"Trans-Medium Blue":74,"Trans-Light Blue":15,"Trans-Aqua":113,"Trans-Light Purple":114,"Trans-Medium Purple":234,"Trans-Purple":51,"Trans-Dark Pink":50,"Trans-Pink":107,"Chrome Gold":21,"Chrome Silver":22,"Chrome Antique Brass":57,"Chrome Black":122,"Chrome Blue":52,"Chrome Green":64,"Chrome Pink":82,"Pearl White":83,"Pearl Very Light Gray":119,"Pearl Light Gray":66,"Flat Silver":95,"Bionicle Silver":239,"Pearl Dark Gray":77,"Pearl Black":244,"Pearl Light Gold":61,"Pearl Gold":115,"Reddish Gold":235,"Bionicle Gold":238,"Flat Dark Gold":81,"Reddish Copper":249,"Copper":84,"Bionicle Copper":237,"Pearl Brown":255,"Pearl Red":252,"Pearl Green":253,"Pearl Blue":254,"Pearl Sand Blue":78,"Pearl Sand Purple":243,"Satin Trans-Clear":228,"Satin Trans-Brown":229,"Satin Trans-Yellow":170,"Satin Trans-Bright Green":233,"Satin Trans-Light Blue":223,"Satin Trans-Dark Blue":232,"Satin Trans-Purple":230,"Satin Trans-Dark Pink":224,"Metallic Silver":67,"Metallic Green":70,"Metallic Gold":65,"Metallic Copper":250,"Milky White":60,"Glow In Dark White":159,"Glow In Dark Opaque":46,"Glow In Dark Trans":118,"Glitter Trans-Clear":101,"Glitter Trans-Orange":222,"Glitter Trans-Neon Green":163,"Glitter Trans-Light Blue":162,"Glitter Trans-Purple":102,"Glitter Trans-Dark Pink":100,"Speckle Silver":111,"Speckle Gold":151,"Speckle Copper":116};
+  var BL_NAVNE = Object.keys(BL_FARVER).sort(function (a, b) { return b.length - a.length; });
+  function lgBilledUrl(d) {
+    var nr = String(d.nr || '').replace(/\(inv\)$/i, '').trim();
+    if (!nr) return '';
+    if (d.type === 'Minifigur') return 'https://img.bricklink.com/ItemImage/MN/0/' + encodeURIComponent(nr) + '.png';
+    var del = String(d.del || ''), id = 0;
+    for (var i = 0; i < BL_NAVNE.length; i++) if (del.indexOf(BL_NAVNE[i] + ' ') === 0) { id = BL_FARVER[BL_NAVNE[i]]; break; }
+    return 'https://img.bricklink.com/ItemImage/PN/' + id + '/' + encodeURIComponent(nr) + '.png';
+  }
+  function lgVisStort(url, tekst) {
+    var o = document.createElement('div');
+    o.className = 'lg-stort';
+    o.setAttribute('role', 'dialog');
+    o.innerHTML = '<img alt=""><p></p><button type="button" class="knap">Luk</button>';
+    o.querySelector('img').src = url;
+    o.querySelector('p').textContent = tekst;
+    o.addEventListener('click', function () { o.remove(); });
+    document.body.appendChild(o);
+  }
   function lgTegn() {
     lgTegnSaet();
     lgTegnStatus();
@@ -1332,13 +1353,16 @@
     liste.forEach(function (d) {
       var el = document.createElement('div'), mangler = d.fundet === null || d.fundet === undefined ? null : d.skal - d.fundet;
       el.className = 'pm-del' + (d.ok ? ' done' : '') + (q ? ' soeg' : '');
-      el.innerHTML = '<div class="info"><div class="nr"></div><div class="navn"></div><div class="meta"></div></div>' +
+      el.innerHTML = '<div class="info lg-info"><button type="button" class="lg-bill" aria-label="Vis stort billede"><img alt="" loading="lazy"></button><div><div class="nr"></div><div class="navn"></div><div class="meta"></div></div></div>' +
         '<div class="pm-taeller"><button type="button" aria-label="En mindre">−</button><input type="number" inputmode="numeric" min="0" aria-label="Fundet"><button type="button" aria-label="En mere">+</button><span class="af"></span></div>' +
         '<button type="button" class="pm-chk" aria-label="Færdig">✓</button>' +
         '<div class="pm-noterad"><input class="note" type="text" placeholder="Note …" aria-label="Note">' +
         '<label class="pm-foto" aria-label="Tag foto af delen">' + KAMERA_SVG + '<span class="pm-antal" hidden></span><input type="file" accept="image/*" capture="environment" hidden></label></div>';
       el.querySelector('.nr').innerHTML = esc(d.nr) + (d.type === 'Minifigur' ? '<span class="type">Minifigur</span>' : '');
       el.querySelector('.navn').textContent = d.del;
+      var bu = lgBilledUrl(d), bk = el.querySelector('.lg-bill'), bi = bk.querySelector('img');
+      if (bu) { bi.src = bu; bi.addEventListener('error', function () { bk.classList.add('tom'); }); bk.addEventListener('click', function () { if (!bk.classList.contains('tom')) lgVisStort(bu, d.nr + ' · ' + d.del); }); }
+      else bk.classList.add('tom');
       el.querySelector('.meta').innerHTML = 'skal være ' + d.skal + (mangler > 0 ? ' · <span class="miss">mangler ' + mangler + '</span>' : '') + (d.gemmer || d.ventende ? ' · gemmer …' : '');
       var noteFelt = el.querySelector('.note'), tal = el.querySelector('.pm-taeller input'), knp = el.querySelectorAll('.pm-taeller button'), chk = el.querySelector('.pm-chk');
       noteFelt.value = d.note || '';
