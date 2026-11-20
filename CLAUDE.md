@@ -9,6 +9,7 @@ Thomas koder ikke selv: forklar i almindeligt dansk, ét trin ad gangen, med pr�
 | **Lego** | Køb, klargøring, lager, salg af LEGO. CTS-appen + regnearket *cts-app* | `docs/noter/lego.md` |
 | **Retro Design** | Salg af andre ting end LEGO (brødskærere, lamper …) + **Playmobil** (børnenes gamle sæt, sorteres og sælges samlet) | `docs/noter/retro.md` |
 | *Vejledning* | Sådan arbejder Thomas med Claude (start, afslut, hukommelse) | `docs/SAADAN.md` |
+| **CTS Web** | Hjemmeside for hele CTS (forside + LEGO / Retro Design / Copenhagen Services), repo `CTSDK/cts-web` | `docs/noter/web.md` |
 | **Økonomi** | Overordnet for hele CTS: Lego + Retro + andre udgifter (Claude, emballage, Excel …), skat | `docs/noter/okonomi.md` |
 
 Thomas skriver bare, hvad dagen handler om. Claude er hovedagent: læser hovednoten + områdets note og laver opgaven.
@@ -16,7 +17,7 @@ Store, opdelelige opgaver kan sendes til hjælpe-agenter (de læser samme noter)
 **Hjælpe-agenter til læsning/opslag** (PDF'er, mails, Sheets-opslag, gennemgang) startes med `model: "sonnet"`; kode og planlægning bruger den store model.
 
 ## Arbejdsregler (Thomas)
-- **Alle spørgsmål samlet FØR der bygges.** Ikke gæt-og-flag bagefter. Diskutér muligheder før der bygges.
+- **Byg ALDRIG før Thomas har sagt ja** (20-11: Claude startede for tidligt). **Alle spørgsmål samlet FØR der bygges.** Ikke gæt-og-flag bagefter. Diskutér muligheder før der bygges.
 - **Skeln mellem planlagt, bygget og testet.** Påstå ikke, at noget virker, før det er testet.
 - **Aldrig fakta fra hukommelsen i data** (fx sætnavn/tema/år). Kun det Thomas giver, eller et opslag hvor kilden vises.
   Uoverensstemmelse → spørg før der skrives. **Før der skrives i arket: vis præcis hvad, og vent på Thomas' ja.**
@@ -51,6 +52,7 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
 ## Næste (pr. 20-11-2026)
+00. **CTS Web (ny samtale):** prøveside af forsiden i Stone Groove-stil → Thomas' ja → byg → skærmbilleder. Skelet ligger i `CTSDK/cts-web`, ikke lagt ud. Se web.md.
 0. **Lego-sortering: app v23 + maskinrum 2.4.0, ✅ virker hos Thomas 15-11.** **App v25 (lagt ud 20-11): Lager har ny vælger "Alle købsdatoer"** (de 6 cifre fra SKU, fx 251009 → kun det køb vises) – testet i browser her,
    **ikke hos Thomas**: tjek App-version 25 under Mere og prøv vælgeren. App v24 (billeder af dele fra BrickLink, tryk = stort billede)
    er lagt ud 18-11, men **ikke testet hos Thomas** – tjek næste gang der sorteres Lego. Klargør → "Sortér dele" → Færdig → Sorteret/Komplet/Noter.
@@ -58,11 +60,12 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" (8 sæt, PlaymoDB-navne). **App v23 + maskinrum 2.4.0** (Retro → Playmobil:
    sortering, sætnavne, "+ Nyt sæt" fx Div, fotos pr. sæt og pr. del via kamera-ikon ved noten). ✅ Alt virker hos Thomas (15-11).
    Thomas sorterer videre (ca. 274/542 afkrydset) → samlet salgstekst. Lilla side virker stadig. Se retro.md.
+   Thomas 20-11: Playmobil var en engangsopgave – **måden det ligger i appen skal laves om** (tages senere, spørg Thomas hvordan).
 1. **Retro:** Thomas tester et rigtigt køb i appen (Retro → Registrér nyt køb → Klargør med fotos) → Claude tjekker arket "CTS Retro" og fotomappen.
    Derefter Retro trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Se retro.md.
 2. **Løbende bilag:** nyt i `Bilag/Indbakke` (Gmail → Gem bilag, eller direkte i Drive; samtaler via GoFullPage) → Claude laver Bilagsplan → Thomas kører Udfør bilagsplan.
 3. **Thomas, når der er tid:** Område for gamle bilag i CTS Økonomi → Bilag; 2 manglende San Martino-kvitteringer.
-4. Senere: "Salg fra eBay-PDF i appen" + kolonne Q Sporingsnr (okonomi.md); idé om hjemmeside for CTS Lego (lego.md).
+4. Senere: "Salg fra eBay-PDF i appen" + kolonne Q Sporingsnr (okonomi.md); webshop (web.md trin 4).
 5. **Ikke hastende – repoet er offentligt:** noterne (mails, id'er, bilag/skat) kan læses af alle på GitHub. Ingen nøgler/koder ligger der (tjekket 09-11),
    og alle 15 Drive-id'er er kun delt med ctsdanmark (tjekket 09-11). Plan, når Thomas vil: noter → nyt privat repo `cts-noter` (app-repo forbliver
    offentligt pga. gratis Pages) + ren historik i app-repoet. Obs: `synkNoter` henter fra offentlig GitHub-adresse (Code.gs linje 83) → skal have
@@ -76,4 +79,5 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - ✅ **CTS Økonomi** (`1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (196), Udgifter, Skat, Kontoplan, Bilagsplan. Lego-arket = priser/lager/salg.
 - ✅ **CTS Retro** (`1FQh_UuorscBSh59KYfhB4x6ufyJT5nNeRyA1renVpbc`) oprettet; ingen rigtige køb endnu.
 - ✅ Alle salg 2026 har bilagsnr (næste B169; 2025 næste B029). Frisk start: gamle regler (afregningsbilag m.m.) gælder ikke.
+- 🟡 **CTS Web:** skelet bygget + testet her, gemt i `CTSDK/cts-web` (Claude har adgang), ikke lagt ud; udseende skal laves om (web.md).
 - ✅ Noter kopieres til Drive CTS/Noter hver nat. Gmail-forbindelse virker.

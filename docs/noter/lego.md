@@ -102,7 +102,5 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
 - Køb 261028: fotos slettet 07-11 (for lav opløsning) – Thomas tager dem om med v16.
 - DB-fejl: årstal står i undertema-kolonnen for bl.a. 41711/41714.
 - **Statustælling** (senere): optælling i appen → liste over afvigelser (gamle salg med forkert SKU) → Claude retter Salg-fanen efter Thomas' ja.
-- **Idé (Thomas 08-11, ikke besluttet): hjemmeside for CTS Lego** – kun hele brugte sæt (ingen dele) som kendetegn. Data fra arket (SKU, navn, tema, år,
-  stand, fotos, listings DE/EN) kan bruges. Forslag: trin 1 = katalog-side (opdateres automatisk fra arket, køb via link til eBay); trin 2 = egen webshop
-  når CVR findes (betaling, handelsbetingelser, fragt, moms – skal undersøges). Senere: søgemaskine-/AI-optimering, fælles fragtaftale.
+- **Hjemmeside:** besluttet 20-11 – hele CTS (LEGO-afdeling = katalog over hele brugte sæt, data fra arket). Se `docs/noter/web.md`.
 - **Idé (diskuteres):** salg registreres automatisk ud fra eBay-mails/fakturaer – se okonomi.md.
