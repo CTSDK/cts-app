@@ -53,7 +53,8 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
 ## Næste (pr. 20-11-2026)
-00. **CTS Web:** siden er live (forside, LEGO-side, salgsside 75135 til €60). Næste: købsknap 75135 (eBay-link?), flere sæt, egne tema-fotos, Retro-side. Se web.md.
+00. **CTS Web:** live med 2 sæt: 75135 (€60) og **3845 Shave a Sheep (€15, ny tema-cirkel Games – lagt ud 20-11, Thomas tjekker live)**.
+   Næste: flere fotos af 3845, købsknapper (eBay-links?), flere sæt (fast måde i web.md → Teknik), egne tema-fotos, Retro-side. Se web.md.
 0. **Lego-sortering med billeder af dele: app v27 ✅ (billeder vises på iPad 20-11) + maskinrum 2.5.2** (lagt ud 20-11, Thomas har måske ikke kopieret 2.5.2 ind endnu –
    2.5.1 ✅; 2.5.2 = kun små fremdriftsbeskeder). Køb 261118 (8 sæt): Thomas sorterer i appen (Klargør → "Sortér dele" → Færdig).
    **Første rigtige "Færdig – overfør" mangler** – tjek Indkøb (Sorteret/Komplet/Noter) bagefter. Nye sæt: Thomas kopierer BrickLink-listen ind i samtalen →
@@ -81,5 +82,5 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - ✅ **CTS Økonomi** (`1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (196), Udgifter, Skat, Kontoplan, Bilagsplan. Lego-arket = priser/lager/salg.
 - ✅ **CTS Retro** (`1FQh_UuorscBSh59KYfhB4x6ufyJT5nNeRyA1renVpbc`) oprettet; ingen rigtige køb endnu.
 - ✅ Alle salg 2026 har bilagsnr (næste B169; 2025 næste B029). Frisk start: gamle regler (afregningsbilag m.m.) gælder ikke.
-- ✅ **CTS Web** live 20-11: https://ctsdk.github.io/cts-web/ (EN+DE). Forside med segl + rombe (LEGO=borg 375, Retro=lampe), LEGO-side med temaer, salgsside 75135 (€60, 9 fotos). Testet her; set af Thomas på pc. iPhone-ikon: slet og tilføj igen (web.md).
+- ✅ **CTS Web** live 20-11: https://ctsdk.github.io/cts-web/ (EN+DE). Forside med segl + rombe (LEGO=borg 375, Retro=lampe), LEGO-side med 12 temaer, salgssider 75135 (€60, 9 fotos) og 3845 (€15, 4 fotos, tema Games). Testet her før udgivelse; 3845 ikke set live endnu. iPhone-ikon: slet og tilføj igen (web.md).
 - ✅ Noter kopieres til Drive CTS/Noter hver nat. Gmail-forbindelse virker.
