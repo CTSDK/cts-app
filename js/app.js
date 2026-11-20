@@ -1349,6 +1349,7 @@
     o.className = 'lg-stort';
     o.setAttribute('role', 'dialog');
     o.innerHTML = '<img alt=""><p></p><button type="button" class="knap">Luk</button>';
+    o.querySelector('img').referrerPolicy = 'no-referrer';
     o.querySelector('img').src = url;
     o.querySelector('p').textContent = tekst;
     o.addEventListener('click', function () { o.remove(); });
@@ -1371,7 +1372,7 @@
       el.querySelector('.nr').innerHTML = esc(d.nr) + (d.type === 'Minifigur' ? '<span class="type">Minifigur</span>' : '');
       el.querySelector('.navn').textContent = d.del;
       var bu = lgBilledUrl(d), bk = el.querySelector('.lg-bill'), bi = bk.querySelector('img');
-      if (bu) { bi.src = bu; bi.addEventListener('error', function () { bk.classList.add('tom'); }); bk.addEventListener('click', function () { if (!bk.classList.contains('tom')) lgVisStort(bu, d.nr + ' · ' + d.del); }); }
+      if (bu) { bi.referrerPolicy = 'no-referrer'; bi.addEventListener('error', function () { bk.classList.add('tom'); }); bi.src = bu; bk.addEventListener('click', function () { if (!bk.classList.contains('tom')) lgVisStort(bu, d.nr + ' · ' + d.del); }); }
       else bk.classList.add('tom');
       el.querySelector('.meta').innerHTML = 'skal være ' + d.skal + (mangler > 0 ? ' · <span class="miss">mangler ' + mangler + '</span>' : '') + (d.gemmer || d.ventende ? ' · gemmer …' : '');
       var noteFelt = el.querySelector('.note'), tal = el.querySelector('.pm-taeller input'), knp = el.querySelectorAll('.pm-taeller button'), chk = el.querySelector('.pm-chk');

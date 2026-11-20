@@ -56,7 +56,8 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 00. **CTS Web:** siden er live (forside, LEGO-side, salgsside 75135 til €60). Næste: købsknap 75135 (eBay-link?), flere sæt, egne tema-fotos, Retro-side. Se web.md.
 0. **Lego-sortering: app v23 + maskinrum 2.4.0, ✅ virker hos Thomas 15-11.** **App v25 (lagt ud 20-11): Lager har ny vælger "Alle købsdatoer"** (de 6 cifre fra SKU, fx 251009 → kun det køb vises) – testet i browser her,
    **ikke hos Thomas**: tjek App-version 25 under Mere og prøv vælgeren. App v24 (billeder af dele fra BrickLink, tryk = stort billede)
-   er lagt ud 18-11, men **ikke testet hos Thomas** – tjek næste gang der sorteres Lego. Klargør → "Sortér dele" → Færdig → Sorteret/Komplet/Noter.
+   viste **kun tomme firkanter** hos Thomas (20-11). **App v26** (lagt ud 20-11) henter billederne uden referrer – **ikke testet**: Thomas åbner 3845 i Sortér dele.
+   Stadig tomt → forslag om at gemme billederne pr. sæt i Drive (byg intet før ja). Farve-id'erne er tjekket og rigtige. Klargør → "Sortér dele" → Færdig → Sorteret/Komplet/Noter.
    Første rigtige "Færdig – overfør" mangler (tjek Indkøb bagefter). Nye sæt kræver ren liste (BrickLink → List → kopiér ind i samtalen). Se lego.md → Sortering.
 0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" (8 sæt, PlaymoDB-navne). **App v23 + maskinrum 2.4.0** (Retro → Playmobil:
    sortering, sætnavne, "+ Nyt sæt" fx Div, fotos pr. sæt og pr. del via kamera-ikon ved noten). ✅ Alt virker hos Thomas (15-11).
