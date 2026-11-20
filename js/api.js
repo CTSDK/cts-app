@@ -375,6 +375,12 @@
         r.sorteret = true; r.komplet = komplet;
         genberegn(s); skriv(s); return r;
       },
+      // Billeder af dele (2.5.0): i testtilstand findes alle billeder undtagen dem, der starter med "3005" (så tom firkant kan testes)
+      lgBilleder: function (d) {
+        var res = {}; (d.navne || []).slice(0, 60).forEach(function (n) {
+          if (!/^3005-/.test(n)) res[n] = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        }); return { billeder: res };
+      },
       lgUploadFoto: function (d) {
         var s = laes(), g = lgL(s);
         if (!d.billede) throw srv('Intet billede.');

@@ -7,7 +7,7 @@ Status pr. 20-11-2026: app v26 (lagt ud 20-11 aften, ikke testet hos Thomas; v25
   Hjemmeskærms-app på iPhone (iOS 27.2). ✅ Også installeret og testet 20-11 på **iPad** (Safari → Føj til hjemmeskærm) og **computer**
   (ASUS, Chrome/Edge → Installér): virker uden ny kode; første åbning på ny enhed skal hente alt, før Lager virker. Bredt layout ikke nødvendigt
   (Thomas 20-11). Find computer-appen igen (ikke tjekket – Googles hjælpeside kunne ikke åbnes): Windows-knap → skriv CTS, eller chrome://apps; højreklik på ikonet → Fastgør til proceslinjen. Fotos tages kun med telefonen; computeren bruges til almindeligt arbejde. Offline: service worker (`sw.js`), lokal kopi + udbakke i IndexedDB (`js/lokal.js`, `js/data.js`).
-  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v26, lagt ud 20-11: BrickLink-billeder hentes uden referrer – i v24/v25 var ALLE billeder tomme på Thomas' iPad (3845, skærmbillede 20-11); formodet årsag: BrickLink afviser billeder vist på andres sider – ikke bekræftet, ikke testet hos Thomas. Virker v26 ikke → billeder skal hentes én gang og gemmes i Drive (ny opgave, forslag før bygning); v25, lagt ud 20-11: købsdato-vælger i Lager – ikke testet hos Thomas; v24, lagt ud 18-11: billeder af dele fra BrickLink i Lego-sortering, tryk = stort billede – ikke testet hos Thomas; v23 ✅ 15-11; versionen står nederst under Mere).
+  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v27 bygget 20-11, ikke lagt ud: billeder fra mappen "Billeder af dele" – kræver maskinrum 2.5.0; v26, lagt ud 20-11: BrickLink-billeder hentes uden referrer – i v24/v25 var ALLE billeder tomme på Thomas' iPad (3845, skærmbillede 20-11); formodet årsag: BrickLink afviser billeder vist på andres sider – ikke bekræftet, ikke testet hos Thomas. Virker v26 ikke → billeder skal hentes én gang og gemmes i Drive (ny opgave, forslag før bygning); v25, lagt ud 20-11: købsdato-vælger i Lager – ikke testet hos Thomas; v24, lagt ud 18-11: billeder af dele fra BrickLink i Lego-sortering, tryk = stort billede – ikke testet hos Thomas; v23 ✅ 15-11; versionen står nederst under Mere).
 - **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.4.0**, lagt ud 15-11 – Thomas kopierer ind; 2.3.x bekræftet hos Thomas; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
   Webapp "Udfør som: Mig", adgang "Alle"; alle kald kræver API-nøgle (Script Properties).
 - **Faste kodetrin (altid sådan):** (1) åbn https://raw.githubusercontent.com/CTSDK/cts-app/main/apps-script/Code.gs, (2) Ctrl+Shift+R og tjek versionen,
@@ -76,14 +76,31 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
     8079 Shadow Snapper `13sMA5n6K20A9XC9FlnwLk5-k6YLnYuIv8Uol0Gn5B2Y` · 70745 Anacondrai Crusher `1NKn-0WWkCHafOxMi67QD9Z5hNiOuHzeeQcpTKv205P0` ·
     3845 Wild Wool / Shave a Sheep `1HSE8LtN762lNHoR7PljWBViwkq2Kn8tD9yEPSnBLNHo` · 70783 Protector of Fire `1AUCc2siYoxLYSu0uleSp4QusVJLib8hbZ5V_c_9x6U8` ·
     70731 Jay Walker One `12Bm1ExD1QlQCfQkylJIU4Cp6yb8Is5wxlnQS9TlqPdk`.
-  - **Fra 18-11 har listerne 2 ekstra kolonner:** E "BL farve-id" (tal) og F "Billede" (én formel i F2: `IMAGE` fra img.bricklink.com, PN/<farve-id>/<nr>.png,
-    minifigurer MN/0/<nr>.png; arkene er dansk – formler bruger `;`). Maskinrummet læser kun A–D. Billederne i arket vises først, når Thomas
-    har klikket **"Tillad adgang"** én gang pr. ark på computeren (ikke gjort endnu). "(inv)" fjernes fra numre; mærkatark er dele (farve 0).
+  - **Kolonner E og F (fra 20-11):** E "BL farve-id" (tal) · F "Billede (Rebrickable)" = kort billedadresse, fx `parts/elements/306901.jpg`
+    eller `sets/fig-003064/108485.jpg` (maskinrummet sætter `https://cdn.rebrickable.com/media/` foran). Maskinrummet læser A–D til sortering og A, D, E, F til billeder.
+    "(inv)" fjernes fra numre; mærkatark er dele (farve 0). (IMAGE-formlen fra 18-11 er fjernet.)
+- **Billeder af dele (aftalt med Thomas 20-11; app v27 + maskinrum 2.5.0 bygget 20-11, IKKE lagt ud/testet hos Thomas endnu):**
+  - Én fælles mappe `CTS/Lego/Sorteringslister/Billeder af dele/` (oprettes af maskinrummet), ét billede pr. del og farve: `<item no>-<BL farve-id>.jpg/png`,
+    minifigurer `<nr>-MN.jpg`. Samme del i flere sæt = ét billede (ingen dubletter). Thomas tager ikke selv fotos af dele.
+  - **Claude finder billederne, når en ny sorteringsliste lægges ind** (Thomas' krav) og skriver adressen i kolonne F. Kilde = **Rebrickable**
+    (BrickLink var nede 20-11; img.bricklink.com afviser/omdirigerer). Netværk: rebrickable.com, cdn.rebrickable.com, img.bricklink.com er tilladt i
+    miljøet "Default" (20-11), og Rebrickable-API-nøglen ligger som netværkshemmelighed (Thomas, 20-11) – bruges automatisk.
+  - Fremgangsmåde (scripts i scratchpad forsvinder – gør sådan igen): BL farve-id → Rebrickable farve via API `colors/` (external_ids BrickLink);
+    BL item no → Rebrickable del via API `parts/?bricklink_id=<nr>`; billede: 1) `parts/elements/<element_id>.jpg` (element_id fra
+    `cdn.rebrickable.com/media/downloads/elements.csv.gz`), 2) `parts/ldraw/<rb-farve>/<del>.png`, 3) API `parts/<del>/colors/<farve>/`,
+    4) samme del i anden farve (API `parts/<del>/`). Minifigurer: API `sets/<setnr>-1/minifigs/` og navnematch. Tjek hver adresse (HTTP 200).
+    Rebrickable tillader ca. 1 API-kald/sek.
+  - 20-11 resultat for de 8 sæt: 711 af 720 dele med billede i rigtig farve, 3 i anden farve (58176 Trans-Bright Green/Trans-Red, 75135-mærkatark),
+    tomme: 6 mærkatark + 44567u. Minifigurer: 13 af 20 (de 7 Cars-figurer i 8639 har intet billede hos Rebrickable).
+  - Maskinrum 2.5.0 henter manglende billeder til mappen: hver nat sammen med noterne (`synkNoter`), når et sæt startes i "Sortér dele" (højst 40 sek.)
+    og via menuen **CTS → Hent billeder af Lego-dele**. Ny API-handling `lgBilleder` sender billederne til appen.
+  - App v27: "Sortér dele" viser billedet fra mappen (navn beregnes af item no + farvenavn via `BL_FARVER`), gemmer det på enheden (virker uden net).
+    Ingen billeder hentes direkte fra BrickLink længere. Testet i browser med falske billeder + maskinrumskoden med simuleret Drive.
+    **Ikke testet:** at Googles servere må hente fra cdn.rebrickable.com (ses første gang hos Thomas).
 - **Farvenumre (BrickLink):** kilde = BrickLinks Color Guide, kopieret af Thomas 18-11 (176 farver, Modulex udeladt). Tabellen ligger i appen
-  (`BL_FARVER` i js/app.js), så appen selv finder billedet ud fra item no + farvenavnet i beskrivelsen. Testet af Thomas 18-11: billedadresser for del,
-  minifigur, mærkatark og del med tryk virker. Nye sæt kræver derfor kun BrickLink-listen (List → kopiér ind i samtalen).
+  (`BL_FARVER` i js/app.js) og bruges til billednavnet. Nye sæt kræver kun BrickLink-listen (List → kopiér ind i samtalen).
 - **Fast måde at hente en liste (testet 15-11 på computer):** BrickLink → sættets Inventory → klik **List** → Ctrl+A, Ctrl+C → indsæt i samtalen.
-  Claude laver den rene liste. Ikke "Udskriv til PDF" (bliver billeder). Rebrickable/BrickLink kan ikke åbnes fra sessionen.
+  Claude laver den rene liste og finder billederne (se ovenfor). Ikke "Udskriv til PDF" (bliver billeder).
 - **Talformat:** item-numre skrives med apostrof (tekst), ellers kan Sheets lave dem om (sket med Playmobil: "30 03 0600" blev en dato).
 - **I appen (v23 + maskinrum 2.4.0, bygget 15-11):** Nyt køb / Lager → **Klargør** → knap **"Sortér dele"** (viser status: ikke startet /
   x af y / sorteret ✓ / ingen liste). Første tryk kopierer sættets rene liste ind i købets ark **"<købsdato> Sortering"** i

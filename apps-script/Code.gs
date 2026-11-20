@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '2.4.0';
+var VERSION = '2.5.0';
 
 // ---------- Faner ----------
 var FANE = {
@@ -66,6 +66,7 @@ function onOpen() {
     .addItem('Lav ny API-nøgle', 'nyNoegle')
     .addSeparator()
     .addItem('Kopiér noter til Drive (og hver nat)', 'synkNoterMenu')
+    .addItem('Hent billeder af Lego-dele', 'lgHentBillederMenu')
     .addSeparator()
     .addItem('Gem bilag fra Gmail (fragt + andre)', 'gemFragtbilagMenu')
     .addItem('Udfør bilagsplan', 'udfoerBilagsplanMenu')
@@ -95,6 +96,9 @@ function synkNoter() {
       if (f.getBlob().getDataAsString('UTF-8') !== tekst) { f.setContent(tekst); res.push(n[1] + ': opdateret'); } else res.push(n[1] + ': uændret');
     } else { mappe.createFile(n[1], tekst, 'text/markdown'); res.push(n[1] + ': oprettet'); }
   });
+  // Billeder af Lego-dele hentes samtidig (2.5.0)
+  try { var b = lgHentBilleder_(); res.push('Billeder af dele: ' + b.hentet + ' hentet' + (b.mangler ? ', ' + b.mangler + ' mangler' : '') + (b.fejl.length ? ', ' + b.fejl.length + ' fejl' : '')); }
+  catch (e) { res.push('Billeder af dele: fejl – ' + e.message); }
   return res;
 }
 function synkNoterMenu() {
@@ -1835,7 +1839,8 @@ var HANDLINGER = {
   lgStart: function (d) { return medLaas_(function () { return lgStart_(d); }); },
   lgGem: function (d) { return medLaas_(function () { return lgGem_(d); }); },
   lgFaerdig: function (d) { return medLaas_(function () { return lgFaerdig_(d); }); },
-  lgUploadFoto: function (d) { return medLaas_(function () { return lgUploadFoto_(d); }); }
+  lgUploadFoto: function (d) { return medLaas_(function () { return lgUploadFoto_(d); }); },
+  lgBilleder: function (d) { return lgBilleder_(d); }
 };
 
 // ======================================================================
@@ -3048,6 +3053,7 @@ function lgStart_(d) {
     a.sh.getRange(start, 6, rk.length, 1).insertCheckboxes();
     SpreadsheetApp.flush();
   }
+  try { lgHentBilleder_(s.setnr, 40 * 1000); } catch (e) { /* billeder er ikke kritiske – tages i nat */ }
   return lgHent_(s.dato);
 }
 function lgFind_(sh, d) {
@@ -3111,6 +3117,65 @@ function lgFaerdig_(d) {
   return res;
 }
 // d: {sku, nr, del, billede, uploadId}
+// ---------- Billeder af dele (2.5.0) ----------
+// Fælles mappe CTS/Lego/Sorteringslister/Billeder af dele: ét billede pr. del og farve, navn "<item no>-<BL farve-id>.<ext>",
+// minifigurer "<nr>-MN.<ext>". Kilde-adressen (Rebrickable, kort form fx "parts/elements/306901.jpg") skriver Claude i kolonne F i de rene lister; maskinrummet henter
+// kun de billeder, der mangler (hver nat sammen med noterne, når et sæt startes i sorteringen, og via menuen).
+var LG_BILLED_MAPPE = 'Billeder af dele', LG_BILLED_KILDE = 'https://cdn.rebrickable.com/media/';
+function lgBilledMappe_() {
+  var rod = lgListeMappe_(), it = rod.getFoldersByName(LG_BILLED_MAPPE);
+  return it.hasNext() ? it.next() : rod.createFolder(LG_BILLED_MAPPE);
+}
+function lgBilledNavn_(nr, type, farveId) {
+  return String(nr).replace(/\(inv\)$/i, '').trim() + '-' + (type === 'Minifigur' ? 'MN' : String(farveId === '' || farveId == null ? 0 : farveId));
+}
+function lgBilledFiler_(mappe) {
+  var res = {}, it = mappe.getFiles();
+  while (it.hasNext()) { var f = it.next(), n = f.getName().replace(/\.[a-z]+$/i, ''); if (!res[n]) res[n] = f; }
+  return res;
+}
+// setnr: kun dette sæt (ellers alle rene lister). Stopper pænt før Googles tidsgrænse; resten tages næste gang.
+function lgHentBilleder_(setnr, maxMs) {
+  var start = Date.now(), mappe = lgBilledMappe_(), findes = lgBilledFiler_(mappe), oversigt = lgListeOversigt_(), mangler = [], set = {};
+  Object.keys(oversigt).forEach(function (nr) {
+    if (setnr && nr !== String(setnr).replace(/-1$/, '')) return;
+    var ss = SpreadsheetApp.openById(oversigt[nr].id), sh = ss.getSheetByName('Liste') || ss.getSheets()[0];
+    if (sh.getLastRow() < 2 || sh.getLastColumn() < 6) return;
+    sh.getRange(2, 1, sh.getLastRow() - 1, 6).getDisplayValues().forEach(function (r) {
+      var url = String(r[5]).trim(), navn = lgBilledNavn_(r[0], String(r[3]).trim(), String(r[4]).trim());
+      if (url && !/^https:\/\//.test(url)) url = LG_BILLED_KILDE + url.replace(/^\/+/, '');   // kort form: "parts/elements/306901.jpg"
+      if (!/^https:\/\//.test(url) || !String(r[0]).trim() || findes[navn] || set[navn]) return;
+      set[navn] = true; mangler.push({ navn: navn, url: url });
+    });
+  });
+  var hentet = 0, fejl = [];
+  for (var i = 0; i < mangler.length; i += 25) {
+    if (Date.now() - start > (maxMs || 4.5 * 60 * 1000)) break;
+    var bid = mangler.slice(i, i + 25);
+    var svar = UrlFetchApp.fetchAll(bid.map(function (m) { return { url: m.url, muteHttpExceptions: true }; }));
+    svar.forEach(function (r, j) {
+      if (r.getResponseCode() !== 200) { fejl.push(bid[j].navn + ' (' + r.getResponseCode() + ')'); return; }
+      var ext = (/\.(png|jpe?g|gif|webp)(\?|$)/i.exec(bid[j].url) || [0, 'jpg'])[1].toLowerCase();
+      mappe.createFile(r.getBlob().setName(bid[j].navn + '.' + ext)); hentet++;
+    });
+  }
+  return { hentet: hentet, mangler: Math.max(0, mangler.length - hentet - fejl.length), fejl: fejl };
+}
+function lgHentBillederMenu() {
+  var r = lgHentBilleder_(), ui = SpreadsheetApp.getUi();
+  ui.alert('Billeder af dele', 'Hentet: ' + r.hentet + '\nMangler stadig (tages næste gang): ' + r.mangler +
+    (r.fejl.length ? '\nKunne ikke hentes: ' + r.fejl.length + ' (' + r.fejl.slice(0, 10).join(', ') + ')' : ''), ui.ButtonSet.OK);
+}
+// Til appen: d.navne = ["3004-11", ...] → { "3004-11": "data:image/png;base64,..." } for dem, der findes (højst 60 pr. kald)
+function lgBilleder_(d) {
+  var navne = (d.navne || []).slice(0, 60).map(String), filer = lgBilledFiler_(lgBilledMappe_()), res = {};
+  navne.forEach(function (n) {
+    var f = filer[n]; if (!f) return;
+    var b = f.getBlob(); res[n] = 'data:' + (b.getContentType() || 'image/jpeg') + ';base64,' + Utilities.base64Encode(b.getBytes());
+  });
+  return { billeder: res };
+}
+
 function lgUploadFoto_(d) {
   if (!d.billede) throw fejl_('Intet billede.');
   var f = findRaekke_(String(d.sku || '')), s = tilSaet_(f.r), a = lgArk_(s.dato, false);
