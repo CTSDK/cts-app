@@ -679,6 +679,7 @@
   });
   $('l-soeg').addEventListener('input', tegnLager);
   $('l-tema').addEventListener('change', tegnLager);
+  $('l-dato').addEventListener('change', tegnLager);
   document.querySelectorAll('[data-filter]').forEach(function (b) {
     b.addEventListener('click', function () {
       filter = b.getAttribute('data-filter');
@@ -706,8 +707,17 @@
     if (valgt && !antal[valgt]) temaer.push(valgt);
     sel.innerHTML = '<option value="">Alle temaer (' + status.length + ')</option>' + temaer.map(function (t) { return '<option value="' + esc(t) + '">' + esc(t) + ' (' + (antal[t] || 0) + ')</option>'; }).join('');
     sel.value = valgt;
+    // Købsdato-feltet (de 6 cifre i SKU'en): købsdatoer med sæt i det valgte filter og tema, nyeste først
+    var iTema = status.filter(function (s) { return !valgt || s.tema === valgt; });
+    var dAntal = {}; iTema.forEach(function (s) { var d = String(s.dato); dAntal[d] = (dAntal[d] || 0) + 1; });
+    var dSel = $('l-dato'), dValgt = dSel.value;
+    var datoer = Object.keys(dAntal).sort(function (a, b) { return (a === '250000') - (b === '250000') || (a < b ? 1 : a > b ? -1 : 0); });
+    if (dValgt && !dAntal[dValgt]) datoer.push(dValgt);
+    dSel.innerHTML = '<option value="">Alle købsdatoer (' + iTema.length + ')</option>' + datoer.map(function (d) { return '<option value="' + esc(d) + '">' + esc(d) + ' (' + (dAntal[d] || 0) + ')</option>'; }).join('');
+    dSel.value = dValgt;
     var vis = status.filter(function (s) {
       if (valgt && s.tema !== valgt) return false;
+      if (dValgt && String(s.dato) !== dValgt) return false;
       if (!q) return true;
       return (s.sku + ' ' + s.setnr + ' ' + s.navn + ' ' + s.tema).toLowerCase().indexOf(q) >= 0;
     });

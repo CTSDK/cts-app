@@ -133,6 +133,15 @@ fs.mkdirSync(UD, { recursive: true });
   const raekkefoelge = await page.$$eval('.lager-post .mono', e => e.map(x => x.textContent.split('-')[1]));
   assert.deepStrictEqual(raekkefoelge, ['10271', '10295', '41711', '41714'], 'lager i nummerorden');
   assert.ok(await page.locator('.fanebar [data-fane="lager"].til').count() === 1, 'Lager-fanen er markeret');
+  // købsdato-feltet: de 6 cifre fra SKU'en med antal
+  const datoer = await page.$$eval('#l-dato option', e => e.map(x => x.textContent));
+  assert.ok(datoer[0].startsWith('Alle købsdatoer'), 'første valg er alle');
+  assert.ok(datoer.includes('261028 (4)'), 'købsdato 261028 med 4 sæt: ' + datoer.join(' | '));
+  await page.selectOption('#l-dato', '261028');
+  assert.strictEqual(await page.locator('.lager-post').count(), 4);
+  assert.ok((await page.$$eval('.lager-post .mono', e => e.map(x => x.textContent))).every(t => t.startsWith('261028')));
+  await skud('6b-lager-dato');
+  await page.selectOption('#l-dato', '');
   await skud('6-lager');
   // menubjælken: Mere → Indstillinger → tilbage til Mere
   await page.click('.fanebar [data-fane="mere"]');

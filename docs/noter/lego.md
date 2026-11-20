@@ -42,7 +42,7 @@ Nyt køb (3 sider) + købsprisfordeling · klargøring med live-kamera + fri bes
 solgte sæt skjult · store køb (>12 sæt) med søgefelt · offline + udbakke · import fra Excel (5232/5232) · listings (Google Doc pr. køb + Kopiér) ·
 Registrér salg (rigtigt salg 251009-6041) · Tilføj sæt og Ret i et køb · Tilføj sæt til DB (10367) · menubjælke · logo og app-ikon.
 
-**Ikke testet hos Thomas endnu:** **Fjern** et sæt fra et køb.
+**Ikke testet hos Thomas endnu:** **Fjern** et sæt fra et køb · **Lager: købsdato-vælger** (app v25, 20-11: vælg de 6 cifre fra SKU, fx 261028 → kun det køb vises; nyeste øverst, 250000 nederst).
 
 ## Regler og beslutninger (Thomas)
 - **Købspriser er dynamiske** – ingen låsning, heller ikke ved salg. Tages op igen, når CTS får CVR-nummer.
