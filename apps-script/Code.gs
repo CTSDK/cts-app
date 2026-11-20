@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '2.5.1';
+var VERSION = '2.5.2';
 
 // ---------- Faner ----------
 var FANE = {
@@ -3149,13 +3149,15 @@ function lgBilledFiler_(mappe, ryd) {
 }
 // setnr: kun dette sæt (ellers alle rene lister). Stopper pænt før Googles tidsgrænse; resten tages næste gang.
 // Kun én kørsel ad gangen (2.5.1) – to samtidige kørsler gav dubletter 20-11.
-function lgHentBilleder_(setnr, maxMs) {
+function lgHentBilleder_(setnr, maxMs, fremdrift) {
   var props = PropertiesService.getScriptProperties(), igang = Number(props.getProperty('LG_BILLEDER_IGANG')) || 0;
   if (Date.now() - igang < 6 * 60 * 1000) return { hentet: 0, mangler: 0, fejl: [], dubletter: 0, fejlbilleder: 0, optaget: true };
   props.setProperty('LG_BILLEDER_IGANG', String(Date.now()));
-  try { return lgHentBillederKoer_(setnr, maxMs); } finally { props.deleteProperty('LG_BILLEDER_IGANG'); }
+  try { return lgHentBillederKoer_(setnr, maxMs, fremdrift); } finally { props.deleteProperty('LG_BILLEDER_IGANG'); }
 }
-function lgHentBillederKoer_(setnr, maxMs) {
+function lgHentBillederKoer_(setnr, maxMs, fremdrift) {
+  var vis = fremdrift || function () {};
+  vis('Rydder op og finder manglende billeder …');
   var ryd = { dubletter: 0, fejlbilleder: 0 };
   var start = Date.now(), mappe = lgBilledMappe_(), findes = lgBilledFiler_(mappe, ryd), oversigt = lgListeOversigt_(), mangler = [], set = {};
   Object.keys(oversigt).forEach(function (nr) {
@@ -3170,8 +3172,10 @@ function lgHentBillederKoer_(setnr, maxMs) {
     });
   });
   var hentet = 0, fejl = [];
+  if (!mangler.length) vis('Ingen billeder mangler.');
   for (var i = 0; i < mangler.length; i += 25) {
     if (Date.now() - start > (maxMs || 4.5 * 60 * 1000)) break;
+    vis('Henter billeder af dele: ' + i + ' af ' + mangler.length + ' …');
     var bid = mangler.slice(i, i + 25);
     var svar = UrlFetchApp.fetchAll(bid.map(function (m) { return { url: m.url, muteHttpExceptions: true }; }));
     svar.forEach(function (r, j) {
@@ -3184,12 +3188,16 @@ function lgHentBillederKoer_(setnr, maxMs) {
   }
   return { hentet: hentet, mangler: Math.max(0, mangler.length - hentet - fejl.length), fejl: fejl, dubletter: ryd.dubletter, fejlbilleder: ryd.fejlbilleder };
 }
+// Menu (2.5.2): små beskeder nederst til højre undervejs og til sidst – ingen OK-boks
 function lgHentBillederMenu() {
-  var r = lgHentBilleder_(), ui = SpreadsheetApp.getUi();
-  if (r.optaget) { ui.alert('Billeder af dele', 'Maskinrummet henter allerede billeder lige nu. Prøv igen om et par minutter.', ui.ButtonSet.OK); return; }
-  ui.alert('Billeder af dele', 'Hentet: ' + r.hentet + '\nMangler stadig (tages næste gang): ' + r.mangler +
-    (r.dubletter || r.fejlbilleder ? '\nRyddet op: ' + r.dubletter + ' dubletter, ' + r.fejlbilleder + ' filer der ikke var billeder' : '') +
-    (r.fejl.length ? '\nKunne ikke hentes: ' + r.fejl.length + ' (' + r.fejl.slice(0, 10).join(', ') + ')' : ''), ui.ButtonSet.OK);
+  var ss = SpreadsheetApp.getActive(), titel = 'Billeder af dele';
+  var r = lgHentBilleder_(null, null, function (t) { ss.toast(t, titel, 60); });
+  if (r.optaget) { ss.toast('Maskinrummet henter allerede billeder lige nu. Prøv igen om et par minutter.', titel, 30); return; }
+  var dele = ['Færdig: ' + r.hentet + ' hentet'];
+  if (r.mangler) dele.push(r.mangler + ' mangler (tages i nat eller næste gang)');
+  if (r.dubletter || r.fejlbilleder) dele.push('ryddet ' + r.dubletter + ' dubletter og ' + r.fejlbilleder + ' fejlbilleder');
+  if (r.fejl.length) dele.push(r.fejl.length + ' kunne ikke hentes (' + r.fejl.slice(0, 5).join(', ') + ')');
+  ss.toast(dele.join(' · '), titel, 30);
 }
 // Til appen: d.navne = ["3004-11", ...] → { "3004-11": "data:image/png;base64,..." } for dem, der findes (højst 60 pr. kald)
 function lgBilleder_(d) {
