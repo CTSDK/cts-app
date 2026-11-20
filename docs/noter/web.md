@@ -1,51 +1,58 @@
 # Område: CTS Web (hjemmeside)
 
-Status pr. 20-11-2026: **skelet bygget og testet her (ikke hos Thomas), gemt på GitHub, IKKE lagt ud** (Pages ikke slået til).
-Udseendet skal laves om til Stone Groove-stil (godkendt retning, se nedenfor). **Byg intet før Thomas har sagt ja** (Thomas 20-11: "spørg altid og start aldrig før der er sagt ja").
+Status pr. 20-11-2026 (aften): **live på https://ctsdk.github.io/cts-web/** (EN; tysk under `/de/`). Seneste udgivelse grøn.
+Testet her (computer + iPhone-bredde, ingen døde links, klikvej forside → LEGO → Star Wars → 75135 på EN og DE).
+Thomas har set siden på pc. iPhone-hjemmeskærmsikon viste gammel udgave → slet ikon og tilføj igen fra Safari (ikke bekræftet virker).
 
-## Hvad siden er
-- Hjemmeside for hele CTS: **forside (landing page) med tre døre**: **LEGO®**, **Retro Design** (Raadvad, brødskærere, renoverede lamper, møbler), **Copenhagen Services** (kun billede + "coming soon" indtil videre).
-- **Engelsk** hovedsprog, **tysk** under `/de/` (Claude oversætter; Astros indbyggede i18n, `prefixDefaultLocale: false`). Flere sprog kan tilføjes.
-- Kontakt: står "CTS mail – coming soon" (Thomas vil ikke vise mailen endnu).
-- Ingen sporing/cookies/Google; skrifter ligger på siden selv (fontsource). LEGO®-varemærkelinje i bunden, ingen LEGO-logo (juridisk ikke tjekket).
+## Regler for webarbejdet (Thomas 20-11)
+- **Byg intet før Thomas har sagt ja. Læg intet ud (push til `main`) før Thomas har sagt "læg det ud".** Arbejd på arbejdsgrenen indtil da.
+- **Gør præcis det, der bedes om.** "Fjern teksten bread slicers" = kun de ord, ikke hele teksten (fejl 20-11).
+- Eksempelsider giver **stil**, ikke indhold (fejl 20-11: Claude lavede en "vinylplade" ud fra Stone Groove).
+  "Layout som det første" = **opbygningen** (segl, velkomst, tre afdelinger), ikke den gamle stil (fejl 20-11).
+- **Ingen LEGO.com-billeder/ikoner** (varemærke/ophavsret, juridisk ikke tjekket). Kun Thomas' egne fotos.
+- **eBay-salgsfotos må ikke bruges som designbilleder** (forside/ikoner) – kun i galleriet for det sæt, de viser.
+- Fotos gøres mindre og EXIF/GPS fjernes, før de lægges i `public/img/`.
+- Skærmbilleder sendes fra computer + iPhone. Symmetri på forsiden måles (Playwright), ikke gættes.
 
-## Teknik (bygget, tjekket mod Astros egen vejledning hentet fra github.com/withastro/docs)
-- Repo **CTSDK/cts-web** (offentligt, adskilt fra appen). Claude har push-adgang (Thomas gav den 20-11). Gren `main`.
-- **Astro 7.4.13**, `site: https://ctsdk.github.io`, `base: /cts-web` → adresse **https://ctsdk.github.io/cts-web/** (eget domæne senere).
-- Udgivelse: `.github/workflows/deploy.yml` (withastro/action@v6 + actions/deploy-pages@v5). Kører ved hver push til main;
-  fejler indtil Pages er slået til (forventet – Thomas kan ignorere fejl-mailen).
-- Tekster: `src/i18n/ui.ts`. Farver/skrift: `src/styles/global.css`. Sider: `src/components/views/` + ruter i `src/pages/` og `src/pages/de/`.
-- Logo: seglet `logo-segl.png` (kopieret fra appens `icons/`).
-- Test (her): 10 sider bygget, ingen døde links, ingen eksterne kald, passer i iPhone-bredde. Nuværende udseende = første bud (creme, butiksdøre) – erstattes.
-- Ikke muligt herfra: docs.astro.build og Thomas' eksempelsider er blokeret → Thomas sender skærmbilleder i samtalen (virker).
+## Sådan ser siden ud NU
+- **Stil:** næsten hvid baggrund, marineblå menubjælke + bund med farvestriber (blå/sennep/rød/orange), Anton (overskrifter),
+  Oswald (etiketter), Courier Prime (brødtekst), Playfair Display ("Welcome to C T S."). Skrifter ligger på siden selv.
+- **Forside:** magasinlinje øverst ("Copenhagen · Denmark ——— Issue No. 01 · 2026"); seglet (400 px) med to fede tekstfelter på hver side
+  ("About CTS · N°01 – A small Danish business…" / "Found · Restored · Passed on – We find them…").
+  Under: symmetrisk rombe (370 px fra midten alle veje): **LEGO** venstre, **Retro Design** højre, "Welcome to C T S." + farvestriber i midten,
+  **Copenhagen Services** nederst. Runde billedvinduer med hvid "+"-knap:
+  LEGO = Thomas' foto af **borg 375** (æskens forside), Retro = Thomas' **teak-lampe** (vinduet retoucheret til tapet), Services = marineblå + by-ikon.
+  Retro-tekst: "Lamps, furniture and other Scandinavian classics." Ingen "Choose a department".
+- **LEGO-siden** (`/lego/`): grå boks "Themes" med 11 runde tema-ikoner (opbygning som LEGO.com).
+  **Star Wars** = Thomas' foto af Obi-Wan i cockpittet, mærke "1 SET", fører til 75135. **Castle** = borg 375-fotoet, "Coming soon".
+  Øvrige (Pirates, Space, Town, Harry Potter, Western, Ninja, Boats, Train, Aquazone) = farvecirkel + forbogstaver, nedtonet.
+- **Salgsside 75135 Obi-Wan's Jedi Interceptor** (`/lego/75135/`), opbygning som LEGO.com-produktside:
+  pris **€60** (Thomas 20-11), stand 9/10, 215 dele, 2016, minifigurer Obi-Wan Kenobi + R4-P17, SKU 261118-75135.
+  Galleri med **9 fotos** (Drive 261118-75135.01–.09, æskens forside først, skæve drejet), salgstekst EN+DE, "What's included", specifikationer.
+  **Købsknap grå** ("Buying here – coming soon"). Kilder: cts-app → Lager/Indkøb (stand, æske-note), "261118 Sortering" (alle dele fundet).
+  215 dele/2016 = Claudes viden, passer med arket (ikke slået op).
+- **Retro, Services, Privatliv:** simpel "coming soon"-side i ny stil. Kontakt: "CTS mail – coming soon".
 
-## Godkendt retning for udseendet (Thomas 20-11)
-- **Overordnet stil = Stone Groove Spirits** (stonegroovespirits.com, set på Thomas' skærmbillede): slidt **creme**-papir, farver **marineblå,
-  brændt orange, sennepsgul, rød** i lodrette blokke/striber (pladecover), store **smalle fede versal-overskrifter** (sort linje + orange linje),
-  små etiketter med spredte bogstaver + tynde streger, skrivemaskine-brødtekst, katalognumre ("SG-001", "SIDE A / TRACK 01") → hos os SKU'er,
-  marineblå menubjælke.
-- **Magasin-præg** (rejsemagasin "World of Travel"): stort coverfoto, elegant overskrift, opslag med store fotos og spalter → forside + Retro Design.
-- **LEGO-afdeling: katalog-præg som LEGO-katalogerne 2006-09**, men **en smule dæmpet**: runde mærker med sætnr./SKU, "NEW"-stjerne. Ingen LEGO-logo.
-- Afdelingerne vises som "spor": No. 01 LEGO®, No. 02 Retro Design, No. 03 Copenhagen Services.
-- Baggrund: **creme**. Skelettet genbruges – kun udseendet ændres.
-- **Coverfoto:** Thomas tager et; indtil da bruges seglet.
+## Teknik
+- Repo **CTSDK/cts-web**, Astro 7.4.13, `base: /cts-web`. Push til `main` → GitHub Actions bygger og udgiver (Pages = GitHub Actions, slået til 20-11).
+- Filer: tekster `src/i18n/ui.ts`; stil `src/styles/global.css`; forside `src/components/views/Home.astro` + `src/components/Doors.astro`;
+  LEGO `src/components/views/Lego.astro`, sæt-side `LegoSet.astro`, **data `src/data/lego.ts`** (temaer + sæt; nyt sæt = nyt objekt).
+  Billeder: `public/img/lego/75135/`, `public/img/lego/themes/`, `public/img/retro/`.
+- `cts-web` har sin egen korte kopi af disse noter (`CLAUDE.md` + `docs/noter/web.md`).
 
-## Plan (trin)
-1. **Fundament** (nu): forside + tre afdelinger, EN/DE, stil. Ingen data endnu.
-2. **Katalog:** LEGO + Retro hentes fra arkene (kun offentlige kolonner – aldrig indkøbspris/noter). Køb = link til eBay. Fotos kopieres fra Drive
-   til siden af maskinrummet (Drive-fotos må ikke deles "alle med linket").
-3. **eBay-salg registreres automatisk** i arket (idé i okonomi.md).
-4. **Webshop** (når CVR m.m. er på plads): arket er "sandheden". Thomas' metode mod dobbeltsalg: kunden lægger i kurv/betaler (helst reservation),
-   Thomas fjerner sættet fra eBay, **først derefter ordrebekræftelse**; når eBay vinder kapløbet → webordre annulleres + refunderes.
-   Betaling via tjeneste med egen betalingsside (Stripe/Shopify/MobilePay-løsning – **ikke tjekket**: pris, reservation, MobilePay).
-   Skal undersøges: handelsbetingelser ("bindende ved bekræftelse" – dansk ret ikke tjekket), moms, fragt, eBays straf for annullering (ikke tjekket).
-- Sikkerhed: statisk side (intet login/database), kortdata kun hos betalingstjenesten, regnearket aldrig offentligt, ingen nøgler i repo,
-  to-trins-login på GitHub + CTS-Google (**ukendt om slået til – spørg Thomas**), privatlivstekst, ingen cookies.
+## NÆSTE (forslag – kræver Thomas' ja)
+1. **Købsknap 75135:** link til eBay-opslaget (Thomas sender link) eller vent på webshop. Indkøb-rækken siger "Listet: FALSE".
+2. **Flere sæt** på LEGO-siden (`src/data/lego.ts`). Når et tema får flere sæt → egen temaside med oversigt (som LEGO.com).
+3. **Egne fotos til tema-cirklerne** (fx minifigur pr. tema) → Drive "CTS - Webpage → Indbakke til Claude".
+4. **Retro Design-siden** i samme stil (Thomas' fotos af lamper/møbler).
+5. **CTS-mail** i kontakt + bund.
+6. Senere: Copenhagen Services, eget domæne, katalog fra arket automatisk, webshop (se plan).
 
-## NÆSTE (start i ny samtale)
-0. Ny samtale: hvis `cts-web` ikke er med i samtalen, kobler Claude det på (add_repo CTSDK/cts-web, push) og kloner det.
-1. **Prøveside (mockup) af forsiden i Stone Groove-stil** – vis Thomas planen kort, få **ja**, byg, test (computer + iPhone), send skærmbilleder.
-   Intet lægges ud før Thomas har godkendt billederne.
-2. Efter godkendelse: resten af siderne i samme stil.
-3. Så: Thomas slår Pages til (Settings → Pages → Source: **GitHub Actions**) → siden live på https://ctsdk.github.io/cts-web/.
-4. Drive-mappe **CTS Web** (Thomas opretter) til logo, fotos, eksempler.
+## Plan (langsigtet, uændret)
+- Katalog: LEGO + Retro fra arkene (kun offentlige kolonner – aldrig indkøbspris/noter). Fotos fra Drive kopieres til siden (Drive-fotos må ikke deles "alle med linket").
+- eBay-salg registreres automatisk i arket (idé i okonomi.md).
+- **Webshop** (når CVR m.m. er på plads): arket er "sandheden". Mod dobbeltsalg: kunden betaler/reserverer → Thomas fjerner sættet fra eBay →
+  **først derefter ordrebekræftelse**; vinder eBay kapløbet → webordre annulleres + refunderes. Betaling via tjeneste med egen betalingsside
+  (Stripe/Shopify/MobilePay – **ikke tjekket**). Skal undersøges: handelsbetingelser, moms, fragt, eBays straf for annullering (ikke tjekket).
+- Sikkerhed: statisk side, ingen cookies/sporing, kortdata kun hos betalingstjenesten, regnearket aldrig offentligt, ingen nøgler i repo,
+  to-trins-login på GitHub + CTS-Google (**ukendt om slået til – spørg Thomas**).

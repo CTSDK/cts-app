@@ -17,6 +17,7 @@ Store, opdelelige opgaver kan sendes til hjælpe-agenter (de læser samme noter)
 **Hjælpe-agenter til læsning/opslag** (PDF'er, mails, Sheets-opslag, gennemgang) startes med `model: "sonnet"`; kode og planlægning bruger den store model.
 
 ## Arbejdsregler (Thomas)
+- **Læg ALDRIG noget ud (hjemmeside/app) før Thomas har sagt "læg det ud".** **Gør præcis det, der bedes om – ikke mere** (20-11: "fjern bread slicers" ≠ fjern hele teksten).
 - **Byg ALDRIG før Thomas har sagt ja** (20-11: Claude startede for tidligt). **Alle spørgsmål samlet FØR der bygges.** Ikke gæt-og-flag bagefter. Diskutér muligheder før der bygges.
 - **Skeln mellem planlagt, bygget og testet.** Påstå ikke, at noget virker, før det er testet.
 - **Aldrig fakta fra hukommelsen i data** (fx sætnavn/tema/år). Kun det Thomas giver, eller et opslag hvor kilden vises.
@@ -52,7 +53,7 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
 ## Næste (pr. 20-11-2026)
-00. **CTS Web (ny samtale):** prøveside af forsiden i Stone Groove-stil → Thomas' ja → byg → skærmbilleder. Skelet ligger i `CTSDK/cts-web`, ikke lagt ud. Se web.md.
+00. **CTS Web:** siden er live (forside, LEGO-side, salgsside 75135 til €60). Næste: købsknap 75135 (eBay-link?), flere sæt, egne tema-fotos, Retro-side. Se web.md.
 0. **Lego-sortering: app v23 + maskinrum 2.4.0, ✅ virker hos Thomas 15-11.** **App v25 (lagt ud 20-11): Lager har ny vælger "Alle købsdatoer"** (de 6 cifre fra SKU, fx 251009 → kun det køb vises) – testet i browser her,
    **ikke hos Thomas**: tjek App-version 25 under Mere og prøv vælgeren. App v24 (billeder af dele fra BrickLink, tryk = stort billede)
    er lagt ud 18-11, men **ikke testet hos Thomas** – tjek næste gang der sorteres Lego. Klargør → "Sortér dele" → Færdig → Sorteret/Komplet/Noter.
@@ -79,5 +80,5 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - ✅ **CTS Økonomi** (`1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (196), Udgifter, Skat, Kontoplan, Bilagsplan. Lego-arket = priser/lager/salg.
 - ✅ **CTS Retro** (`1FQh_UuorscBSh59KYfhB4x6ufyJT5nNeRyA1renVpbc`) oprettet; ingen rigtige køb endnu.
 - ✅ Alle salg 2026 har bilagsnr (næste B169; 2025 næste B029). Frisk start: gamle regler (afregningsbilag m.m.) gælder ikke.
-- 🟡 **CTS Web:** skelet bygget + testet her, gemt i `CTSDK/cts-web` (Claude har adgang), ikke lagt ud; udseende skal laves om (web.md).
+- ✅ **CTS Web** live 20-11: https://ctsdk.github.io/cts-web/ (EN+DE). Forside med segl + rombe (LEGO=borg 375, Retro=lampe), LEGO-side med temaer, salgsside 75135 (€60, 9 fotos). Testet her; set af Thomas på pc. iPhone-ikon: slet og tilføj igen (web.md).
 - ✅ Noter kopieres til Drive CTS/Noter hver nat. Gmail-forbindelse virker.

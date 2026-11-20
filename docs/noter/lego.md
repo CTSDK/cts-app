@@ -103,4 +103,5 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
 - DB-fejl: årstal står i undertema-kolonnen for bl.a. 41711/41714.
 - **Statustælling** (senere): optælling i appen → liste over afvigelser (gamle salg med forkert SKU) → Claude retter Salg-fanen efter Thomas' ja.
 - **Hjemmeside:** besluttet 20-11 – hele CTS (LEGO-afdeling = katalog over hele brugte sæt, data fra arket). Se `docs/noter/web.md`.
+- **Hjemmeside 20-11:** 261118-75135 (Obi-Wan's Jedi Interceptor) vises til salg på https://ctsdk.github.io/cts-web/lego/75135/ til **€60** (Thomas' pris; "Sættes til salg for" i Indkøb er tomt, "Listet" FALSE). Ingen købsknap endnu. Sælges det på eBay → fjern det fra siden.
 - **Idé (diskuteres):** salg registreres automatisk ud fra eBay-mails/fakturaer – se okonomi.md.
