@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '2.5.0';
+var VERSION = '2.5.1';
 
 // ---------- Faner ----------
 var FANE = {
@@ -3129,14 +3129,35 @@ function lgBilledMappe_() {
 function lgBilledNavn_(nr, type, farveId) {
   return String(nr).replace(/\(inv\)$/i, '').trim() + '-' + (type === 'Minifigur' ? 'MN' : String(farveId === '' || farveId == null ? 0 : farveId));
 }
-function lgBilledFiler_(mappe) {
+// Er bytes et rigtigt billede? (JPEG, PNG, GIF eller WEBP) – Rebrickable kan sende en "Not Found"-side med status 200 (20-11)
+function lgErBillede_(b) {
+  if (!b || b.length < 12) return false;
+  var x = function (i) { return (b[i] + 256) % 256; };
+  return (x(0) === 0xFF && x(1) === 0xD8) || (x(0) === 0x89 && x(1) === 0x50 && x(2) === 0x4E && x(3) === 0x47) ||
+    (x(0) === 0x47 && x(1) === 0x49 && x(2) === 0x46) || (x(0) === 0x52 && x(1) === 0x49 && x(2) === 0x46 && x(3) === 0x46 && x(8) === 0x57);
+}
+// navn → fil. Rydder samtidig op (2.5.1): dubletter og filer, der ikke er billeder, lægges i papirkurven.
+function lgBilledFiler_(mappe, ryd) {
   var res = {}, it = mappe.getFiles();
-  while (it.hasNext()) { var f = it.next(), n = f.getName().replace(/\.[a-z]+$/i, ''); if (!res[n]) res[n] = f; }
+  while (it.hasNext()) {
+    var f = it.next(), n = f.getName().replace(/\.[a-z]+$/i, '');
+    if (res[n]) { if (ryd) { f.setTrashed(true); ryd.dubletter++; } continue; }
+    if (ryd && f.getSize() < 2000 && !lgErBillede_(f.getBlob().getBytes())) { f.setTrashed(true); ryd.fejlbilleder++; continue; }
+    res[n] = f;
+  }
   return res;
 }
 // setnr: kun dette sæt (ellers alle rene lister). Stopper pænt før Googles tidsgrænse; resten tages næste gang.
+// Kun én kørsel ad gangen (2.5.1) – to samtidige kørsler gav dubletter 20-11.
 function lgHentBilleder_(setnr, maxMs) {
-  var start = Date.now(), mappe = lgBilledMappe_(), findes = lgBilledFiler_(mappe), oversigt = lgListeOversigt_(), mangler = [], set = {};
+  var props = PropertiesService.getScriptProperties(), igang = Number(props.getProperty('LG_BILLEDER_IGANG')) || 0;
+  if (Date.now() - igang < 6 * 60 * 1000) return { hentet: 0, mangler: 0, fejl: [], dubletter: 0, fejlbilleder: 0, optaget: true };
+  props.setProperty('LG_BILLEDER_IGANG', String(Date.now()));
+  try { return lgHentBillederKoer_(setnr, maxMs); } finally { props.deleteProperty('LG_BILLEDER_IGANG'); }
+}
+function lgHentBillederKoer_(setnr, maxMs) {
+  var ryd = { dubletter: 0, fejlbilleder: 0 };
+  var start = Date.now(), mappe = lgBilledMappe_(), findes = lgBilledFiler_(mappe, ryd), oversigt = lgListeOversigt_(), mangler = [], set = {};
   Object.keys(oversigt).forEach(function (nr) {
     if (setnr && nr !== String(setnr).replace(/-1$/, '')) return;
     var ss = SpreadsheetApp.openById(oversigt[nr].id), sh = ss.getSheetByName('Liste') || ss.getSheets()[0];
@@ -3155,15 +3176,19 @@ function lgHentBilleder_(setnr, maxMs) {
     var svar = UrlFetchApp.fetchAll(bid.map(function (m) { return { url: m.url, muteHttpExceptions: true }; }));
     svar.forEach(function (r, j) {
       if (r.getResponseCode() !== 200) { fejl.push(bid[j].navn + ' (' + r.getResponseCode() + ')'); return; }
+      var blob = r.getBlob();
+      if (!lgErBillede_(blob.getBytes())) { fejl.push(bid[j].navn + ' (ikke et billede)'); return; }
       var ext = (/\.(png|jpe?g|gif|webp)(\?|$)/i.exec(bid[j].url) || [0, 'jpg'])[1].toLowerCase();
-      mappe.createFile(r.getBlob().setName(bid[j].navn + '.' + ext)); hentet++;
+      mappe.createFile(blob.setName(bid[j].navn + '.' + ext)); hentet++;
     });
   }
-  return { hentet: hentet, mangler: Math.max(0, mangler.length - hentet - fejl.length), fejl: fejl };
+  return { hentet: hentet, mangler: Math.max(0, mangler.length - hentet - fejl.length), fejl: fejl, dubletter: ryd.dubletter, fejlbilleder: ryd.fejlbilleder };
 }
 function lgHentBillederMenu() {
   var r = lgHentBilleder_(), ui = SpreadsheetApp.getUi();
+  if (r.optaget) { ui.alert('Billeder af dele', 'Maskinrummet henter allerede billeder lige nu. Prøv igen om et par minutter.', ui.ButtonSet.OK); return; }
   ui.alert('Billeder af dele', 'Hentet: ' + r.hentet + '\nMangler stadig (tages næste gang): ' + r.mangler +
+    (r.dubletter || r.fejlbilleder ? '\nRyddet op: ' + r.dubletter + ' dubletter, ' + r.fejlbilleder + ' filer der ikke var billeder' : '') +
     (r.fejl.length ? '\nKunne ikke hentes: ' + r.fejl.length + ' (' + r.fejl.slice(0, 10).join(', ') + ')' : ''), ui.ButtonSet.OK);
 }
 // Til appen: d.navne = ["3004-11", ...] → { "3004-11": "data:image/png;base64,..." } for dem, der findes (højst 60 pr. kald)

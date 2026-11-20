@@ -88,7 +88,8 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
   - Fremgangsmåde (scripts i scratchpad forsvinder – gør sådan igen): BL farve-id → Rebrickable farve via API `colors/` (external_ids BrickLink);
     BL item no → Rebrickable del via API `parts/?bricklink_id=<nr>`; billede: 1) `parts/elements/<element_id>.jpg` (element_id fra
     `cdn.rebrickable.com/media/downloads/elements.csv.gz`), 2) `parts/ldraw/<rb-farve>/<del>.png`, 3) API `parts/<del>/colors/<farve>/`,
-    4) samme del i anden farve (API `parts/<del>/`). Minifigurer: API `sets/<setnr>-1/minifigs/` og navnematch. Tjek hver adresse (HTTP 200).
+    4) samme del i anden farve (API `parts/<del>/`). Minifigurer: API `sets/<setnr>-1/minifigs/` og navnematch. Tjek hver adresse: HTTP 200 **og at indholdet er et billede** (Rebrickable sender
+    nogle gange en "Not Found"-side med status 200 – fx 300551.jpg og 4274194.jpg 20-11).
     Rebrickable tillader ca. 1 API-kald/sek.
   - 20-11 resultat for de 8 sæt: 711 af 720 dele med billede i rigtig farve, 3 i anden farve (58176 Trans-Bright Green/Trans-Red, 75135-mærkatark),
     tomme: 6 mærkatark + 44567u. Minifigurer: 13 af 20 (de 7 Cars-figurer i 8639 har intet billede hos Rebrickable).
