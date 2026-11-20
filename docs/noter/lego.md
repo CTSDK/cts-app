@@ -117,5 +117,8 @@ Formål: indkøb til videresalg, fokus "udgår snart" (≥15 %), ellers ≥20 %,
 - Forbrug (målt 17-11 kl. 17:05, efter forenkling til `hent.py start/slut`): 5 skridt, ca. 222.000 genlæste + 20.000 nye tokens + 470 skrevet
   (med nye fund). Hvert skridt ≈ 45.000 genlæste tokens (fast opstart) – antal skridt er det, der tæller. Forventet uden nye fund: 3 skridt ≈ 140.000.
   Forbindelser fjernet fra opgaven (gjorde ingen forskel). Kørsler: 06:05, 12:05, 17:05.
+- **Daglig pris (20-11):** afsnit "Daglig pris" i `kriterier.md` (nu 10351) → ved kørslen kl. 12 sender scriptet selv laveste pris hos Toyspace/Legekæden
+  + ændring siden sidst (gemmes i historik "priser"). Testet mod rigtige butikker 20-11 (10351: 878 kr. hos Toyspace). Prisjagt/LEGO.com/Saxo m.fl. blokerer.
+  Indstillingssiden sætter selv "www." foran domæner → adresser uden www (brickset.com, toyspace.dk, prisjagt.dk, coop.dk) tilføjer Claude.
 - Sæt overvåges via tabellen i `kriterier.md` (12 sæt, Thomas' danske navne); kolonnen "Andre navne" udfylder Thomas selv (engelske navne, adskilt med ;).
 - Næste: Thomas vurderer beskeder/forbrug; mulig besparelse: sæt ROUTINE_PROMPT.md direkte ind som opgavens prompt (−1 skridt ≈ −45.000 tokens); ønskeliste-ark (ONSKELISTE_ARK_ID) når Thomas vil; kurs €→kr. i kriterier.md.
