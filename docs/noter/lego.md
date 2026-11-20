@@ -71,6 +71,17 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
   navn "<setnr> <navn>" (sorteres efter nummer). Fane **Liste**: A Item No (tekst) · B Beskrivelse (BrickLinks navn inkl. farve, uændret engelsk) · C Antal · D Type (Del/Minifigur).
   Med: Regular Items (dele + minifigurer som hele figurer). **Ikke med:** Counterparts og Alternate Items.
   - **6080 Kings Castle** `1qOf7Ual_TOh5WetzWOK3UAsBGM6EfldnzHqY08p61LU`: 99 dele (627 stk.) + 6 minifigurer (12). Tjekket mod BrickLinks Summary og mod Thomas' kopierede tekst (105/105 ens).
+  - **Køb 18-11 (8 sæt, lavet 18-11, stk.-tal tjekket mod BrickLink for alle):** 70735 Ronin R.E.X. `1sn_xdz7p9_y81KkvFnAworJ8Pf-XpXH1nXVMwiS4DlA` ·
+    8639 Big Bentley Bust Out `1jL_FZEBC06i-T5m9DPAD1VxR8uTqA9iz483403SD20M` · 75135 Obi-Wan's Jedi Interceptor `1FpKUSSuHsPVt22FiHKGkbWT7Lou5nWetm4mtGFYHqYA` ·
+    8079 Shadow Snapper `13sMA5n6K20A9XC9FlnwLk5-k6YLnYuIv8Uol0Gn5B2Y` · 70745 Anacondrai Crusher `1NKn-0WWkCHafOxMi67QD9Z5hNiOuHzeeQcpTKv205P0` ·
+    3845 Wild Wool / Shave a Sheep `1HSE8LtN762lNHoR7PljWBViwkq2Kn8tD9yEPSnBLNHo` · 70783 Protector of Fire `1AUCc2siYoxLYSu0uleSp4QusVJLib8hbZ5V_c_9x6U8` ·
+    70731 Jay Walker One `12Bm1ExD1QlQCfQkylJIU4Cp6yb8Is5wxlnQS9TlqPdk`.
+  - **Fra 18-11 har listerne 2 ekstra kolonner:** E "BL farve-id" (tal) og F "Billede" (én formel i F2: `IMAGE` fra img.bricklink.com, PN/<farve-id>/<nr>.png,
+    minifigurer MN/0/<nr>.png; arkene er dansk – formler bruger `;`). Maskinrummet læser kun A–D. Billederne i arket vises først, når Thomas
+    har klikket **"Tillad adgang"** én gang pr. ark på computeren (ikke gjort endnu). "(inv)" fjernes fra numre; mærkatark er dele (farve 0).
+- **Farvenumre (BrickLink):** kilde = BrickLinks Color Guide, kopieret af Thomas 18-11 (176 farver, Modulex udeladt). Tabellen ligger i appen
+  (`BL_FARVER` i js/app.js), så appen selv finder billedet ud fra item no + farvenavnet i beskrivelsen. Testet af Thomas 18-11: billedadresser for del,
+  minifigur, mærkatark og del med tryk virker. Nye sæt kræver derfor kun BrickLink-listen (List → kopiér ind i samtalen).
 - **Fast måde at hente en liste (testet 15-11 på computer):** BrickLink → sættets Inventory → klik **List** → Ctrl+A, Ctrl+C → indsæt i samtalen.
   Claude laver den rene liste. Ikke "Udskriv til PDF" (bliver billeder). Rebrickable/BrickLink kan ikke åbnes fra sessionen.
 - **Talformat:** item-numre skrives med apostrof (tekst), ellers kan Sheets lave dem om (sket med Playmobil: "30 03 0600" blev en dato).
@@ -101,6 +112,9 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
 - Tom række 12 i Salg 2026 (var række 5; sandsynligvis fra importen) – ikke rørt; spørg før sletning.
 - Køb 261028: fotos slettet 07-11 (for lav opløsning) – Thomas tager dem om med v16.
 - DB-fejl: årstal står i undertema-kolonnen for bl.a. 41711/41714.
+- **DB 18-11:** 7 sæt tilføjet af Claude (række 2465–2471, F = "Tilføjet af Claude 18-11-2026 (BrickLink)", kilde = BrickLink-sider Thomas kopierede):
+  8639 (nyt tema **Cars**/Cars 2), 75135, 8079, 70745, 3845 (nyt tema **Games**), 70783, 70731. 70735 fandtes i forvejen (række 2249).
+  DB-fanen havde ingen tomme rækker – nye rækker tilføjes nederst.
 - **Statustælling** (senere): optælling i appen → liste over afvigelser (gamle salg med forkert SKU) → Claude retter Salg-fanen efter Thomas' ja.
 - **Hjemmeside:** besluttet 20-11 – hele CTS (LEGO-afdeling = katalog over hele brugte sæt, data fra arket). Se `docs/noter/web.md`.
 - **Hjemmeside 20-11:** 261118-75135 (Obi-Wan's Jedi Interceptor) vises til salg på https://ctsdk.github.io/cts-web/lego/75135/ til **€60** (Thomas' pris; "Sættes til salg for" i Indkøb er tomt, "Listet" FALSE). Ingen købsknap endnu. Sælges det på eBay → fjern det fra siden.
