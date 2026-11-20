@@ -1,14 +1,14 @@
 # Område: Lego (CTS-appen + regnearket cts-app)
 
-Status pr. 20-11-2026: app v26 (lagt ud 20-11 aften, ikke testet hos Thomas; v25 og v24 heller ikke testet) + maskinrum 2.4.0; v23 + 2.4.0 ✅ hos Thomas 15-11. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
+Status pr. 20-11-2026: app v27 ✅ (billeder af dele vises på iPad) + maskinrum 2.5.2 (lagt ud 20-11; 2.5.1 ✅). v25 (købsdato-vælger i Lager) ikke testet hos Thomas. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
 
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
   Hjemmeskærms-app på iPhone (iOS 27.2). ✅ Også installeret og testet 20-11 på **iPad** (Safari → Føj til hjemmeskærm) og **computer**
   (ASUS, Chrome/Edge → Installér): virker uden ny kode; første åbning på ny enhed skal hente alt, før Lager virker. Bredt layout ikke nødvendigt
   (Thomas 20-11). Find computer-appen igen (ikke tjekket – Googles hjælpeside kunne ikke åbnes): Windows-knap → skriv CTS, eller chrome://apps; højreklik på ikonet → Fastgør til proceslinjen. Fotos tages kun med telefonen; computeren bruges til almindeligt arbejde. Offline: service worker (`sw.js`), lokal kopi + udbakke i IndexedDB (`js/lokal.js`, `js/data.js`).
-  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v27 ✅ hos Thomas 20-11 – billeder vises på iPad: billeder fra mappen "Billeder af dele" – kræver maskinrum 2.5.0; v26, lagt ud 20-11: BrickLink-billeder hentes uden referrer – i v24/v25 var ALLE billeder tomme på Thomas' iPad (3845, skærmbillede 20-11); formodet årsag: BrickLink afviser billeder vist på andres sider – ikke bekræftet, ikke testet hos Thomas. Virker v26 ikke → billeder skal hentes én gang og gemmes i Drive (ny opgave, forslag før bygning); v25, lagt ud 20-11: købsdato-vælger i Lager – ikke testet hos Thomas; v24, lagt ud 18-11: billeder af dele fra BrickLink i Lego-sortering, tryk = stort billede – ikke testet hos Thomas; v23 ✅ 15-11; versionen står nederst under Mere).
-- **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.5.2** lagt ud 20-11, ikke testet hos Thomas: små fremdriftsbeskeder (toast) i stedet for OK-boks ved Hent billeder; **2.5.1 ✅ hos Thomas 20-11**: hentede 2, ryddede 76 dubletter + 2 fejlbilleder, 0 mangler; Thomas kopierer ind, ikke bekræftet; 2.4.0 ✅ 15-11; 2.3.x bekræftet hos Thomas; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
+  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu **v27** ✅ 20-11; versionen står nederst under Mere). v25 (Lager: vælger "Alle købsdatoer") ikke testet hos Thomas.
+- **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.5.2**, lagt ud 20-11: små fremdriftsbeskeder ved Hent billeder – ikke bekræftet indkopieret/testet; 2.5.1 ✅ hos Thomas 20-11; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
   Webapp "Udfør som: Mig", adgang "Alle"; alle kald kræver API-nøgle (Script Properties).
 - **Faste kodetrin (altid sådan):** (1) åbn https://raw.githubusercontent.com/CTSDK/cts-app/main/apps-script/Code.gs, (2) Ctrl+Shift+R og tjek versionen,
   (3) Ctrl+A → Ctrl+C → Apps Script → Ctrl+A → Ctrl+V → Ctrl+S, (4) Implementer → Administrer implementeringer → blyanten → Ny version → Implementer,
@@ -65,7 +65,7 @@ Kun fakta, ingen AI. Noter oversættes med Google Oversæt; "Sort: …" og [teks
   "manual" → "building instructions". Thomas' eksempel er test i `tests/listing.test.js`.
 - Vejledning/Komplet er false for alle importerede sæt – Thomas krydser af ved gennemgang.
 
-## Sortering af dele (besluttet 15-11-2026; test bygget, app ikke bygget)
+## Sortering af dele (i appen siden v23 ✅ 15-11; billeder af dele v27 ✅ 20-11)
 Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde i CTS-appen**.
 - **Ren liste pr. sæt (fast, for altid, aldrig udfyldt):** ét regneark pr. sæt i `CTS/Lego/Sorteringslister` (id `1PsC1QepXfrHJKbfdNQJYR9RGjY77y4IR`),
   navn "<setnr> <navn>" (sorteres efter nummer). Fane **Liste**: A Item No (tekst) · B Beskrivelse (BrickLinks navn inkl. farve, uændret engelsk) · C Antal · D Type (Del/Minifigur).
@@ -79,7 +79,7 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
   - **Kolonner E og F (fra 20-11):** E "BL farve-id" (tal) · F "Billede (Rebrickable)" = kort billedadresse, fx `parts/elements/306901.jpg`
     eller `sets/fig-003064/108485.jpg` (maskinrummet sætter `https://cdn.rebrickable.com/media/` foran). Maskinrummet læser A–D til sortering og A, D, E, F til billeder.
     "(inv)" fjernes fra numre; mærkatark er dele (farve 0). (IMAGE-formlen fra 18-11 er fjernet.)
-- **Billeder af dele (aftalt med Thomas 20-11; app v27 + maskinrum 2.5.x lagt ud 20-11, ✅ billeder vises hos Thomas på iPad):**
+- **Billeder af dele (aftalt med Thomas 20-11; app v27 + maskinrum 2.5.x, ✅ vises hos Thomas på iPad 20-11; mappen komplet: 674 billeder):**
   - Én fælles mappe `CTS/Lego/Sorteringslister/Billeder af dele/` (oprettes af maskinrummet), ét billede pr. del og farve: `<item no>-<BL farve-id>.jpg/png`,
     minifigurer `<nr>-MN.jpg`. Samme del i flere sæt = ét billede (ingen dubletter). Thomas tager ikke selv fotos af dele.
   - **Claude finder billederne, når en ny sorteringsliste lægges ind** (Thomas' krav) og skriver adressen i kolonne F. Kilde = **Rebrickable**
@@ -93,11 +93,11 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
     Rebrickable tillader ca. 1 API-kald/sek.
   - 20-11 resultat for de 8 sæt: 711 af 720 dele med billede i rigtig farve, 3 i anden farve (58176 Trans-Bright Green/Trans-Red, 75135-mærkatark),
     tomme: 6 mærkatark + 44567u. Minifigurer: 13 af 20 (de 7 Cars-figurer i 8639 har intet billede hos Rebrickable).
-  - Maskinrum 2.5.0 henter manglende billeder til mappen: hver nat sammen med noterne (`synkNoter`), når et sæt startes i "Sortér dele" (højst 40 sek.)
-    og via menuen **CTS → Hent billeder af Lego-dele**. Ny API-handling `lgBilleder` sender billederne til appen.
-  - App v27: "Sortér dele" viser billedet fra mappen (navn beregnes af item no + farvenavn via `BL_FARVER`), gemmer det på enheden (virker uden net).
-    Ingen billeder hentes direkte fra BrickLink længere. Testet i browser med falske billeder + maskinrumskoden med simuleret Drive.
-    **Ikke testet:** at Googles servere må hente fra cdn.rebrickable.com (ses første gang hos Thomas).
+  - Maskinrummet henter manglende billeder til mappen: hver nat sammen med noterne (`synkNoter`), når et sæt startes i "Sortér dele" (højst 40 sek.)
+    og via menuen **CTS → Hent billeder af Lego-dele**. Kun én kørsel ad gangen; hver kørsel rydder dubletter og filer, der ikke er billeder (2.5.1),
+    og viser små beskeder nederst til højre i stedet for OK-boks (2.5.2). API-handlingen `lgBilleder` sender billederne til appen.
+  - App v27: "Sortér dele" viser billedet fra mappen (navn = item no + farve-id via `BL_FARVER`), gemmer det på enheden (virker uden net).
+    Ingen billeder hentes direkte fra BrickLink. Thomas vil IKKE have billeder inde i masterarkene (fylder) – mappen er nok.
 - **Farvenumre (BrickLink):** kilde = BrickLinks Color Guide, kopieret af Thomas 18-11 (176 farver, Modulex udeladt). Tabellen ligger i appen
   (`BL_FARVER` i js/app.js) og bruges til billednavnet. Nye sæt kræver kun BrickLink-listen (List → kopiér ind i samtalen).
 - **Fast måde at hente en liste (testet 15-11 på computer):** BrickLink → sættets Inventory → klik **List** → Ctrl+A, Ctrl+C → indsæt i samtalen.
@@ -112,8 +112,8 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
   **"Færdig – overfør til klargøring"** (når alle ✓): viser først teksten → Overfør: Indkøb **Sorteret ✓**, **Komplet** ✓ hvis intet mangler,
   og tilføjer til **Noter** (eksisterende noter bevares): `Missing: 1 x Black Brick 1 x 2 (3004)` + linje med del-noter. Tomt Fundet = ikke talt.
   Ingen ren liste → besked "kopiér listen fra BrickLink og sæt den ind i samtalen". Kun nye sæt sorteres.
-  Testet i browser (`tests/lgs-e2e.js`) og **✅ hos Thomas 15-11** ("alt virker"): ark `261110 Sortering` oprettet og udfyldt.
-  "Færdig – overfør" er endnu ikke kørt på et rigtigt sæt. Testkøbet 261110-6080 er slettet 20-11 (Indkøb + Indkøbslog; mappen CTS/Lager/261110 skal Thomas selv lægge i papirkurven – Claude har ikke rettighed).
+  Testet i browser (`tests/lgs-e2e.js`) og ✅ hos Thomas 15-11. **"Færdig – overfør" er endnu ikke kørt på et rigtigt sæt.**
+  Købet **261118** (8 sæt, 600 kr): 3845, 8079, 70731, 75135 startet i "261118 Sortering" (`CTS/Lager/261118/Sorteringslister`). Testkøbet 261110 er slettet helt 20-11.
 - **Senere (ikke besluttet):** SKU-sorteringsark slettes, når sættet er solgt; "Ny sorteringsliste" i appen (indsæt BrickLink-tekst fra telefonen).
 - **Test (15-11):** `CTS/Lego/Sorteringslister/Test sortering` (`187NNroSbDSO3h_Bar5j3bEoGBEthKG1HzWGZiLuE__o`, fane Dele, række 14–118, SKU TEST-6080)
   + testside https://claude.ai/artifact/2fqHt1ppFSatTcd8XpMwKy (rød). Testet i browser med falske data; **ikke testet mod arket af Thomas endnu.**
@@ -122,9 +122,7 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
   er selve noten – tom note = intet andet at notere. Efter ✓ ryddes søgefeltet, og markøren springer op i det, så næste nummer kan tastes.
   "Alle sæt"/"Alle SKU" er kun visning; sortering og noter kun under ét valgt sæt/SKU.
   Når testen er færdig, slettes testarket og testsiden.
-- **App-plan (ikke bygget):** (1) "Ny sorteringsliste": Thomas kopierer fra BrickLink på iPad/iPhone og indsætter i appen → appen laver den rene liste selv
-  (formatet fra telefonen er ikke set endnu – Thomas prøver fx 6085/6086 fra telefonen og indsætter i samtalen først);
-  (2) sorteringsark pr. køb oprettes ud fra købets sæt; (3) sorteringssiden i appen. Kræver ny maskinrumskode + app-version.
+- **Senere idé (ikke bygget):** "Ny sorteringsliste" direkte i appen (indsæt BrickLink-tekst fra telefonen); i dag kopieres listen ind i samtalen.
 
 ## Kendte forhold / næste i Lego
 - Tom række 12 i Salg 2026 (var række 5; sandsynligvis fra importen) – ikke rørt; spørg før sletning.

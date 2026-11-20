@@ -54,11 +54,10 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 
 ## Næste (pr. 20-11-2026)
 00. **CTS Web:** siden er live (forside, LEGO-side, salgsside 75135 til €60). Næste: købsknap 75135 (eBay-link?), flere sæt, egne tema-fotos, Retro-side. Se web.md.
-0. **Lego-sortering: app v23 + maskinrum 2.4.0, ✅ virker hos Thomas 15-11.** **App v25 (lagt ud 20-11): Lager har ny vælger "Alle købsdatoer"** (de 6 cifre fra SKU, fx 251009 → kun det køb vises) – testet i browser her,
-   **ikke hos Thomas**: tjek App-version 25 under Mere og prøv vælgeren. **Billeder af dele: app v27 + maskinrum 2.5.2 lagt ud 20-11; billedmappen ✅ komplet (674 billeder, oprydning testet hos Thomas med 2.5.1); app v27 ✅ billeder vises hos Thomas på iPad (20-11).**
-   Fælles mappe Sorteringslister/Billeder af dele (Rebrickable). Thomas: kopiér Code.gs 2.5.2 ind (fremdriftsbeskeder, ikke testet).
-   Nye sorteringslister: Claude finder billedadresser (kolonne F) – fremgangsmåde i lego.md. Klargør → "Sortér dele" → Færdig → Sorteret/Komplet/Noter.
-   Første rigtige "Færdig – overfør" mangler (tjek Indkøb bagefter). Nye sæt kræver ren liste (BrickLink → List → kopiér ind i samtalen). Se lego.md → Sortering.
+0. **Lego-sortering med billeder af dele: app v27 ✅ (billeder vises på iPad 20-11) + maskinrum 2.5.2** (lagt ud 20-11, Thomas har måske ikke kopieret 2.5.2 ind endnu –
+   2.5.1 ✅; 2.5.2 = kun små fremdriftsbeskeder). Køb 261118 (8 sæt): Thomas sorterer i appen (Klargør → "Sortér dele" → Færdig).
+   **Første rigtige "Færdig – overfør" mangler** – tjek Indkøb (Sorteret/Komplet/Noter) bagefter. Nye sæt: Thomas kopierer BrickLink-listen ind i samtalen →
+   Claude laver ren liste + billedadresser fra Rebrickable (kolonne F) – fremgangsmåde i lego.md → Sortering. App v25 (Lager: vælger "Alle købsdatoer") ikke testet hos Thomas.
 0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" (8 sæt, PlaymoDB-navne). **App v23 + maskinrum 2.4.0** (Retro → Playmobil:
    sortering, sætnavne, "+ Nyt sæt" fx Div, fotos pr. sæt og pr. del via kamera-ikon ved noten). ✅ Alt virker hos Thomas (15-11).
    Thomas sorterer videre (ca. 274/542 afkrydset) → samlet salgstekst. Lilla side virker stadig. Se retro.md.
@@ -75,9 +74,10 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
    (65 KB) op efter emne; slank hovednoten.
 
 ## Status pr. 20-11-2026
-- ✅ **App v23** på Thomas' iPhone (versionen står nederst under Mere); v24 (18-11) og v25 (20-11, købsdato-vælger i Lager) lagt ud, ikke testet.
+- ✅ **App v27** (billeder af dele i Lego-sortering, testet på iPad 20-11); v25-vælgeren i Lager ikke testet. Versionen står nederst under Mere.
 - ✅ Appen virker også på **iPad** og **computer** (installeret 20-11, ingen ny kode; link https://ctsdk.github.io/cts-app/). Bredt layout ikke nødvendigt. Retro: nyt køb, klargør, **Playmobil-sortering**.
-- ✅ **Maskinrum 2.4.0** hos Thomas: Gem bilag fra Gmail, Udfør bilagsplan, økonomi-ark, Opret Retro-ark, Playmobil (pm*).
+- ✅ **Maskinrum 2.5.1** hos Thomas (2.5.2 lagt ud): Gem bilag fra Gmail, Udfør bilagsplan, økonomi-ark, Opret Retro-ark, Playmobil (pm*), Lego-sortering, Hent billeder af Lego-dele.
+- ✅ Netværk: Rebrickable (API-nøgle som netværkshemmelighed) + img.bricklink.com tilladt i miljøet "Default" (20-11).
 - ✅ **CTS Økonomi** (`1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (196), Udgifter, Skat, Kontoplan, Bilagsplan. Lego-arket = priser/lager/salg.
 - ✅ **CTS Retro** (`1FQh_UuorscBSh59KYfhB4x6ufyJT5nNeRyA1renVpbc`) oprettet; ingen rigtige køb endnu.
 - ✅ Alle salg 2026 har bilagsnr (næste B169; 2025 næste B029). Frisk start: gamle regler (afregningsbilag m.m.) gælder ikke.
