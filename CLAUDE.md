@@ -50,8 +50,9 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - **Del aldrig regneark/mapper med "alle med linket"** – id'erne står på GitHub (offentligt).
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
-## Næste (pr. 15-11-2026)
-0. **Lego-sortering: app v23 + maskinrum 2.4.0, ✅ virker hos Thomas 15-11.** Klargør → "Sortér dele" → Færdig → Sorteret/Komplet/Noter.
+## Næste (pr. 20-11-2026)
+0. **Lego-sortering: app v23 + maskinrum 2.4.0, ✅ virker hos Thomas 15-11.** App v24 (billeder af dele fra BrickLink, tryk = stort billede)
+   er lagt ud 18-11, men **ikke testet hos Thomas** – tjek næste gang der sorteres Lego. Klargør → "Sortér dele" → Færdig → Sorteret/Komplet/Noter.
    Første rigtige "Færdig – overfør" mangler (tjek Indkøb bagefter). Nye sæt kræver ren liste (BrickLink → List → kopiér ind i samtalen). Se lego.md → Sortering.
 0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" (8 sæt, PlaymoDB-navne). **App v23 + maskinrum 2.4.0** (Retro → Playmobil:
    sortering, sætnavne, "+ Nyt sæt" fx Div, fotos pr. sæt og pr. del via kamera-ikon ved noten). ✅ Alt virker hos Thomas (15-11).
@@ -67,8 +68,9 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
    GitHub-nøgle i Apps Script. Ikke tjekket: om en samtale læser hovednoten fra et andet repo end appen. Senere ideer: del Code.gs (161 KB) og app.js
    (65 KB) op efter emne; slank hovednoten.
 
-## Status pr. 15-11-2026
-- ✅ **App v23** på Thomas' iPhone ( versionen står nederst under Mere). Retro: nyt køb, klargør, **Playmobil-sortering**.
+## Status pr. 20-11-2026
+- ✅ **App v23** på Thomas' iPhone (versionen står nederst under Mere); v24 lagt ud 18-11, ikke testet.
+- ✅ Appen virker også på **iPad** og **computer** (installeret 20-11, ingen ny kode; link https://ctsdk.github.io/cts-app/). Bredt layout ikke nødvendigt. Retro: nyt køb, klargør, **Playmobil-sortering**.
 - ✅ **Maskinrum 2.4.0** hos Thomas: Gem bilag fra Gmail, Udfør bilagsplan, økonomi-ark, Opret Retro-ark, Playmobil (pm*).
 - ✅ **CTS Økonomi** (`1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (196), Udgifter, Skat, Kontoplan, Bilagsplan. Lego-arket = priser/lager/salg.
 - ✅ **CTS Retro** (`1FQh_UuorscBSh59KYfhB4x6ufyJT5nNeRyA1renVpbc`) oprettet; ingen rigtige køb endnu.

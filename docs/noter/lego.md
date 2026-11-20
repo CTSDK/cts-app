@@ -1,11 +1,13 @@
 # Område: Lego (CTS-appen + regnearket cts-app)
 
-Status pr. 15-11-2026: app v23 + maskinrum 2.4.0 (Lego-sortering + Playmobil) lagt ud 15-11; v20 + 2.3.0 bekræftet hos Thomas. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
+Status pr. 20-11-2026: app v24 (lagt ud 18-11, ikke testet hos Thomas) + maskinrum 2.4.0; v23 + 2.4.0 ✅ hos Thomas 15-11. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
 
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
-  Hjemmeskærms-app på iPhone (iOS 27.2). Offline: service worker (`sw.js`), lokal kopi + udbakke i IndexedDB (`js/lokal.js`, `js/data.js`).
-  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v23, lagt ud 15-11; v20 bekræftet på iPhone 15-11; versionen står nederst under Mere).
+  Hjemmeskærms-app på iPhone (iOS 27.2). ✅ Også installeret og testet 20-11 på **iPad** (Safari → Føj til hjemmeskærm) og **computer**
+  (ASUS, Chrome/Edge → Installér): virker uden ny kode; første åbning på ny enhed skal hente alt, før Lager virker. Bredt layout ikke nødvendigt
+  (Thomas 20-11). Fotos tages kun med telefonen; computeren bruges til almindeligt arbejde. Offline: service worker (`sw.js`), lokal kopi + udbakke i IndexedDB (`js/lokal.js`, `js/data.js`).
+  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu v24, lagt ud 18-11: billeder af dele fra BrickLink i Lego-sortering, tryk = stort billede – ikke testet hos Thomas; v23 ✅ 15-11; versionen står nederst under Mere).
 - **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.4.0**, lagt ud 15-11 – Thomas kopierer ind; 2.3.x bekræftet hos Thomas; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
   Webapp "Udfør som: Mig", adgang "Alle"; alle kald kræver API-nøgle (Script Properties).
 - **Faste kodetrin (altid sådan):** (1) åbn https://raw.githubusercontent.com/CTSDK/cts-app/main/apps-script/Code.gs, (2) Ctrl+Shift+R og tjek versionen,
