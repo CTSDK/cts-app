@@ -51,7 +51,8 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
 ## Næste (pr. 20-11-2026)
-0. **Lego-sortering: app v23 + maskinrum 2.4.0, ✅ virker hos Thomas 15-11.** App v24 (billeder af dele fra BrickLink, tryk = stort billede)
+0. **Lego-sortering: app v23 + maskinrum 2.4.0, ✅ virker hos Thomas 15-11.** **App v25 (lagt ud 20-11): Lager har ny vælger "Alle købsdatoer"** (de 6 cifre fra SKU, fx 251009 → kun det køb vises) – testet i browser her,
+   **ikke hos Thomas**: tjek App-version 25 under Mere og prøv vælgeren. App v24 (billeder af dele fra BrickLink, tryk = stort billede)
    er lagt ud 18-11, men **ikke testet hos Thomas** – tjek næste gang der sorteres Lego. Klargør → "Sortér dele" → Færdig → Sorteret/Komplet/Noter.
    Første rigtige "Færdig – overfør" mangler (tjek Indkøb bagefter). Nye sæt kræver ren liste (BrickLink → List → kopiér ind i samtalen). Se lego.md → Sortering.
 0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" (8 sæt, PlaymoDB-navne). **App v23 + maskinrum 2.4.0** (Retro → Playmobil:
@@ -69,7 +70,7 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
    (65 KB) op efter emne; slank hovednoten.
 
 ## Status pr. 20-11-2026
-- ✅ **App v23** på Thomas' iPhone (versionen står nederst under Mere); v24 lagt ud 18-11, ikke testet.
+- ✅ **App v23** på Thomas' iPhone (versionen står nederst under Mere); v24 (18-11) og v25 (20-11, købsdato-vælger i Lager) lagt ud, ikke testet.
 - ✅ Appen virker også på **iPad** og **computer** (installeret 20-11, ingen ny kode; link https://ctsdk.github.io/cts-app/). Bredt layout ikke nødvendigt. Retro: nyt køb, klargør, **Playmobil-sortering**.
 - ✅ **Maskinrum 2.4.0** hos Thomas: Gem bilag fra Gmail, Udfør bilagsplan, økonomi-ark, Opret Retro-ark, Playmobil (pm*).
 - ✅ **CTS Økonomi** (`1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (196), Udgifter, Skat, Kontoplan, Bilagsplan. Lego-arket = priser/lager/salg.
