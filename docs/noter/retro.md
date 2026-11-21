@@ -52,8 +52,9 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
 (kolonne I) + Thomas' input: "sæt X, Y, Z … med disse mangler – stort set alle næsten komplette". Kun noget vi har nu; evt. små mængder senere her.
 - **Drive:** `CTS/Retro/Playmobil` (id `1GMWYxrs8T8cvRCSUxSWs5MaaExXHgxXQ`, flyttet fra CTS/Playmobil 15-11). Manual-PDF'er ligger hos Thomas.
 - **Regneark "Playmobil alle sæt"** (eneste kilde): `1pEB0STX0_rDlWOzGswuZyo2ot3zCztb99Ezueoi1NEc`, fane **Dele** (sheetId 449130092).
-  Række 1 søgefelt B1 (leder i A+B+G), række 2–12 træf, række 13 overskrift. **Række 14–555 = 542 rækker:** 3315 (14–25), 3319 (26–56),
-  5135 (57–141), 5139 (142–218), 5142 (219–393), 4343 (394–493), 4439 (494–539), 3155 (540–555); inden for sæt i samme orden som de gamle ark.
+  Række 1 søgefelt B1 (leder i A+B+G), række 2–12 træf, række 13 overskrift. **Række 14–742 = 729 rækker:** 3315 (14–25), 3319 (26–56),
+  5135 (57–141), 5139 (142–218), 5142 (219–393), 4343 (394–493), 4439 (494–539), 3155 (540–555),
+  **5149 (556–670), 5150 (671–704), 5154 (705–742)** (tilføjet 21-11); inden for sæt i samme orden som de gamle ark.
   Kolonner: A Varenr. · B Del · C Skal være · **D Fundet** · E Mangler (formel) · **F ✓** · **G Sæt · side** (fx "5142 · s.22") · H tom · **I Note**.
   Dansk ark (`;` i formler). "Fundet" tomt = ikke talt.
 - 15-11: samlet fra de 4 gamle ark (5142, 5135, 5139, små sæt). Tjek i arket: 0 forskelle i A–D, F, G, I for alle rækker. Søgning testet ("5139" = 77 træf).
@@ -98,7 +99,14 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
     30 51 2920 sider = 1 sæt; 30 62 6752 = 1; 30 21 0700 grå clips = 1 (måske flere). Flammer 30 07 6930 = 3.
   - **3155 Nessie** (PlaymoDB "Nessie", 2002) tilføjet 15-11: række 540–555, 16 numre, alle = PlaymoDB. 30 20 0200 = 3 (tegnet 3 gange).
     Undervandsmotor 7350 sælges separat – ikke med.
-  - **Alle 8 sæt har PlaymoDB-navne (engelsk).** Manualer er ikke tilføjet som rækker. **Delenavnene skal oversættes til salgsteksten senere** (Thomas 15-11).
+  - **5149 E-Rangers hovedkvarter** (PlaymoDB "E-Rangers' Headquarters", 2011) tilføjet 21-11: 115 numre (168 stk.), alle = PlaymoDB. Stykliste s.13–16.
+    Antal-valg: 30 23 0692 = 2, 30 28 4290 = 2, 30 62 7953/7963 = 2 hver, 30 60 1552 = 1 (2 dele, ét nr.).
+  - **5150 E-Rangers turbojet med landingsplads** (PlaymoDB "E-Rangers Turbojet with Launch Pad") tilføjet 21-11: 34 numre (62 stk.), alle = PlaymoDB.
+    Ingen stykliste (numre fra byggetrin). 30 03 6600 gule propper = 18 (6 pr. ben × 3; PlaymoDB pose med 16).
+    30 22 9922 og 30 66 5972 = 3 hver, men måske samme ben (står i navnet) – Thomas afgør ved sortering.
+  - **5154 Dark Rangers' truck med IR-kanon** (PlaymoDB "Dark Rangers' Truck with IR Knockout Cannon") tilføjet 21-11: 38 numre (54 stk.).
+    Ingen stykliste. Manual 30 02 5392 = PlaymoDB 30 21 3390 (står i navnet). 30 03 6600 = 4 (tegnet; PlaymoDB pose med 8).
+  - **Alle 11 sæt har PlaymoDB-navne (engelsk). 5149/5150/5154 var de allersidste sæt (Thomas 21-11).**** Manualer er ikke tilføjet som rækker. **Delenavnene skal oversættes til salgsteksten senere** (Thomas 15-11).
 - Sætnavne (søgeresuméer 14-11; 4343/4439 fra PlaymoDB 15-11): 4343 Dyreklinik, 4439 Barbartårn, 5142 Prinsesseslot, 5135 Piratskib ("Pirate Prize Ship", 2011–2015), 5139 Soldaterfort ("Soldiers Fort with Dungeon", 2011–2014),
   3315 Sort ridder, 3319 Dragebaronens tropper (svag kilde).
 - Åbent (ikke hastende): lignende skib til 5135 (3940?) – Thomas sender evt. 3940-manualen. Skrog: 30 23 2852 = 30 22 8412 (PlaymoDB).
@@ -109,7 +117,7 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   Claude læser rækken først, skriver D/F og bekræfter i én linje.
 
 ## Næste i Retro
-- **Playmobil:** Thomas sorterer videre i appen (Retro → Playmobil). Tjek: foto af en del (v22), "+ Nyt sæt" Div, sætnavne. Når alt er sorteret:
+- **Playmobil:** Thomas sorterer videre i appen (Retro → Playmobil), nu også 5149, 5150, 5154. Salget deles måske i **to lots** (Thomas vender tilbage). Tjek: foto af en del (v22), "+ Nyt sæt" Div, sætnavne. Når alt er sorteret:
   samlet salgstekst ud fra noterne (delnavne oversættes) + Thomas' input.
 - Thomas: test et rigtigt køb i appen → Claude tjekker CTS Retro (Indkøbslog, Indkøb, Mærker) og fotomappen CTS/Retro/Lager.
 - Trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Trin 3: Salg + klargøringshold.

@@ -59,9 +59,9 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
    2.5.1 ✅; 2.5.2 = kun små fremdriftsbeskeder). Køb 261118 (8 sæt): Thomas sorterer i appen (Klargør → "Sortér dele" → Færdig).
    **Første rigtige "Færdig – overfør" mangler** – tjek Indkøb (Sorteret/Komplet/Noter) bagefter. Nye sæt: Thomas kopierer BrickLink-listen ind i samtalen →
    Claude laver ren liste + billedadresser fra Rebrickable (kolonne F) – fremgangsmåde i lego.md → Sortering. App v25 (Lager: vælger "Alle købsdatoer") ikke testet hos Thomas.
-0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" (8 sæt, PlaymoDB-navne). **App v23 + maskinrum 2.4.0** (Retro → Playmobil:
+0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" (11 sæt inkl. 5149, 5150, 5154 tilføjet 21-11 – de sidste; 729 rækker, PlaymoDB-navne). **App v23 + maskinrum 2.4.0** (Retro → Playmobil:
    sortering, sætnavne, "+ Nyt sæt" fx Div, fotos pr. sæt og pr. del via kamera-ikon ved noten). ✅ Alt virker hos Thomas (15-11).
-   Thomas sorterer videre (ca. 274/542 afkrydset) → samlet salgstekst. Lilla side virker stadig. Se retro.md.
+   Thomas sorterer videre (ca. 274/542 afkrydset 15-11; nu 729 rækker) → salg, måske i to lots (Thomas vender tilbage). Lilla side virker stadig. Se retro.md.
    Thomas 20-11: Playmobil var en engangsopgave – **måden det ligger i appen skal laves om** (tages senere, spørg Thomas hvordan).
 1. **Retro:** Thomas tester et rigtigt køb i appen (Retro → Registrér nyt køb → Klargør med fotos) → Claude tjekker arket "CTS Retro" og fotomappen.
    Derefter Retro trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Se retro.md.
