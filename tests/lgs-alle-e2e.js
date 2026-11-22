@@ -30,8 +30,12 @@ fs.mkdirSync(UD, { recursive: true });
   });
   await page.evaluate(() => CTS.aabnKlargoering('261110', '261110-6086'));
   await page.waitForSelector('#v-koeb3:not([hidden])');
+  assert.strictEqual((await page.textContent('#k3-sorter span')).trim(), 'Sortér dele i sættet →');
   await page.click('#k3-sorter');
   await page.waitForSelector('#lg-liste .pm-del');
+  // v29: tydelig tilbage-knap over søgefeltet og nederst
+  assert.strictEqual(await page.locator('[data-lgtilbage]').count(), 2);
+  assert.strictEqual((await page.locator('[data-lgtilbage]').first().textContent()).trim(), '← Tilbage til klargøring – 261110-6086');
   assert.strictEqual((await page.textContent('#lg-alle')).trim(), 'Alt i orden – kryds resten af (5)');
   assert.ok(await page.isVisible('#lg-alle'));
 
@@ -54,6 +58,13 @@ fs.mkdirSync(UD, { recursive: true });
   await tomUdbakke();
   assert.strictEqual((await page.textContent('#lg-alle')).trim(), 'Alt i orden – kryds resten af (3)');
   await skud('1-foer');
+  // Tilbage nederfra → klargøring viser status; ind igen
+  await page.locator('[data-lgtilbage]').last().click();
+  await page.waitForSelector('#v-koeb3:not([hidden])');
+  await page.waitForFunction(() => document.getElementById('k3-sorter-info').textContent === 'Tæl og kryds delene af · 2 af 5 afkrydset');
+  await skud('0-klargoer');
+  await page.click('#k3-sorter');
+  await page.waitForSelector('#lg-liste .pm-del');
 
   // Alt i orden uden net → bekræft → vises med det samme fra udbakken; sendes, når nettet er tilbage
   await ctx.setOffline(true);

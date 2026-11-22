@@ -309,7 +309,7 @@
     var lk = Data.lgKoeb(k3.dato), ls = lk.saet.find(function (x) { return x.sku === s.sku; });
     var dele = lk.dele.filter(function (d) { return d.sku === s.sku; });
     el.textContent = s.sorteret ? 'Sorteret ✓' + (s.komplet ? ' · komplet' : '')
-      : dele.length ? dele.filter(function (d) { return d.ok; }).length + ' af ' + dele.length + ' dele krydset af'
+      : dele.length ? 'Tæl og kryds delene af · ' + dele.filter(function (d) { return d.ok; }).length + ' af ' + dele.length + ' afkrydset'
       : ls && !ls.harListe ? 'Ingen sorteringsliste for ' + s.setnr + ' endnu' : ls ? 'Ikke startet' : '';
   }
   $('k3-sorter').addEventListener('click', async function () {
@@ -1296,7 +1296,10 @@
     catch (e) { lgBesked(e.message, true); }
     finally { lgv.starter = false; lgTegn(); }
   }
-  $('lg-tilbage').addEventListener('click', function () { lgSendAlt(); aabnKlargoering(lgv.dato, lgv.sku, k3.fra); });
+  function lgTilbage() { lgSendAlt(); aabnKlargoering(lgv.dato, lgv.sku, k3.fra); window.scrollTo(0, 0); }
+  $('lg-tilbage').addEventListener('click', lgTilbage);
+  // v29: tydelig tilbage-knap over søgefeltet og nederst under listen
+  document.querySelectorAll('[data-lgtilbage]').forEach(function (b) { b.addEventListener('click', lgTilbage); });
   function lgOpdater() { if (!lgv.redigerer) lgTegn(); else lgTegnStatus(); }
   function lgFiltrer(dele) {
     var q = pmNorm($('lg-q').value);
@@ -1312,6 +1315,7 @@
     var ok = dele.filter(function (d) { return d.ok; }).length, q = pmNorm($('lg-q').value);
     $('lg-status').textContent = dele.length ? ok + ' af ' + dele.length + ' afkrydset' + (q ? ' · ' + lgFiltrer(dele).length + ' træf' : '') : '';
     var venter = Object.keys(lgv.pend).length || Data.poster().some(function (p) { return (p.type === 'lgGem' || p.type === 'lgGemAlle') && p.data.sku === lgv.sku && p.status !== 'fejl'; });
+    document.querySelectorAll('[data-lgtilbage]').forEach(function (b) { b.textContent = '← Tilbage til klargøring – ' + lgv.sku; });
     var rest = dele.length - ok;
     $('lg-alle').hidden = !(dele.length && rest > 0);
     $('lg-alle').textContent = 'Alt i orden – kryds resten af (' + rest + ')';

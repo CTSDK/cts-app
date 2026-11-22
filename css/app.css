@@ -291,6 +291,9 @@ body.laast { overflow: hidden; }
 /* Lego-sortering (v23) */
 .lg-start { flex-direction: column; gap: 2px; }
 .lg-start small { font-size: 12px; font-weight: 500; color: var(--daempet); }
+.lg-start.knap-primaer { min-height: 60px; font-size: 17px; }
+.lg-start.knap-primaer small { color: rgba(255,255,255,.85); font-size: 13px; }
+.lg-tilbage-knap { width: 100%; margin: 8px 0; border: 2px solid var(--navy); color: var(--navy); background: var(--kort); font-weight: 600; }
 #lg-saet { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
 #lg-saet button { min-height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; line-height: 1.15; }
 #lg-saet button b { font: 600 12px var(--mono); }
