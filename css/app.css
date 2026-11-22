@@ -272,6 +272,8 @@ body.laast { overflow: hidden; }
 .pm-taeller { display: flex; align-items: center; gap: 4px; }
 .pm-taeller button { width: 40px; height: 40px; border-radius: 10px; border: 0; background: var(--chip); font-size: 20px; font-weight: 600; cursor: pointer; }
 .pm-taeller input { width: 52px; min-height: 40px; padding: 4px; text-align: center; font-family: var(--mono); }
+.pm-taeller .lg-fuld { width: auto; padding: 0 10px; font-size: 14px; margin-left: 4px; }
+#lg-alle { width: 100%; margin: 6px 0; }
 .pm-taeller .af { font-size: 12px; color: var(--daempet); min-width: 30px; font-family: var(--mono); }
 .pm-chk { width: 44px; height: 44px; border-radius: 12px; border: 2px solid var(--kant); background: var(--kort); color: var(--kant); font-size: 22px; font-weight: 700; cursor: pointer; }
 .pm-chk.klar { border-color: var(--groen); color: var(--groen); box-shadow: 0 0 0 3px var(--groen-bg); }

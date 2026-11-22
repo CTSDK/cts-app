@@ -227,6 +227,12 @@
       var lk = lg[String(p.data.dato)];
       if (lk) { var li = lk.dele.findIndex(function (x) { return lgNoegle(x) === lgNoegle(svar); }); if (li >= 0) { svar.antalFotos = lk.dele[li].antalFotos; lk.dele[li] = svar; } }
       await Lokal.saet('lg', lg);
+    } else if (p.type === 'lgGemAlle') {
+      // Hele købet kommer tilbage; antal fotos bevares fra kopien, hvis svaret mangler dem
+      var la = lg[String(p.data.dato)], gf = {};
+      if (la) la.dele.forEach(function (x) { gf[lgNoegle(x)] = x.antalFotos; });
+      (svar.dele || []).forEach(function (x) { if (x.antalFotos === undefined) x.antalFotos = gf[lgNoegle(x)] || 0; });
+      await lgGemKopi(svar);
     } else if (p.type === 'lgUploadFoto') {
       var lf = lg[String(p.data.dato)];
       if (lf) { var ld = lf.dele.find(function (x) { return lgNoegle(x) === lgNoegle(p.data); }); if (ld) ld.antalFotos = svar.antalFotos; }
@@ -477,7 +483,11 @@
     var dele = k.dele.map(function (d) { return Object.assign({}, d, { ventende: false }); });
     var idx = {}; dele.forEach(function (d) { idx[lgNoegle(d)] = d; });
     udbakke.forEach(function (p) {
-      if (p.type !== 'lgGem' || p.status === 'fejl' || String(p.data.dato) !== String(dato)) return;
+      if ((p.type !== 'lgGem' && p.type !== 'lgGemAlle') || p.status === 'fejl' || String(p.data.dato) !== String(dato)) return;
+      if (p.type === 'lgGemAlle') {
+        dele.forEach(function (x) { if (x.sku === p.data.sku && !x.ok) { x.fundet = x.skal; x.ok = true; x.ventende = true; } });
+        return;
+      }
       var d = idx[lgNoegle(p.data)]; if (!d) return;
       ['fundet', 'ok', 'note'].forEach(function (x) { if (p.data[x] !== undefined) d[x] = p.data[x]; });
       d.ventende = true;

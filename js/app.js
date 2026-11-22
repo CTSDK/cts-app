@@ -1311,7 +1311,10 @@
     $('lg-info').textContent = 'Køb ' + lgv.dato + ' · ' + lgv.sku + (saet.navn ? ' ' + saet.navn : '') + (saet.sorteret ? ' · sorteret ✓' : '') + (Data.status().lgFejl ? ' · ' + Data.status().lgFejl : '');
     var ok = dele.filter(function (d) { return d.ok; }).length, q = pmNorm($('lg-q').value);
     $('lg-status').textContent = dele.length ? ok + ' af ' + dele.length + ' afkrydset' + (q ? ' · ' + lgFiltrer(dele).length + ' træf' : '') : '';
-    var venter = Object.keys(lgv.pend).length || Data.poster().some(function (p) { return p.type === 'lgGem' && p.data.sku === lgv.sku && p.status !== 'fejl'; });
+    var venter = Object.keys(lgv.pend).length || Data.poster().some(function (p) { return (p.type === 'lgGem' || p.type === 'lgGemAlle') && p.data.sku === lgv.sku && p.status !== 'fejl'; });
+    var rest = dele.length - ok;
+    $('lg-alle').hidden = !(dele.length && rest > 0);
+    $('lg-alle').textContent = 'Alt i orden – kryds resten af (' + rest + ')';
     $('lg-faerdig').hidden = !(dele.length && ok === dele.length);
     $('lg-faerdig').disabled = !!venter;
     $('lg-faerdig').textContent = venter ? 'Gemmer … (vent et øjeblik)' : 'Færdig – overfør til klargøring';
@@ -1366,7 +1369,7 @@
       var el = document.createElement('div'), mangler = d.fundet === null || d.fundet === undefined ? null : d.skal - d.fundet;
       el.className = 'pm-del' + (d.ok ? ' done' : '') + (q ? ' soeg' : '');
       el.innerHTML = '<div class="info lg-info"><button type="button" class="lg-bill" aria-label="Vis stort billede"><img alt="" loading="lazy"></button><div><div class="nr"></div><div class="navn"></div><div class="meta"></div></div></div>' +
-        '<div class="pm-taeller"><button type="button" aria-label="En mindre">−</button><input type="number" inputmode="numeric" min="0" aria-label="Fundet"><button type="button" aria-label="En mere">+</button><span class="af"></span></div>' +
+        '<div class="pm-taeller"><button type="button" aria-label="En mindre">−</button><input type="number" inputmode="numeric" min="0" aria-label="Fundet"><button type="button" aria-label="En mere">+</button><span class="af"></span><button type="button" class="lg-fuld" aria-label="Alle fundet – kryds af">Alle</button></div>' +
         '<button type="button" class="pm-chk" aria-label="Færdig">✓</button>' +
         '<div class="pm-noterad"><input class="note" type="text" placeholder="Note …" aria-label="Note">' +
         '<label class="pm-foto" aria-label="Tag foto af delen">' + KAMERA_SVG + '<span class="pm-antal" hidden></span><input type="file" accept="image/*" capture="environment" hidden></label></div>';
@@ -1391,6 +1394,11 @@
       tal.addEventListener('focus', function () { lgv.redigerer = true; });
       tal.addEventListener('blur', function () { lgv.redigerer = false; lgTegn(); });
       tal.addEventListener('input', function () { var t = tal.value.trim(); lgAendr(d, { fundet: t === '' ? null : Math.max(0, Math.floor(Number(t)) || 0) }); });
+      // "Alle" (v28): antal = Skal være og ✓ i ét tryk
+      el.querySelector('.lg-fuld').addEventListener('click', function () {
+        lgAendr(d, { fundet: d.skal, ok: true }, 200);
+        $('lg-q').value = ''; lgv.redigerer = false; lgTegn(); window.scrollTo(0, 0); $('lg-q').focus();
+      });
       chk.addEventListener('click', function () {
         var ok = !d.ok;
         lgAendr(d, { ok: ok }, 200);
@@ -1424,6 +1432,17 @@
       lgTegn();
     });
   });
+  // "Alt i orden – kryds resten af" (v28 + maskinrum 2.5.3): alle dele, der ikke er krydset af, får fuldt antal og ✓ i én omgang.
+  // Afkrydsede dele og noter røres ikke.
+  $('lg-alle').addEventListener('click', async function () {
+    var dele = lgDele(), rest = dele.filter(function (d) { return !d.ok; }).length;
+    if (!rest) return;
+    var saet = findSaet(lgv.sku) || {};
+    if (!confirm('Alt i orden i ' + lgv.sku + (saet.navn ? ' ' + saet.navn : '') + '?\n\nDe ' + rest + ' dele, der ikke er krydset af, får fuldt antal og kryds. Dele du allerede har krydset af, og dine noter, bliver ikke rørt.')) return;
+    lgSendAlt();
+    await Data.tilfoej('lgGemAlle', { dato: lgv.dato, sku: lgv.sku }, { sku: lgv.sku });
+    $('lg-q').value = ''; lgTegn(); window.scrollTo(0, 0);
+  });
   // Færdig → vis hvad der skrives i Indkøb (Sorteret, Komplet, Noter) → Overfør (udbakke)
   $('lg-faerdig').addEventListener('click', async function () {
     lgSendAlt();
@@ -1447,7 +1466,7 @@
   var TYPENAVN = { tilfoejDb: 'Nyt sæt i DB', opretBatch: 'Nyt køb', gemKlargoering: 'Klargøring', uploadFoto: 'Foto', registrerSalg: 'Salg', saetListet: 'Listet',
     retroOpretKoeb: 'Retro: nyt køb', retroGemTing: 'Retro: klargøring', retroUploadFoto: 'Retro: foto',
     pmGem: 'Playmobil', pmNytSaet: 'Playmobil: nyt sæt', pmUploadFoto: 'Playmobil: foto',
-    lgGem: 'Lego-sortering', lgFaerdig: 'Lego: sorteret', lgUploadFoto: 'Lego: foto af del' };
+    lgGem: 'Lego-sortering', lgGemAlle: 'Lego: alt i orden', lgFaerdig: 'Lego: sorteret', lgUploadFoto: 'Lego: foto af del' };
   function tegnUdbakke() {
     var c = $('u-liste'); c.innerHTML = '';
     var p = Data.poster();
@@ -1459,6 +1478,7 @@
         : x.type === 'tilfoejDb' ? x.data.setnr + ' ' + x.data.navn
         : x.type === 'pmGem' ? x.data.saet + ' · ' + (x.data.nr || 'note')
         : x.type === 'lgGem' || x.type === 'lgUploadFoto' ? x.data.sku + ' · ' + x.data.nr
+        : x.type === 'lgGemAlle' ? x.data.sku + ' · resten krydset af'
         : x.type === 'pmNytSaet' ? x.data.navn
         : x.type === 'pmUploadFoto' ? 'Sæt ' + x.data.saet
         : x.type === 'retroOpretKoeb' ? 'Køb ' + x.meta.dato + ' · ' + R.udvid(x.data.ting).length + ' ting · ' + B.kr(x.data.pris) + ' kr' + (x.data.tilfoej ? ' (tilføjet)' : '')

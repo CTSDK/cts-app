@@ -355,6 +355,12 @@
         if (d.note !== undefined) x.note = String(d.note || '');
         skriv(s); var c = Object.assign({}, x); delete c.dato; return c;
       },
+      lgGemAlle: function (d) {
+        var s = laes(), g = lgL(s), dele = g.dele.filter(function (y) { return y.sku === String(d.sku || '') && y.dato === String(d.dato || ''); });
+        if (!dele.length) throw srv('Sættet ' + d.sku + ' er ikke startet i sorteringen.');
+        dele.forEach(function (x) { if (!x.ok) { x.fundet = x.skal; x.ok = true; } });
+        skriv(s); return H.lgHent({ dato: d.dato });
+      },
       lgFaerdig: function (d) {
         var s = laes(); genberegn(s); var g = lgL(s), r = s.ind.find(function (x) { return x.sku === d.sku; });
         if (!r) throw srv('SKU ' + d.sku + ' findes ikke i Indkøb.');

@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '2.5.2';
+var VERSION = '2.5.3';
 
 // ---------- Faner ----------
 var FANE = {
@@ -1838,6 +1838,7 @@ var HANDLINGER = {
   lgHent: function (d) { return lgHent_(String(d.dato || '')); },
   lgStart: function (d) { return medLaas_(function () { return lgStart_(d); }); },
   lgGem: function (d) { return medLaas_(function () { return lgGem_(d); }); },
+  lgGemAlle: function (d) { return medLaas_(function () { return lgGemAlle_(d); }); },
   lgFaerdig: function (d) { return medLaas_(function () { return lgFaerdig_(d); }); },
   lgUploadFoto: function (d) { return medLaas_(function () { return lgUploadFoto_(d); }); },
   lgBilleder: function (d) { return lgBilleder_(d); }
@@ -3082,6 +3083,27 @@ function lgGem_(d) {
   SpreadsheetApp.flush();
   var rg = a.sh.getRange(x.r, 1, 1, LG_KOL), y = lgRaekke_(x.r, rg.getDisplayValues()[0], rg.getValues()[0]);
   return y;
+}
+// 2.5.3 "Alt i orden – kryds resten af": d {dato, sku}. Alle dele i sættet, der ikke er krydset af, får Fundet = Skal være og ✓.
+// Allerede afkrydsede dele og noter røres ikke. Skrives i én omgang (kolonne E:F). Svar = hele købet (som lgHent).
+function lgGemAlle_(d) {
+  var dato = String(d.dato || ''), sku = String(d.sku || '');
+  var a = lgArk_(dato, false);
+  if (!a) throw fejl_('Sorteringsarket for køb ' + dato + ' findes ikke.');
+  var n = a.sh.getLastRow() - LG_START + 1;
+  if (n < 1) throw fejl_('Sættet ' + sku + ' er ikke startet i sorteringen.');
+  var rg = a.sh.getRange(LG_START, 1, n, LG_KOL), vis = rg.getDisplayValues(), val = rg.getValues();
+  var ef = a.sh.getRange(LG_START, 5, n, 2), ny = ef.getValues(), fundet = 0, rettet = 0;
+  for (var i = 0; i < n; i++) {
+    var x = lgRaekke_(LG_START + i, vis[i], val[i]);
+    if (x.sku !== sku) continue;
+    fundet++;
+    if (x.ok) continue;
+    ny[i] = [x.skal, true]; rettet++;
+  }
+  if (!fundet) throw fejl_('Sættet ' + sku + ' er ikke startet i sorteringen.');
+  if (rettet) { ef.setValues(ny); SpreadsheetApp.flush(); }
+  return lgHent_(dato);
 }
 // Tekst til Noter: mangler (Skal − Fundet) + noter pr. del. Tomt Fundet = ikke talt (tæller ikke som mangel).
 function lgNoteTekst_(dele) {

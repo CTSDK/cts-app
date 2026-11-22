@@ -1,6 +1,6 @@
 // Service worker: gemmer selve appen på telefonen, så den kan starte uden net.
 // Kald til Google (maskinrummet) går aldrig gennem cachen.
-var CACHE = 'cts-app-v27';
+var CACHE = 'cts-app-v28';
 var FILER = [
   './', 'index.html', 'manifest.webmanifest',
   'css/app.css?v=27',
