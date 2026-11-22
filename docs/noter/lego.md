@@ -1,14 +1,14 @@
 # Område: Lego (CTS-appen + regnearket cts-app)
 
-Status pr. 20-11-2026: app v27 ✅ (billeder af dele vises på iPad) + maskinrum 2.5.2 (lagt ud 20-11; 2.5.1 ✅). v25 (købsdato-vælger i Lager) ikke testet hos Thomas. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
+Status pr. 22-11-2026: app **v29** lagt ud 22-11 (tydelige tilbage-knapper i Sortér dele – ikke bekræftet hos Thomas); v28 ✅ ("Alle" + "Alt i orden" virker hos Thomas 22-11) + maskinrum **2.5.3** ✅ (indkopieret + ny version 22-11). v25 (købsdato-vælger i Lager) ikke testet hos Thomas. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
 
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
   Hjemmeskærms-app på iPhone (iOS 27.2). ✅ Også installeret og testet 20-11 på **iPad** (Safari → Føj til hjemmeskærm) og **computer**
   (ASUS, Chrome/Edge → Installér): virker uden ny kode; første åbning på ny enhed skal hente alt, før Lager virker. Bredt layout ikke nødvendigt
   (Thomas 20-11). Find computer-appen igen (ikke tjekket – Googles hjælpeside kunne ikke åbnes): Windows-knap → skriv CTS, eller chrome://apps; højreklik på ikonet → Fastgør til proceslinjen. Fotos tages kun med telefonen; computeren bruges til almindeligt arbejde. Offline: service worker (`sw.js`), lokal kopi + udbakke i IndexedDB (`js/lokal.js`, `js/data.js`).
-  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu **v27** ✅ 20-11; versionen står nederst under Mere). v25 (Lager: vælger "Alle købsdatoer") ikke testet hos Thomas.
-- **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.5.2**, lagt ud 20-11: små fremdriftsbeskeder ved Hent billeder – ikke bekræftet indkopieret/testet; 2.5.1 ✅ hos Thomas 20-11; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
+  Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu **v29**, lagt ud 22-11; versionen står nederst under Mere). v25 (Lager: vælger "Alle købsdatoer") ikke testet hos Thomas.
+- **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.5.3** ✅ hos Thomas 22-11: `lgGemAlle` til "Alt i orden"; indeholder også 2.5.2's små fremdriftsbeskeder; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
   Webapp "Udfør som: Mig", adgang "Alle"; alle kald kræver API-nøgle (Script Properties).
 - **Faste kodetrin (altid sådan):** (1) åbn https://raw.githubusercontent.com/CTSDK/cts-app/main/apps-script/Code.gs, (2) Ctrl+Shift+R og tjek versionen,
   (3) Ctrl+A → Ctrl+C → Apps Script → Ctrl+A → Ctrl+V → Ctrl+S, (4) Implementer → Administrer implementeringer → blyanten → Ny version → Implementer,
@@ -23,7 +23,8 @@ Status pr. 20-11-2026: app v27 ✅ (billeder af dele vises på iPad) + maskinrum
   Skriv formler mens arket er `en_US` (`medEngelsk_`); SUMIFS udvider ikke i ARRAYFORMULA (brug MAP+SUMIFS); LET-navne må ikke ligne celler;
   tekst som "7236-2" skrives med apostrof (`tekst_`).
 - **Tests:** `node tests/beregn.test.js`, `tests/listing.test.js`, `tests/sortering.test.js`, `tests/fragtbilag.test.js`; Playwright (server: `python3 -m http.server 8765`):
-  `tests/e2e.js`, `tests/stortkoeb.js`, `tests/forbindelse.js`, `tests/tilfoejdb.js`, `tests/retro-e2e.js`, `tests/pm-e2e.js`, `tests/lgs-e2e.js`.
+  `tests/e2e.js`, `tests/stortkoeb.js`, `tests/forbindelse.js`, `tests/tilfoejdb.js`, `tests/retro-e2e.js`, `tests/pm-e2e.js`, `tests/lgs-e2e.js`, `tests/lgs-alle-e2e.js` (v28/v29-knapperne).
+  Kendt: `tests/retro.test.js` fejler på en forældet versionskontrol ("VERSION 2.4.x", linje 68) – ikke en fejl i koden; ret testen, når der er tid.
 
 ## Regnearket cts-app
 - **Indkøb:** A SKU, B Købsdato, C Set nr., D Navn, E Værdi €, F Købspris, G Salg for, H OVP, I Sorteret, J Fotos, K Klar, L Stand, M Platform,
@@ -112,7 +113,15 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
   **"Færdig – overfør til klargøring"** (når alle ✓): viser først teksten → Overfør: Indkøb **Sorteret ✓**, **Komplet** ✓ hvis intet mangler,
   og tilføjer til **Noter** (eksisterende noter bevares): `Missing: 1 x Black Brick 1 x 2 (3004)` + linje med del-noter. Tomt Fundet = ikke talt.
   Ingen ren liste → besked "kopiér listen fra BrickLink og sæt den ind i samtalen". Kun nye sæt sorteres.
-  Testet i browser (`tests/lgs-e2e.js`) og ✅ hos Thomas 15-11. **"Færdig – overfør" er endnu ikke kørt på et rigtigt sæt.**
+  Testet i browser (`tests/lgs-e2e.js`) og ✅ hos Thomas 15-11. **"Færdig – overfør" er endnu ikke bekræftet kørt på et rigtigt sæt** (tjek Indkøb bagefter).
+  **Hurtig-knapper (app v28 + maskinrum 2.5.3, ✅ virker hos Thomas 22-11):** til sæt i nye/uåbnede poser.
+  - **"Alt i orden – kryds resten af (N)"** over listen (kun når noget mangler kryds): bekræftelse → alle dele uden kryds får Fundet = Skal være og ✓
+    i én omgang (API `lgGemAlle`, skriver kolonne E:F). Allerede afkrydsede dele og noter røres ikke. Virker offline (udbakke).
+  - **"Alle"** ved hver del (efter −/+): Fundet = Skal være **og** ✓ i ét tryk; søgefeltet ryddes og får fokus (som ✓).
+  - Ikke i Playmobil (Thomas 22-11: Playmobil fjernes fra appen, når den er færdig).
+  **Navigation (app v29, lagt ud 22-11, testet i browser – ikke bekræftet hos Thomas):** stor knap "← Tilbage til klargøring – <SKU>" over søgefeltet
+  og nederst under listen (den lille pil øverst findes stadig). På Klargør er knappen blå: "Sortér dele i sættet →" med "Tæl og kryds delene af · x af y afkrydset".
+  Noter på sættet: Klargør → rul ned til **Noter** (Indkøb kolonne Q); Ret (sætnr./OVP/værdi) via "Ret" ved SKU øverst på Klargør.
   Købet **261118** (8 sæt, 600 kr): 3845, 8079, 70731, 75135 startet i "261118 Sortering" (`CTS/Lager/261118/Sorteringslister`). Testkøbet 261110 er slettet helt 20-11.
 - **Senere (ikke besluttet):** SKU-sorteringsark slettes, når sættet er solgt; "Ny sorteringsliste" i appen (indsæt BrickLink-tekst fra telefonen).
 - **Test (15-11):** `CTS/Lego/Sorteringslister/Test sortering` (`187NNroSbDSO3h_Bar5j3bEoGBEthKG1HzWGZiLuE__o`, fane Dele, række 14–118, SKU TEST-6080)
