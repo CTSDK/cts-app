@@ -52,7 +52,7 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - **Del aldrig regneark/mapper med "alle med linket"** – id'erne står på GitHub (offentligt).
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
-## Næste (pr. 20-11-2026)
+## Næste (pr. 22-11-2026)
 00. **CTS Web:** live med 2 sæt: 75135 (€60) og **3845 Shave a Sheep (€15, ny tema-cirkel Games – lagt ud 20-11, Thomas tjekker live)**.
    Næste: flere fotos af 3845, købsknapper (eBay-links?), flere sæt (fast måde i web.md → Teknik), egne tema-fotos, Retro-side. Se web.md.
 0. **Lego-sortering med billeder af dele: app v27 ✅ (billeder vises på iPad 20-11) + maskinrum 2.5.2** (lagt ud 20-11, Thomas har måske ikke kopieret 2.5.2 ind endnu –
@@ -61,7 +61,8 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
    Claude laver ren liste + billedadresser fra Rebrickable (kolonne F) – fremgangsmåde i lego.md → Sortering. App v25 (Lager: vælger "Alle købsdatoer") ikke testet hos Thomas.
 0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" (11 sæt inkl. 5149, 5150, 5154 tilføjet 21-11 – de sidste; 729 rækker, PlaymoDB-navne). **App v23 + maskinrum 2.4.0** (Retro → Playmobil:
    sortering, sætnavne, "+ Nyt sæt" fx Div, fotos pr. sæt og pr. del via kamera-ikon ved noten). ✅ Alt virker hos Thomas (15-11).
-   Thomas sorterer videre (ca. 274/542 afkrydset 15-11; nu 729 rækker) → salg, måske i to lots (Thomas vender tilbage). Lilla side virker stadig. Se retro.md.
+   **Lot 1 (5149+5150+5154 Space) ✅ afsluttet 22-11:** salgstekst DE+EN i Doc "Playmobil 5149 5150 5154 Listing" + fotos i Playmobil-mappen; ikke lagt på eBay endnu (Thomas).
+   Resten (8 sæt) → lot 2: Thomas sorterer videre, så laves annonce på samme måde. Lilla side virker stadig. Se retro.md.
    Thomas 20-11: Playmobil var en engangsopgave – **måden det ligger i appen skal laves om** (tages senere, spørg Thomas hvordan).
 1. **Retro:** Thomas tester et rigtigt køb i appen (Retro → Registrér nyt køb → Klargør med fotos) → Claude tjekker arket "CTS Retro" og fotomappen.
    Derefter Retro trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Se retro.md.
@@ -74,7 +75,7 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
    GitHub-nøgle i Apps Script. Ikke tjekket: om en samtale læser hovednoten fra et andet repo end appen. Senere ideer: del Code.gs (161 KB) og app.js
    (65 KB) op efter emne; slank hovednoten.
 
-## Status pr. 20-11-2026
+## Status pr. 22-11-2026
 - ✅ **App v27** (billeder af dele i Lego-sortering, testet på iPad 20-11); v25-vælgeren i Lager ikke testet. Versionen står nederst under Mere.
 - ✅ Appen virker også på **iPad** og **computer** (installeret 20-11, ingen ny kode; link https://ctsdk.github.io/cts-app/). Bredt layout ikke nødvendigt. Retro: nyt køb, klargør, **Playmobil-sortering**.
 - ✅ **Maskinrum 2.5.1** hos Thomas (2.5.2 lagt ud): Gem bilag fra Gmail, Udfør bilagsplan, økonomi-ark, Opret Retro-ark, Playmobil (pm*), Lego-sortering, Hent billeder af Lego-dele.

@@ -74,6 +74,7 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   På note-linjer (fx Div) gælder ikonet hele sættet. Arkets id: konstant
   PM_STANDARD_ID i Code.gs (kan overstyres med Script Property PLAYMOBIL_ID).
   **Sætnavne** (v21/2.3.1): fanen **"Sæt"** i arket (A nr., B navn) → vises under nummeret på knapperne. Nye navne skrives bare i fanen.
+  Kolonne **C Status** (22-11, kun til Thomas/Claude – appen læser kun A–B): "Afsluttet <dato> – salgstekst i Drive" når et sæt er solgt-klar.
   Testet i browser med testdata (`tests/pm-e2e.js`). **Hos Thomas 15-11 virker:** noter, ✓, + og **fotos af sæt** (Fotos-mappe id
   `1jbdX824Irc5XpEBbblUx02bIrzOv8cDa`: PM-3155.01, PM-4343.01–03). Thomas 15-11: **alt testet og virker** (inkl. fotos pr. del, Nyt sæt, sætnavne).
 - Status 15-11 aften (ca.): **274 af 542 afkrydset** – 3315: 10/12 · 3319: 13/31 · 5135: 63/85 · 5139: 40/77 · 5142: 86/175 · 4343: 41/100 · 4439: 19/46 · 3155: 2/16.
@@ -117,7 +118,13 @@ Børnenes gamle Playmobil. **Ingen købspris, ingen SKU.** Alle sæt sælges **s
   Claude læser rækken først, skriver D/F og bekræfter i én linje.
 
 ## Næste i Retro
-- **Playmobil:** Thomas sorterer videre i appen (Retro → Playmobil), nu også 5149, 5150, 5154. Salget deles måske i **to lots** (Thomas vender tilbage). Tjek: foto af en del (v22), "+ Nyt sæt" Div, sætnavne. Når alt er sorteret:
-  samlet salgstekst ud fra noterne (delnavne oversættes) + Thomas' input.
+- **Playmobil – lot 1 ✅ afsluttet 22-11: 5149 + 5150 + 5154 (Space, 2011)** som ét eBay-lot. Sorteret af Thomas; Sæt!C = "Afsluttet 22-11".
+  Salgstekst (titel, Zustand, beskrivelse DE+EN, derefter manglende dele pr. sæt) i Google Doc **"Playmobil 5149 5150 5154 Listing"**
+  i CTS/Retro/Playmobil (id `1XnVOF_0IZqondYAeDPi8p_pw_kgEgoBC9s1USek1TNE`). Fotos: Fotos/PM-5149.01–03, PM-5150.01–02, PM-5154.01–03.
+  Stand 7 = Gut (G)/Good (G). Ingen æske/vejledning ("Bauanleitungen auf der Playmobil-Webseite"). Elektronik ikke testet.
+  Mangler: 5149 45/168, 5150 9/62, 5154 7/54 (tomme "Fundet" regnet som mangler; alle 9 figurer med). Titel/sætnavne = PlaymoDB (engelsk).
+  **Ikke lagt på eBay endnu** – det gør Thomas. Pris ikke aftalt.
+- **Playmobil – resten (8 sæt: 3315, 3319, 5135, 5139, 5142, 4343, 4439, 3155):** Thomas sorterer videre → lot 2 (eller flere – Thomas vender tilbage).
+  Samme fremgangsmåde som lot 1: Claude læser arket (D/F/I), laver annonce efter Lego-skabelonen (lego.md → Listings), Doc i Playmobil-mappen, Sæt!C.
 - Thomas: test et rigtigt køb i appen → Claude tjekker CTS Retro (Indkøbslog, Indkøb, Mærker) og fotomappen CTS/Retro/Lager.
 - Trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Trin 3: Salg + klargøringshold.
