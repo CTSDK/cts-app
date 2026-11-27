@@ -76,7 +76,6 @@
         var sum = iKoeb.filter(function (x) { return x.fast == null; }).reduce(function (a, x) { return a + x.vaerdi; }, 0);
         var fastsum = iKoeb.reduce(function (a, x) { return a + (x.fast == null ? 0 : x.fast); }, 0);
         r.koebspris = r.fast != null ? r.fast : log && sum ? Math.round((log.pris - fastsum) * r.vaerdi / sum * 100) / 100 : 0;
-        r.nyt = String(r.noter || '').indexOf('Ny, forseglet') === 0;
         r.navn = DB[r.setnr] ? DB[r.setnr][0] : 'Sæt findes ikke';
         r.lagerstatus = (s.salg || []).some(function (x) { return x.sku === r.sku; }) ? 'Solgt' : (r.klar ? 'På lager' : '');
         r.antalFotos = (s.fotos[r.sku] || []).length;
@@ -108,25 +107,33 @@
         genberegn(s); skriv(s);
         return H.hentBatch({ dato: d.dato });
       },
-      opretNytLego: function (d) {
-        var s = laes(), dato = String(d.dato), pct = Number(d.cashbackPct) || 0;
+      // ----- Nyt LEGO (samme regler som maskinrummet: lagernr N-<sætnr>, først købt først solgt) -----
+      nytKoeb: function (d) {
+        var s = laes(); s.nk = s.nk || []; s.nytIds = s.nytIds || [];
+        if (d.id && s.nytIds.indexOf(d.id) >= 0) return { lager: nytLager(s), gentaget: true };
         if (!String(d.butik || '').trim()) throw srv('Skriv hvilken butik.');
-        s.nytIds = s.nytIds || [];
-        if (d.id && s.nytIds.indexOf(d.id) >= 0) return H.hentBatch({ dato: dato });
-        var nye = d.saet.map(function (x) {
-          var f = x.gave ? 0 : Number(x.faktura); if (!x.gave && !(f > 0)) throw srv('Sæt ' + x.setnr + ' mangler fakturapris (eller markér det som gave).');
-          var cb = Math.round(f * pct) / 100;
-          return { dato: dato, setnr: String(x.setnr), vaerdi: 0, fast: Math.round((f - cb) * 100) / 100, ovp: true, kilde: '', sorteret: true, fotos: false, klar: false, stand: '10', platform: '', noter: 'Ny, forseglet – ' + (x.gave ? 'Gave (GWP) til ' : '') + d.butik, vejledning: false, komplet: true, listet: false };
+        var pct = Number(d.cashbackPct) || 0, ekstra = laes().db || {};
+        var linjer = (d.linjer || []).filter(function (l) { return String(l.setnr || '').trim(); });
+        if (!linjer.length) throw srv('Tilføj mindst ét sæt.');
+        linjer.forEach(function (l) {
+          var nr = String(l.setnr).trim(), gave = l.gave === true, styk = gave ? 0 : Number(l.styk), antal = Math.round(Number(l.antal));
+          if (!(antal >= 1)) throw srv('Sæt ' + nr + ': antal skal være mindst 1.');
+          if (!gave && !(styk > 0)) throw srv('Sæt ' + nr + ' mangler stykpris (eller markér det som gave).');
+          var db = DB[nr] || ekstra[nr]; if (!db) throw srv('Sæt ' + nr + ' findes ikke i DB – tilføj det først.');
+          var belob = Math.round(styk * antal * 100) / 100, cb = Math.round(belob * pct) / 100;
+          s.nk.push({ id: 'K' + ('00' + (s.nk.length + 1)).slice(-3), dato: d.dato, butik: d.butik, lagernr: 'N-' + nr, setnr: nr, navn: db[0], tema: db[1], antal: antal, prStk: Math.round((belob - cb) / antal * 100) / 100 });
         });
-        var netto = nye.reduce(function (a, x) { return a + x.fast; }, 0);
-        var log = s.log.find(function (l) { return l.dato === dato; });
-        if (log) log.pris = Math.round((log.pris + netto) * 100) / 100; else s.log.unshift({ dato: dato, pris: Math.round(netto * 100) / 100 });
-        var sidste = -1; s.ind.forEach(function (r, i) { if (r.dato === dato) sidste = i; });
-        if (sidste < 0) s.ind = nye.concat(s.ind); else s.ind.splice.apply(s.ind, [sidste + 1, 0].concat(nye));
-        s.nyt = (s.nyt || []).concat(nye.map(function (x) { return { setnr: x.setnr, butik: d.butik, ordrenr: d.ordrenr, netto: x.fast }; }));
         if (d.id) s.nytIds.push(d.id);
-        genberegn(s); skriv(s); return H.hentBatch({ dato: dato });
+        skriv(s); return { lager: nytLager(s), gentaget: false };
       },
+      nytFoto: function (d) {
+        var s = laes(); s.nfoto = s.nfoto || {};
+        var l = s.nfoto[d.sku] = s.nfoto[d.sku] || [];
+        var gl = l.find(function (x) { return x.id === d.uploadId; }); if (gl) return { navn: gl.navn, antalFotos: l.length, gentaget: true };
+        var navn = d.sku + '.' + ('0' + (l.length + 1)).slice(-2) + '.jpg'; l.push({ id: d.uploadId, navn: navn });
+        skriv(s); return { navn: navn, antalFotos: l.length, gentaget: false };
+      },
+      nytLager: function () { return nytLager(laes()); },
       hentBatch: function (d) {
         var s = laes(); genberegn(s);
         var log = s.log.find(function (l) { return l.dato === String(d.dato); });
@@ -201,7 +208,13 @@
         var s = laes(); genberegn(s);
         var varer = (d.varer || []).filter(function (v) { return v.sku; });
         if (!varer.length) throw srv('Ingen varer i ordren.');
+        var nye = varer.filter(function (v) { return /^N-/i.test(v.sku); });
+        if (nye.length) {
+          var fifo = nytFifo(s);
+          nye.forEach(function (v) { var nr = v.sku.toUpperCase(), l = fifo[nr]; if (!l || !l.length) throw srv('Ingen flere ' + nr + ' på lager.'); var x = l.shift(); v.sku = nr + '.' + x.id; v.koebspris = x.prStk; });
+        }
         varer.forEach(function (v) {
+          if (/^N-/.test(v.sku)) return;
           var r = s.ind.find(function (x) { return x.sku === v.sku; });
           if (!r) throw srv('SKU ' + v.sku + ' findes ikke i Indkøb.');
           if (r.lagerstatus === 'Solgt') throw srv('SKU ' + v.sku + ' er allerede solgt.');
@@ -209,7 +222,7 @@
         var kurs = 7.46, sumH = varer.reduce(function (a, v) { return a + Number(v.pris); }, 0);
         var n = function (x) { return Number(x) || 0; };
         var raekker = varer.map(function (v) {
-          var r = s.ind.find(function (x) { return x.sku === v.sku; });
+          var r = /^N-/.test(v.sku) ? { koebspris: v.koebspris } : s.ind.find(function (x) { return x.sku === v.sku; });
           var andel = sumH ? Number(v.pris) / sumH : 0;
           var f = (Number(v.pris) + andel * (n(d.fragtInd) - n(d.gebyr) - n(d.refund))) * kurs - andel * n(d.fragtUd) - r.koebspris;
           s.salg.push({ dato: d.dato, sku: v.sku, koeber: d.koeber, pris: Number(v.pris) });
@@ -217,7 +230,7 @@
         });
         genberegn(s); skriv(s);
         return { aar: d.dato.slice(0, 4), raekker: raekker, fortjenesteOrdre: Math.round(raekker.reduce(function (a, r) { return a + r.fortjeneste; }, 0) * 100) / 100,
-          saet: s.ind.filter(function (r) { return varer.some(function (v) { return v.sku === r.sku; }); }) };
+          saet: s.ind.filter(function (r) { return varer.some(function (v) { return v.sku === r.sku; }); }), nyt: nye.length ? nytLager(s) : null };
       },
       // ----- Retro Design (samme regler som maskinrummet; SKU/pris fra js/retro.js) -----
       retroMaerker: function () { return retroL(laes()).maerker; },
@@ -427,11 +440,26 @@
           salg: Object.keys(SALG).map(function (k) { var x = SALG[k]; return [k, x.gns, x.antal, x.hoejeste, x.laveste]; }),
           lager: s.ind.map(function (r) { var c = Object.assign({}, r); delete c.antalFotos; return c; }),
           log: s.log.map(function (l) { return [l.dato, l.pris]; }),
-          kurs: { '2025': 7.46, '2026': 7.46 }
+          kurs: { '2025': 7.46, '2026': 7.46 },
+          nyt: nytLager(s)
         };
       }
     };
     function srv(t) { var e = new Error(t); e.fraServer = true; return e; }
+    function nytFifo(s) {
+      var solgt = {}; (s.salg || []).forEach(function (x) { var m = /^N-.+\.(K\d+)$/.exec(x.sku); if (m) solgt[m[1]] = (solgt[m[1]] || 0) + 1; });
+      var res = {}; (s.nk || []).forEach(function (r) { var l = res[r.lagernr] = res[r.lagernr] || []; for (var i = 0; i < r.antal - (solgt[r.id] || 0); i++) l.push(r); });
+      return res;
+    }
+    function nytLager(s) {
+      var fifo = nytFifo(s), set = {}, ud = [];
+      (s.nk || []).forEach(function (r) {
+        if (!set[r.lagernr]) { set[r.lagernr] = { lagernr: r.lagernr, setnr: r.setnr, navn: r.navn, tema: r.tema, koebt: 0, paaLager: 0, fotos: ((s.nfoto || {})[r.lagernr] || []).length, naesteKoebspris: null }; ud.push(set[r.lagernr]); }
+        set[r.lagernr].koebt += r.antal;
+      });
+      ud.forEach(function (x) { var l = fifo[x.lagernr] || []; x.paaLager = l.length; x.naesteKoebspris = l.length ? l[0].prStk : null; });
+      return ud;
+    }
     // Test-data: rene sorteringslister (udsnit) – [Item No, Beskrivelse, Antal, Type]
     var LISTER = { '6086': [['3004', 'Black Brick 1 x 2', 10, 'Del'], ['3004', 'Light Gray Brick 1 x 2', 89, 'Del'], ['3005', 'Light Gray Brick 1 x 1', 4, 'Del'],
       ['4491a', 'Black Horse Saddle with Clip', 1, 'Del'], ['cas108', 'Crusader Axe - Blue Legs with Black Hips', 2, 'Minifigur']] };

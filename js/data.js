@@ -7,7 +7,7 @@
   'use strict';
 
   var B = rod.Beregn, Api = rod.Api, Lokal = rod.Lokal;
-  var kopi = { db: null, salg: {}, lager: [], log: {}, hentet: 0, kurs: {} };
+  var kopi = { db: null, salg: {}, lager: [], log: {}, hentet: 0, kurs: {}, nyt: [] };
   var listings = { saet: {}, doc: {} }; // sku → {titel, zustand, beskrivelse}; dato → dokument-url
   var udbakke = [];
   var lyttere = [], haendelser = [];
@@ -28,8 +28,8 @@
 
   async function start() {
     try {
-      var v = await Promise.all(['db', 'salg', 'lager', 'log', 'hentet', 'kurs'].map(function (k) { return Lokal.hent(k); }));
-      kopi.db = v[0] || null; kopi.salg = v[1] || {}; kopi.lager = v[2] || []; kopi.log = v[3] || {}; kopi.hentet = v[4] || 0; kopi.kurs = v[5] || {};
+      var v = await Promise.all(['db', 'salg', 'lager', 'log', 'hentet', 'kurs', 'nyt'].map(function (k) { return Lokal.hent(k); }));
+      kopi.db = v[0] || null; kopi.salg = v[1] || {}; kopi.lager = v[2] || []; kopi.log = v[3] || {}; kopi.hentet = v[4] || 0; kopi.kurs = v[5] || {}; kopi.nyt = v[6] || [];
       listings = (await Lokal.hent('listings')) || { saet: {}, doc: {} };
       retro = (await Lokal.hent('retro')) || nyRetro();
       pm = (await Lokal.hent('pm')) || pm;
@@ -58,23 +58,6 @@
     });
   }
 
-  // Nyt LEGO (v30): lokale rækker, til Sheets har svaret. SKU regnes med de sæt, købet har i forvejen.
-  function nytRaekker(d, meta, foer) {
-    var dato = String(d.dato), pct = Number(d.cashbackPct) || 0;
-    var gl = foer.filter(function (r) { return r.dato === dato; }).map(function (r) { return r.setnr; });
-    var nr = d.saet.map(function (s) { return String(s.setnr); });
-    var sk = B.skuer(dato, gl.concat(nr)).slice(gl.length);
-    return d.saet.map(function (s, i) {
-      var f = s.gave ? 0 : Number(s.faktura) || 0, cb = Math.round(f * pct) / 100;
-      return {
-        sku: sk[i], dato: dato, setnr: nr[i], navn: (meta && meta.navne && meta.navne[i]) || nr[i],
-        vaerdi: 0, koebspris: Math.round((f - cb) * 100) / 100, ovp: true, kilde: '',
-        sorteret: true, fotos: false, klar: false, stand: '10', platform: '', lagerstatus: '', noter: 'Ny, forseglet – ' + d.butik,
-        vejledning: false, komplet: true, antalFotos: 0, lokal: true, nyt: true
-      };
-    });
-  }
-
   function anvend(raekker, poster) {
     var res = raekker.map(function (r) { return Object.assign({}, r, { ventendeFotos: 0, ventende: false }); });
     var idx = {}; res.forEach(function (r) { idx[r.sku] = r; });
@@ -84,10 +67,6 @@
         var nye = lokaleRaekker(p.data, p.meta);
         nye.forEach(function (r) { r.ventende = true; idx[r.sku] = r; });
         res = nye.concat(res);
-      } else if (p.type === 'opretNytLego') {
-        var ny = nytRaekker(p.data, p.meta, res);
-        ny.forEach(function (r) { r.ventende = true; idx[r.sku] = r; });
-        res = ny.concat(res);
       } else if (p.type === 'gemKlargoering') {
         var r = idx[p.data.sku]; if (!r) return;
         ['sorteret', 'klar', 'stand', 'platform', 'noter', 'vejledning', 'komplet'].forEach(function (k) { r[k] = p.data[k]; });
@@ -215,20 +194,23 @@
       var afvig = svar.saet.filter(function (s, i) { return lokal[i] && Math.abs(s.koebspris - lokal[i].koebspris) > 0.01; });
       await Promise.all([Lokal.saet('lager', kopi.lager), Lokal.saet('log', kopi.log)]);
       haendelse('batchGemt', { dato: dato, antal: svar.saet.length, afvig: afvig.length });
-    } else if (p.type === 'opretNytLego') {
-      var nd = String(svar.dato);
-      kopi.lager = svar.saet.map(function (s) { s.antalFotos = s.antalFotos || 0; return s; })
-        .concat(kopi.lager.filter(function (r) { return r.dato !== nd; }));
-      kopi.log[nd] = svar.pris;
-      await Promise.all([Lokal.saet('lager', kopi.lager), Lokal.saet('log', kopi.log)]);
-      haendelse('batchGemt', { dato: nd, antal: svar.saet.length, afvig: 0 });
+    } else if (p.type === 'nytKoeb') {
+      kopi.nyt = svar.lager || kopi.nyt;
+      await Lokal.saet('nyt', kopi.nyt);
+      haendelse('nytGemt', { antal: (p.data.linjer || []).length });
     } else if (p.type === 'gemKlargoering') {
       erstat(svar);
       await Lokal.saet('lager', kopi.lager);
     } else if (p.type === 'saetListet') {
       erstat(svar);
       await Lokal.saet('lager', kopi.lager);
+    } else if (p.type === 'nytFoto') {
+      var nf = kopi.nyt.find(function (x) { return x.lagernr === p.data.sku; });
+      if (nf) nf.fotos = svar.antalFotos;
+      (sendteFotos[p.data.sku] = sendteFotos[p.data.sku] || []).push({ thumb: p.meta.thumb, navn: svar.navn });
+      await Lokal.saet('nyt', kopi.nyt);
     } else if (p.type === 'registrerSalg') {
+      if (svar.nyt) { kopi.nyt = svar.nyt; await Lokal.saet('nyt', kopi.nyt); }
       (svar.saet || []).forEach(erstat);
       await Lokal.saet('lager', kopi.lager);
       haendelse('salgGemt', { antal: (svar.raekker || []).length, fortjeneste: svar.fortjenesteOrdre });
@@ -318,9 +300,9 @@
       // bevar fototællinger, som lagerlisten ikke indeholder
       var gl = {}; kopi.lager.forEach(function (r) { gl[r.sku] = r.antalFotos; });
       (d.lager || []).forEach(function (r) { if (r.antalFotos === undefined) r.antalFotos = gl[r.sku] || (r.fotos ? 1 : 0); });
-      kopi = { db: db, salg: salg, lager: d.lager || [], log: log, hentet: Date.now(), kurs: d.kurs || {} };
+      kopi = { db: db, salg: salg, lager: d.lager || [], log: log, hentet: Date.now(), kurs: d.kurs || {}, nyt: d.nyt || [] };
       anvendDb();
-      await Promise.all([Lokal.saet('db', db), Lokal.saet('salg', salg), Lokal.saet('lager', kopi.lager), Lokal.saet('log', log), Lokal.saet('hentet', kopi.hentet), Lokal.saet('kurs', kopi.kurs)]);
+      await Promise.all([Lokal.saet('db', db), Lokal.saet('salg', salg), Lokal.saet('lager', kopi.lager), Lokal.saet('log', log), Lokal.saet('hentet', kopi.hentet), Lokal.saet('kurs', kopi.kurs), Lokal.saet('nyt', kopi.nyt)]);
       status.online = true;
       return true;
     } catch (e) {
@@ -543,13 +525,33 @@
     return { iDrive: d.antalFotos || 0, venter: v };
   }
 
+  // Nyt LEGO: lagernumre med "på lager" – ventende køb lægges til, ventende salg trækkes fra
+  function nyt() {
+    var res = kopi.nyt.map(function (r) { return Object.assign({}, r, { ventende: false, ventendeFotos: 0 }); });
+    var idx = {}; res.forEach(function (r) { idx[r.lagernr] = r; });
+    udbakke.forEach(function (p) {
+      if (p.type === 'nytKoeb') {
+        (p.data.linjer || []).forEach(function (l, i) {
+          var nr = 'N-' + String(l.setnr).trim(), r = idx[nr];
+          if (!r) { r = idx[nr] = { lagernr: nr, setnr: String(l.setnr), navn: (p.meta.navne && p.meta.navne[i]) || String(l.setnr), tema: (p.meta.temaer && p.meta.temaer[i]) || '', koebt: 0, paaLager: 0, fotos: 0, naesteKoebspris: null }; res.push(r); }
+          r.koebt += Number(l.antal) || 0; r.paaLager += Number(l.antal) || 0; r.ventende = true;
+        });
+      } else if (p.type === 'registrerSalg') {
+        (p.data.varer || []).forEach(function (v) { var r = idx[String(v.sku).toUpperCase()]; if (r) { r.paaLager--; r.ventende = true; } });
+      } else if (p.type === 'nytFoto') {
+        var f = idx[p.data.sku]; if (f) f.ventendeFotos++;
+      }
+    });
+    return res.sort(function (a, b) { return (a.tema || '').localeCompare(b.tema || '') || (Number(a.setnr) || 0) - (Number(b.setnr) || 0); });
+  }
+
   window.addEventListener('online', function () { status.online = true; fyr(); koer(); });
   window.addEventListener('offline', function () { status.online = false; fyr(); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) koer(); });
 
   rod.Data = {
     start: start, paa: function (fn) { lyttere.push(fn); }, paaHaendelse: function (fn) { haendelser.push(fn); },
-    lager: lager, batch: batch, batchFindes: batchFindes, harDb: harDb, slaaOp: slaaOp, tilfoejDb: tilfoejDb, temaer: temaer, dbNummer: dbNummer,
+    lager: lager, nyt: nyt, batch: batch, batchFindes: batchFindes, harDb: harDb, slaaOp: slaaOp, tilfoejDb: tilfoejDb, temaer: temaer, dbNummer: dbNummer,
     tilfoej: tilfoej, venter: venter, fejlede: fejlede, poster: poster, proevIgen: proevIgen, slet: slet, koer: koer,
     hentAlt: hentAlt, opdaterFotos: opdaterFotos, status: function () { return status; },
     retKoeb: retKoeb, koebStatus: koebStatus, lavListings: lavListings,

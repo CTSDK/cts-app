@@ -318,3 +318,4 @@ body.laast { overflow: hidden; }
 .nyt-linje .nyt-priser { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .nyt-linje .nyt-priser input { min-height: 44px; font-family: inherit; }
 .nyt-linje .chip { grid-column: 1 / -1; justify-self: start; }
+.nyt-kort { text-align: left; border: 0; width: 100%; cursor: pointer; font: inherit; color: inherit; }

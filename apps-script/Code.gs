@@ -1094,8 +1094,11 @@ function formlerSalg_(sh, aar) {
     ',fragtind,' + v('I') + ',refund,' + v('J') + ',raekker,ARRAYFORMULA(ROW(dato)),tom,ARRAYFORMULA((dato="")*(sku="")),';
   var forste = 'COUNTIFS(dato,dato,kober,kober,raekker,"<"&raekker)=0';
   // E: indkøbspris fra Indkøb
+  // Nyt LEGO (2.6.0): SKU "N-21348.K015" → købspris pr. stk. fra linje K015 i "Nyt LEGO køb"
   sh.getRange('E3').setFormula('=LET(' + lad + 'opslag,{' + ind_(I, 'A', 3) + ',' + ind_(I, 'F', 3) + '},' +
-    '{"Indkøbspris (DKK)";ARRAYFORMULA(IF(sku="","",IFERROR(VLOOKUP(sku,opslag,2,FALSE),"")))})');
+    'nytopslag,{' + ind_(NK_FANE, 'A', 3) + ',' + ind_(NK_FANE, 'O', 3) + '},' +
+    '{"Indkøbspris (DKK)";ARRAYFORMULA(IF(sku="","",IFERROR(VLOOKUP(sku,opslag,2,FALSE),' +
+    'IFERROR(VLOOKUP(REGEXEXTRACT(sku,"\\.(K\\d+)$"),nytopslag,2,FALSE),""))))})');
   // K: Ordre Sum + Fragt (DKK). 2025: pr. række. 2026: samlet pr. ordre på ordrens første række.
   if (aar === '2025') {
     sh.getRange('K3').setFormula('=LET(' + lad + '{"Ordre Sum + Fragt (DKK)";ARRAYFORMULA(IF(tom,"",(IF(ISNUMBER(ordre),ordre,0)+IF(ISNUMBER(fragtind),fragtind,0)-IF(ISNUMBER(refund),refund,0))*$R$2))})');
@@ -1113,7 +1116,7 @@ function formlerSalg_(sh, aar) {
   // N: Skattepligtigt (2026 slås op i Indkøbslog; 2025 er indtastet)
   if (aar === '2026') {
     sh.getRange('N3').setFormula('=LET(sku,' + v('B') + ',logtabel,{ARRAYFORMULA(UPPER(TO_TEXT(' + ind_(L, 'A', 3) + '))),' + ind_(L, 'C', 3) + '},' +
-      '{"Skattepligtigt";ARRAYFORMULA(IF(sku="","",IFERROR(VLOOKUP(UPPER(IFERROR(LEFT(sku,FIND("-",sku)-1),"")),logtabel,2,FALSE),"")))})');
+      '{"Skattepligtigt";ARRAYFORMULA(IF(sku="","",IF(LEFT(sku,2)="N-","Ja",IFERROR(VLOOKUP(UPPER(IFERROR(LEFT(sku,FIND("-",sku)-1),"")),logtabel,2,FALSE),""))))})');
   }
   // Totaler i række 2
   sh.getRange('K2').setFormula('=SUM(' + v('K') + ')');
@@ -1818,7 +1821,9 @@ var HANDLINGER = {
   hentAlt: function () { return hentAlt_(); },
   registrerSalg: function (d) { return medLaas_(function () { return registrerSalg_(d); }); },
   tilfoejSaet: function (d) { return medLaas_(function () { return tilfoejSaet_(d); }); },
-  opretNytLego: function (d) { return medLaas_(function () { return opretNytLego_(d); }); },
+  nytKoeb: function (d) { return medLaas_(function () { return nytKoeb_(d); }); },
+  nytFoto: function (d) { return medLaas_(function () { return nytFoto_(d); }); },
+  nytLager: function () { return nytLager_(); },
   retSaet: function (d) { return medLaas_(function () { return retSaet_(d); }); },
   fjernSaet: function (d) { return medLaas_(function () { return fjernSaet_(d); }); },
   saetListet: function (d) { return medLaas_(function () { return saetListet_(d); }); },
@@ -1903,121 +1908,135 @@ function tilfoejSaet_(d) {
   return hentBatch_(dato);
 }
 
-// ---------- Nyt LEGO: nye, forseglede sæt fra butikker (2.6.0) ----------
-// Købspris = fakturapris minus cashback (fast købspris i Indkøb U). Gaver (GWP) får 0 kr.
-// Findes købsdatoen allerede, lægges sættene til det køb, og nettoprisen lægges til Indkøbslog.
-// Sættene skrives også i fanen "Nyt LEGO" (sorteret efter tema og sæt nr.).
-var NYT_FANE = 'Nyt LEGO', NYT_NOTE = 'Ny, forseglet';
-var NYT_KOL = ['SKU', 'Købsdato', 'Sæt nr.', 'Navn', 'Tema', 'Undertema', 'Butik', 'Ordrenr.', 'Fakturapris (DKK)', 'Cashback (DKK)',
-  'Købspris netto (DKK)', 'Insiderpoint', 'Gave (GWP)', 'Vejl. pris € (Brickset)', 'Vejl. pris DKK', 'Mål-salgspris € (vejl. +30 %)',
-  'Anslået salgspris €', 'Udgår (Brickset)', 'Cashback-status', 'Bilagsnr', 'Noter'];
-function erNyt_(noter) { return String(noter || '').indexOf(NYT_NOTE) === 0; }
+// ---------- Nyt LEGO: nye, forseglede sæt – ét lagernummer pr. sætnummer (2.6.0) ----------
+// "Nyt LEGO køb": én række pr. ordrelinje (A Linje K001 … U Noter). "Nyt LEGO lager": én række pr. lagernummer N-<sætnr>.
+// Salg: lagernummeret sælges; maskinrummet vælger den ældste købslinje med sæt tilbage (først købt, først solgt)
+// og skriver SKU'en "N-<sætnr>.K012" i Salg, så indkøbsprisen kan slås op i købs-fanen.
+var NK_FANE = 'Nyt LEGO køb', NL_FANE = 'Nyt LEGO lager', NYT_MAPPE = 'Nyt LEGO';
+var NK = { ID: 1, DATO: 2, BUTIK: 3, ORDRE: 4, FAKTURA: 5, LAGERNR: 6, SETNR: 7, NAVN: 8, ANTAL: 9, STYK: 10, LINJE: 11, FRAGT: 12,
+  CB: 13, IALT: 14, PRSTK: 15, POINT: 16, PVAERDI: 17, EFTERPOINT: 18, GAVE: 19, BILAG: 20, NOTER: 21 };
+var NL = { LAGERNR: 1, SETNR: 2, NAVN: 3, TEMA: 4, UNDERTEMA: 5, AAR: 6, KOEBT: 7, SOLGT: 8, PAALAGER: 9, LAV: 10, HOEJ: 11,
+  VEJLDKK: 12, VEJLEUR: 13, FOTOS: 18, NOTER: 19 };
+function erNytSku_(sku) { return /^N-/i.test(String(sku || '')); }
 
-function nytFane_() {
-  var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(NYT_FANE);
-  if (sh) return sh;
-  sh = ss.insertSheet(NYT_FANE, 2);
-  sh.getRange(1, 1).setValue('NYT LEGO — nye, forseglede sæt købt til videresalg (sorteret efter tema og sæt nr.)').setFontWeight('bold');
-  sh.getRange(2, 1, 1, NYT_KOL.length).setValues([NYT_KOL]).setFontWeight('bold').setBackground(NAVY).setFontColor('#ffffff').setWrap(true);
-  sh.setFrozenRows(2);
-  return sh;
+function nytKoebRaekker_() {
+  var sh = ark_(NK_FANE), n = sh.getLastRow() - START + 1;
+  if (n < 1) return [];
+  return sh.getRange(START, 1, n, NK.NOTER).getValues().map(function (v, i) {
+    return { raekke: START + i, id: String(v[NK.ID - 1]), lagernr: String(v[NK.LAGERNR - 1]), antal: Number(v[NK.ANTAL - 1]) || 0, prStk: Number(v[NK.PRSTK - 1]) || 0 };
+  }).filter(function (r) { return /^K\d+$/.test(r.id); });
+}
+// Solgte stk. pr. købslinje (SKU "N-21348.K015" i Salg 2025/2026)
+function nytSolgtPrLinje_() {
+  var res = {};
+  ['SALG25', 'SALG26'].forEach(function (k) {
+    var sh = SpreadsheetApp.getActive().getSheetByName(FANE[k]);
+    if (!sh || sh.getLastRow() < SALG_START) return;
+    sh.getRange(SALG_START, 2, sh.getLastRow() - SALG_START + 1, 1).getValues().forEach(function (r) {
+      var m = /^N-.+\.(K\d+)$/i.exec(String(r[0])); if (m) res[m[1].toUpperCase()] = (res[m[1].toUpperCase()] || 0) + 1;
+    });
+  });
+  return res;
+}
+// Ledige stk. pr. lagernummer i købsrækkefølge: { 'N-21348': ['K015', 'K070', 'K073'] }
+function nytFifo_() {
+  var solgt = nytSolgtPrLinje_(), res = {};
+  nytKoebRaekker_().forEach(function (r) {
+    var fri = r.antal - (solgt[r.id] || 0), l = res[r.lagernr] = res[r.lagernr] || [];
+    for (var i = 0; i < fri; i++) l.push({ id: r.id, prStk: r.prStk });
+  });
+  return res;
+}
+function nytLager_() {
+  var sh = ark_(NL_FANE), n = sh.getLastRow() - START + 1;
+  if (n < 1) return [];
+  var fifo = nytFifo_();
+  return sh.getRange(START, 1, n, NL.NOTER).getValues().filter(function (v) { return /^N-/.test(String(v[0])); }).map(function (v) {
+    var f = fifo[String(v[0])] || [];
+    return { lagernr: String(v[0]), setnr: String(v[NL.SETNR - 1]), navn: String(v[NL.NAVN - 1]), tema: String(v[NL.TEMA - 1]),
+      koebt: Number(v[NL.KOEBT - 1]) || 0, paaLager: f.length, fotos: Number(v[NL.FOTOS - 1]) || 0,
+      naesteKoebspris: f.length ? Math.round(f[0].prStk * 100) / 100 : null, vejlEur: v[NL.VEJLEUR - 1] === '' ? null : Number(v[NL.VEJLEUR - 1]) };
+  });
 }
 
-function opretNytLego_(d) {
+function nytKoeb_(d) {
   var dato = String(d.dato || '');
   if (!/^\d{6}$/.test(dato)) throw fejl_('Købsdato skal være ÅÅMMDD.');
-  var butik = String(d.butik || '').trim(), ordre = String(d.ordrenr || '').trim();
+  var butik = String(d.butik || '').trim(), ordre = String(d.ordrenr || '').trim(), faktura = String(d.fakturanr || '').trim();
   if (!butik) throw fejl_('Skriv hvilken butik.');
   var pct = Number(d.cashbackPct); if (!(pct >= 0 && pct < 100)) pct = 0;
-  var saet = d.saet || [];
-  if (!saet.length) throw fejl_('Tilføj mindst ét sæt.');
+  var faktor = [1, 2, 4].indexOf(Number(d.pointFaktor)) >= 0 ? Number(d.pointFaktor) : 0;
+  var linjer = (d.linjer || []).filter(function (l) { return String(l.setnr || '').trim(); });
+  if (!linjer.length) throw fejl_('Tilføj mindst ét sæt.');
   var id = String(d.id || ''), props = PropertiesService.getScriptProperties();
-  if (id && props.getProperty('NYT_' + id)) return hentBatch_(dato);   // allerede gemt (sendt igen)
-
-  var linjer = saet.map(function (s, i) {
-    var nr = String(s.setnr || '').trim();
-    if (!nr) throw fejl_('Sæt ' + (i + 1) + ' mangler sætnummer.');
-    var gave = s.gave === true, f = gave ? 0 : Number(s.faktura);
-    if (!(f > 0) && !gave) throw fejl_('Sæt ' + nr + ' mangler fakturapris (eller markér det som gave).');
-    var cb = Math.round(f * pct) / 100;
-    return { nr: nr, gave: gave, faktura: f, netto: Math.round((f - cb) * 100) / 100, vejl: Number(s.vejlEur) > 0 ? Number(s.vejlEur) : '' };
+  if (id && props.getProperty('NYT_' + id)) return { lager: nytLager_(), gentaget: true };   // allerede gemt (sendt igen)
+  var db = {};
+  linjer = linjer.map(function (l, i) {
+    var nr = String(l.setnr).trim().replace(/-1$/, ''), antal = Math.round(Number(l.antal));
+    if (!(antal >= 1)) throw fejl_('Sæt ' + nr + ': antal skal være mindst 1.');
+    var gave = l.gave === true, styk = gave ? 0 : Number(l.styk);
+    if (!gave && !(styk > 0)) throw fejl_('Sæt ' + nr + ' mangler stykpris (eller markér det som gave).');
+    var o = db[nr] = db[nr] || slaaOp_(nr);
+    if (!o.fundet) throw fejl_('Sæt ' + nr + ' findes ikke i DB – tilføj det først.');
+    var belob = Math.round(styk * antal * 100) / 100;
+    return { nr: nr, antal: antal, styk: styk, belob: belob, gave: gave, cb: Math.round(belob * pct) / 100 };
   });
-  var sum = Math.round(linjer.reduce(function (a, l) { return a + l.netto; }, 0) * 100) / 100;
-  var kilde = butik + (ordre ? ' ordre ' + ordre : '');
-  var logNote = kilde + ': ' + linjer.map(function (l) { return l.nr + (l.gave ? ' (gave)' : ''); }).join(', ') +
-    (pct ? '. Faktura minus cashback ' + pct + ' %.' : '.') + ' Nye, forseglede sæt.';
-
-  // Indkøbslog: ny række øverst – eller læg til et køb med samme dato
-  var log = ark_(FANE.LOG), logRk = 0;
-  if (log.getLastRow() >= START) {
-    var lv = log.getRange(START, 1, log.getLastRow() - START + 1, 1).getValues();
-    for (var i = 0; i < lv.length; i++) if (String(lv[i][0]) === dato) { logRk = START + i; break; }
+  var kSh = ark_(NK_FANE), eks = nytKoebRaekker_();
+  var naeste = eks.reduce(function (m, r) { return Math.max(m, Number(r.id.slice(1))); }, 0) + 1;
+  var r0 = Math.max(kSh.getLastRow() + 1, START), n = linjer.length;
+  if (kSh.getMaxRows() < r0 + n) kSh.insertRowsAfter(kSh.getMaxRows(), r0 + n - kSh.getMaxRows());
+  var note = (faktor ? faktor + 'x point. ' : '') + 'Tilføjet fra appen ' + Utilities.formatDate(new Date(), 'Europe/Copenhagen', 'dd-MM-yyyy') + '.';
+  var rows = linjer.map(function (l, j) {
+    var r = r0 + j, pts = faktor && !l.gave ? Math.round(l.belob) * faktor : '';
+    return ['K' + ('00' + (naeste + j)).slice(-3), Number(dato), butik, /^\d+$/.test(ordre) ? "'" + ordre : ordre, /^0/.test(faktura) ? "'" + faktura : faktura,
+      'N-' + l.nr, /^\d+$/.test(l.nr) ? Number(l.nr) : l.nr, db[l.nr].navn, l.antal, l.styk, l.belob, '', l.cb || '',
+      '=K' + r + '+L' + r + '-M' + r, '=N' + r + '/I' + r, pts, pts === '' ? '' : '=P' + r + '*5/100', pts === '' ? '' : '=(N' + r + '-Q' + r + ')/I' + r,
+      l.gave ? 'Ja' : 'Nej', '', (l.gave ? 'Gave til ' + (ordre || butik) + '. ' : '') + note];
+  });
+  kSh.getRange(r0, 1, n, NK.NOTER).setValues(rows);
+  kSh.getRange(r0, NK.DATO, n, 1).setNumberFormat('0');
+  kSh.getRange(r0, NK.SETNR, n, 1).setNumberFormat('0');
+  kSh.getRange(r0, NK.STYK, n, 6).setNumberFormat('#,##0.00');
+  // Nye lagernumre: formlerne kopieres fra første lagerrække
+  var lSh = ark_(NL_FANE), har = {};
+  if (lSh.getLastRow() >= START) lSh.getRange(START, 1, lSh.getLastRow() - START + 1, 1).getValues().forEach(function (v) { har[String(v[0])] = true; });
+  var nyeNr = Object.keys(db).filter(function (nr) { return !har['N-' + nr]; });
+  if (nyeNr.length) {
+    var l0 = Math.max(lSh.getLastRow() + 1, START);
+    if (lSh.getMaxRows() < l0 + nyeNr.length) lSh.insertRowsAfter(lSh.getMaxRows(), l0 + nyeNr.length - lSh.getMaxRows());
+    lSh.getRange(l0, 1, nyeNr.length, 6).setValues(nyeNr.map(function (nr) {
+      var o = db[nr]; return ['N-' + nr, /^\d+$/.test(nr) ? Number(nr) : nr, o.navn, o.tema, o.undertema, o.aar === '' ? '' : Number(o.aar) || o.aar];
+    }));
+    if (l0 > START) {
+      lSh.getRange(START, NL.KOEBT, 1, 5).copyTo(lSh.getRange(l0, NL.KOEBT, nyeNr.length, 5));
+      lSh.getRange(START, 14, 1, 2).copyTo(lSh.getRange(l0, 14, nyeNr.length, 2));
+    }
+    lSh.getRange(l0, NL.FOTOS, nyeNr.length, 2).setValues(nyeNr.map(function () { return [0, 'Tilføjet fra appen; tema fra DB']; }));
+    SpreadsheetApp.flush();
+    lSh.getRange(START, 1, lSh.getLastRow() - START + 1, NL.NOTER).sort([{ column: NL.TEMA, ascending: true }, { column: NL.SETNR, ascending: true }]);
   }
-  if (logRk) {
-    var b = log.getRange(logRk, LK.PRIS), dn = log.getRange(logRk, LK.NOTER);
-    b.setValue(Math.round(((Number(b.getValue()) || 0) + sum) * 100) / 100);
-    dn.setValue((String(dn.getValue() || '') ? dn.getValue() + ' | ' : '') + logNote);
-  } else {
-    log.insertRowsBefore(START, 1);
-    log.getRange(START, 1, 1, 13).setBackground(null).setFontColor(null).setFontWeight('normal').setHorizontalAlignment(null).setWrap(false);
-    log.getRange(START, 1, 1, 4).setValues([[Number(dato), sum, 'Ja', logNote]]);
-    log.getRange(START, 1).setNumberFormat('0');
-    log.getRange(START, 2).setNumberFormat('#,##0.00');
-  }
-
-  // Indkøb: rækker efter købets sidste række (eller øverst)
-  var data = laesIndkoeb_(), rk = batchRaekker_(data, dato), ind = data.ark, n = linjer.length;
-  var gamle = {}; rk.forEach(function (r) { gamle[String(r.v[K.SKU - 1])] = true; });
-  var efter = rk.length ? Math.max.apply(null, rk.map(function (r) { return r.raekke; })) : START - 1;
-  if (efter < START) ind.insertRowsBefore(START, n); else ind.insertRowsAfter(efter, n);
-  var fra = efter < START ? START : efter + 1;
-  ind.getRange(fra, 1, n, INDKOEB_KOLONNER).setBackground(null).setFontColor(null).setFontWeight('normal').setHorizontalAlignment(null).setWrap(false);
-  var bc = [], gm = [], ov = [];
-  linjer.forEach(function (l) {
-    bc.push([Number(dato), /^\d+$/.test(l.nr) ? Number(l.nr) : tekst_(l.nr)]);
-    gm.push(['', 'Ja', true, false, false, '10', '']);
-    var note = NYT_NOTE + ' – ' + (l.gave ? 'Gave (GWP) til ' + kilde + '.' : kilde + '. Faktura ' + l.faktura.toFixed(2).replace('.', ',') +
-      (pct ? ' minus cashback ' + pct + ' % (afventer).' : '.'));
-    ov.push(['', '', note, '', false, true, l.netto, '']);
-  });
-  ind.getRange(fra, K.DATO, n, 2).setValues(bc);
-  ind.getRange(fra, K.SALGFOR, n, 7).setValues(gm);
-  ind.getRange(fra, K.SALGSDATO, n, 8).setValues(ov);
-  ind.getRange(fra, K.LISTET, n, 1).setValue(false);
-  saetValidering_(ind, fra, n);
-  ind.getRange(fra, K.DATO, n, 2).setNumberFormat('0');
-  ind.getRange(fra, K.FAST, n, 1).setNumberFormat('#,##0.00');
   SpreadsheetApp.flush();
-  sorterKoeb_(dato);
-  if (rk.length) synkFotonavne_(dato);
-  SpreadsheetApp.flush();
-
-  // Fanen "Nyt LEGO": de nye SKU'er (matches på sæt nr. i rækkefølge)
-  var nyeSku = {};
-  batchRaekker_(laesIndkoeb_(), dato).forEach(function (r) {
-    var sku = String(r.v[K.SKU - 1]), nr = String(r.v[K.SETNR - 1]);
-    if (!gamle[sku] && erNyt_(r.v[K.NOTER - 1])) (nyeSku[nr] = nyeSku[nr] || []).push(sku);
-  });
-  var sh = nytFane_(), r0 = Math.max(sh.getLastRow() + 1, START), bp = Math.round(pct * 100), rows = [];
-  linjer.forEach(function (l, j) {
-    var r = r0 + j, db = slaaOp_(l.nr), sku = (nyeSku[l.nr] || []).shift() || dato + '-' + l.nr;
-    rows.push([sku, Number(dato), /^\d+$/.test(l.nr) ? Number(l.nr) : tekst_(l.nr), db.fundet ? db.navn : '', db.tema, db.undertema, butik, /^\d+$/.test(ordre) ? "'" + ordre : ordre,
-      l.faktura, '=I' + r + '*' + bp + '/10000', '=I' + r + '-J' + r, '', l.gave ? 'Ja' : 'Nej', l.vejl, '', l.vejl === '' ? '' : '=N' + r + '*130/100',
-      '', '', pct && !l.gave ? 'Afventer' : '', '', l.gave ? 'Gave til ' + kilde : kilde]);
-  });
-  if (sh.getMaxRows() < r0 + n) sh.insertRowsAfter(sh.getMaxRows(), r0 + n - sh.getMaxRows());
-  sh.getRange(r0, 1, n, NYT_KOL.length).setValues(rows);
-  sh.getRange(r0, 2, n, 2).setNumberFormat('0');
-  sh.getRange(r0, 9, n, 3).setNumberFormat('#,##0.00');
-  sh.getRange(r0, 14, n, 1).setNumberFormat('[$€]#,##0.00');
-  sh.getRange(r0, 16, n, 2).setNumberFormat('[$€]#,##0.00');
-  SpreadsheetApp.flush();
-  var sidst = sh.getLastRow();
-  if (sidst > START) sh.getRange(START, 1, sidst - START + 1, NYT_KOL.length).sort([{ column: 5, ascending: true }, { column: 3, ascending: true }]);
   if (id) props.setProperty('NYT_' + id, dato);
-  return hentBatch_(dato);
+  return { lager: nytLager_(), gentaget: false };
 }
 
+// Fotos af kassen: CTS/Lager/Nyt LEGO/<lagernr>/<lagernr>.NN.jpg
+function nytFoto_(d) {
+  var lagernr = String(d.sku || '');
+  if (!d.billede) throw fejl_('Intet billede.');
+  var lSh = ark_(NL_FANE), rk = 0;
+  if (lSh.getLastRow() >= START) lSh.getRange(START, 1, lSh.getLastRow() - START + 1, 1).getValues().forEach(function (v, i) { if (String(v[0]) === lagernr) rk = START + i; });
+  if (!rk) throw fejl_('Lagernummer ' + lagernr + ' findes ikke.');
+  var mappe = underMappe_(underMappe_(rodMappe_(), NYT_MAPPE), lagernr);
+  var t = fotoTaelling_(mappe), uploadId = String(d.uploadId || '');
+  if (uploadId) for (var i = 0; i < t.filer.length; i++) if (t.filer[i].getDescription() === uploadId) return { navn: t.filer[i].getName(), antalFotos: t.antal[lagernr] || 0, gentaget: true };
+  var navn = lagernr + '.' + pad2_((t.hoejeste[lagernr] || 0) + 1) + '.jpg';
+  var ny = mappe.createFile(Utilities.newBlob(Utilities.base64Decode(String(d.billede)), 'image/jpeg', navn));
+  if (uploadId) ny.setDescription(uploadId);
+  var antal = (t.antal[lagernr] || 0) + 1;
+  lSh.getRange(rk, NL.FOTOS).setValue(antal);
+  return { navn: navn, antalFotos: antal, gentaget: false };
+}
 function retSaet_(d) {
   var f = findRaekke_(String(d.sku || ''));
   if (String(f.r.v[K.LAGERSTATUS - 1]) === 'Solgt') throw fejl_('Sættet er solgt og kan ikke rettes.');
@@ -2269,15 +2288,27 @@ function registrerSalg_(d) {
   // Tjek SKU'er mod Indkøb
   var data = laesIndkoeb_(), status = {};
   data.raekker.forEach(function (r) { status[String(r.v[K.SKU - 1])] = String(r.v[K.LAGERSTATUS - 1] || ''); });
-  var set = {};
+  var set = {}, nyeVarer = [];
   varer.forEach(function (v) {
     var sku = String(v.sku).trim();
+    if (erNytSku_(sku)) {   // Nyt LEGO: lagernummer – købslinjen vælges nedenfor
+      if (!(Number(v.pris) >= 0)) throw fejl_('Pris mangler for ' + sku + '.');
+      nyeVarer.push(v); return;
+    }
     if (status[sku] === undefined) throw fejl_('SKU ' + sku + ' findes ikke i Indkøb.');
     if (status[sku] === 'Solgt') throw fejl_('SKU ' + sku + ' er allerede solgt.');
     if (set[sku]) throw fejl_('SKU ' + sku + ' står to gange i ordren.');
     set[sku] = true;
     if (!(Number(v.pris) >= 0)) throw fejl_('Pris mangler for ' + sku + '.');
   });
+  if (nyeVarer.length) {   // først købt, først solgt
+    var fifo = nytFifo_();
+    nyeVarer.forEach(function (v) {
+      var nr = String(v.sku).trim().toUpperCase().replace(/\..*$/, ''), l = fifo[nr];
+      if (!l || !l.length) throw fejl_('Ingen flere ' + nr + ' på lager.');
+      v.sku = nr + '.' + l.shift().id;
+    });
+  }
   var tal = function (x) { var n = Number(x); return x === '' || x === null || x === undefined || isNaN(n) || n === 0 ? '' : n; };
   var n = varer.length;
   sh.insertRowsBefore(SALG_START, n);
@@ -2303,7 +2334,7 @@ function registrerSalg_(d) {
   var res = v.map(function (r) { return { sku: String(r[1]), indkoebspris: Number(r[4]) || 0, fortjeneste: r[11] === '' ? null : Math.round(Number(r[11]) * 100) / 100 }; });
   var ordre = v[0][12] === '' ? null : Math.round(Number(v[0][12]) * 100) / 100;
   var lager = laesIndkoeb_().raekker.filter(function (r) { return set[String(r.v[K.SKU - 1])]; }).map(tilSaet_);
-  return { aar: aar, raekker: res, fortjenesteOrdre: ordre, saet: lager };
+  return { aar: aar, raekker: res, fortjenesteOrdre: ordre, saet: lager, nyt: nyeVarer.length ? nytLager_() : null };
 }
 
 function medLaas_(fn) {
@@ -2330,7 +2361,8 @@ function hentAlt_() {
     .map(function (r) { return [String(r[0]), Number(r[1])]; }) : [];
   var kurs = {};
   ['SALG25', 'SALG26'].forEach(function (k) { var sh = SpreadsheetApp.getActive().getSheetByName(FANE[k]); if (sh) kurs['20' + k.slice(4)] = Number(sh.getRange('R2').getValue()) || 7.46; });
-  return { db: dbRaekker, salg: salg, lager: hentLager_(), log: logRaekker, kurs: kurs };
+  var nyt = []; try { nyt = nytLager_(); } catch (e) { /* fanerne findes ikke endnu */ }
+  return { db: dbRaekker, salg: salg, lager: hentLager_(), log: logRaekker, kurs: kurs, nyt: nyt };
 }
 
 // ---------- Tilføj et sæt til DB fra appen ----------
@@ -2471,8 +2503,7 @@ function tilSaet_(r) {
     ovp: v[K.OVP - 1] === 'Ja', sorteret: b(v[K.SORTERET - 1]), fotos: b(v[K.FOTOS - 1]), klar: b(v[K.KLAR - 1]),
     stand: v[K.STAND - 1] === '' ? '' : String(v[K.STAND - 1]), platform: String(v[K.PLATFORM - 1] || ''),
     lagerstatus: String(v[K.LAGERSTATUS - 1] || ''), noter: String(v[K.NOTER - 1] || ''), kilde: String(v[K.KILDE - 1] || ''),
-    vejledning: b(v[K.VEJLEDNING - 1]), komplet: b(v[K.KOMPLET - 1]), listet: b(v[K.LISTET - 1]),
-    nyt: erNyt_(v[K.NOTER - 1])
+    vejledning: b(v[K.VEJLEDNING - 1]), komplet: b(v[K.KOMPLET - 1]), listet: b(v[K.LISTET - 1])
   };
 }
 
