@@ -58,6 +58,23 @@
     });
   }
 
+  // Nyt LEGO (v30): lokale rækker, til Sheets har svaret. SKU regnes med de sæt, købet har i forvejen.
+  function nytRaekker(d, meta, foer) {
+    var dato = String(d.dato), pct = Number(d.cashbackPct) || 0;
+    var gl = foer.filter(function (r) { return r.dato === dato; }).map(function (r) { return r.setnr; });
+    var nr = d.saet.map(function (s) { return String(s.setnr); });
+    var sk = B.skuer(dato, gl.concat(nr)).slice(gl.length);
+    return d.saet.map(function (s, i) {
+      var f = s.gave ? 0 : Number(s.faktura) || 0, cb = Math.round(f * pct) / 100;
+      return {
+        sku: sk[i], dato: dato, setnr: nr[i], navn: (meta && meta.navne && meta.navne[i]) || nr[i],
+        vaerdi: 0, koebspris: Math.round((f - cb) * 100) / 100, ovp: true, kilde: '',
+        sorteret: true, fotos: false, klar: false, stand: '10', platform: '', lagerstatus: '', noter: 'Ny, forseglet – ' + d.butik,
+        vejledning: false, komplet: true, antalFotos: 0, lokal: true, nyt: true
+      };
+    });
+  }
+
   function anvend(raekker, poster) {
     var res = raekker.map(function (r) { return Object.assign({}, r, { ventendeFotos: 0, ventende: false }); });
     var idx = {}; res.forEach(function (r) { idx[r.sku] = r; });
@@ -67,6 +84,10 @@
         var nye = lokaleRaekker(p.data, p.meta);
         nye.forEach(function (r) { r.ventende = true; idx[r.sku] = r; });
         res = nye.concat(res);
+      } else if (p.type === 'opretNytLego') {
+        var ny = nytRaekker(p.data, p.meta, res);
+        ny.forEach(function (r) { r.ventende = true; idx[r.sku] = r; });
+        res = ny.concat(res);
       } else if (p.type === 'gemKlargoering') {
         var r = idx[p.data.sku]; if (!r) return;
         ['sorteret', 'klar', 'stand', 'platform', 'noter', 'vejledning', 'komplet'].forEach(function (k) { r[k] = p.data[k]; });
@@ -194,6 +215,13 @@
       var afvig = svar.saet.filter(function (s, i) { return lokal[i] && Math.abs(s.koebspris - lokal[i].koebspris) > 0.01; });
       await Promise.all([Lokal.saet('lager', kopi.lager), Lokal.saet('log', kopi.log)]);
       haendelse('batchGemt', { dato: dato, antal: svar.saet.length, afvig: afvig.length });
+    } else if (p.type === 'opretNytLego') {
+      var nd = String(svar.dato);
+      kopi.lager = svar.saet.map(function (s) { s.antalFotos = s.antalFotos || 0; return s; })
+        .concat(kopi.lager.filter(function (r) { return r.dato !== nd; }));
+      kopi.log[nd] = svar.pris;
+      await Promise.all([Lokal.saet('lager', kopi.lager), Lokal.saet('log', kopi.log)]);
+      haendelse('batchGemt', { dato: nd, antal: svar.saet.length, afvig: 0 });
     } else if (p.type === 'gemKlargoering') {
       erstat(svar);
       await Lokal.saet('lager', kopi.lager);

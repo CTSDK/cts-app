@@ -52,13 +52,14 @@
     if (aktiv === 'lgs' && navn !== 'lgs') lgSendAlt();
     document.querySelectorAll('.visning').forEach(function (v) { v.hidden = v.id !== 'v-' + navn; });
     aktiv = navn;
-    var fane = { forside: 'hjem', retro: 'hjem', rk1: 'hjem', rk2: 'hjem', pm: 'hjem', lgs: 'koeb1', koeb2: 'koeb1', koeb3: k3 && k3.fra === 'lager' ? 'lager' : 'koeb1', indstillinger: 'mere', udbakke: 'mere' }[navn] || navn;
+    var fane = { forside: 'hjem', retro: 'hjem', rk1: 'hjem', rk2: 'hjem', pm: 'hjem', lgs: 'koeb1', koeb2: 'koeb1', nyt: 'koeb1', koeb3: k3 && k3.fra === 'lager' ? 'lager' : 'koeb1', indstillinger: 'mere', udbakke: 'mere' }[navn] || navn;
     document.querySelectorAll('[data-fane]').forEach(function (b) { b.classList.toggle('til', b.getAttribute('data-fane') === fane); });
     window.scrollTo(0, 0);
     if (navn === 'hjem') tjekForbindelse();
     if (navn === 'indstillinger') visIndstillinger();
     if (navn === 'koeb1') visKoeb1();
     if (navn === 'koeb2') visKoeb2();
+    if (navn === 'nyt') visNyt();
     if (navn === 'lager') visLager();
     if (navn === 'udbakke') tegnUdbakke();
     if (navn === 'salg') visSalg();
@@ -290,6 +291,112 @@
     } finally { knap.disabled = false; }
   });
 
+  // ================= Nyt LEGO: nye, forseglede sæt fra butik (v30) =================
+  // Fakturapris minus cashback = købspris. Gaver (GWP) får 0 kr. Bagefter Klargør med fotos af kassen.
+  var NYT_KLADDE = 'cts.nytlego';
+  var nyt = null, nytTimer = new WeakMap();
+  function nytTomLinje() { return { setnr: '', faktura: '', vejl: '', gave: false, opslag: null }; }
+  function nytGemKladde() { try { localStorage.setItem(NYT_KLADDE, JSON.stringify(nyt)); } catch (e) { /* ignorer */ } }
+  function visNyt() {
+    if (!nyt) { try { nyt = JSON.parse(localStorage.getItem(NYT_KLADDE)); } catch (e) { nyt = null; } }
+    if (!nyt) nyt = { iso: iDag(), butik: 'LEGO.com', ordre: '', cb: '5', linjer: [nytTomLinje()], id: '' };
+    $('n-dato').value = nyt.iso; $('n-butik').value = nyt.butik; $('n-ordre').value = nyt.ordre; $('n-cb').value = nyt.cb;
+    $('n-fejl').textContent = '';
+    tegnNyt();
+  }
+  $('n-dato').addEventListener('change', function () { nyt.iso = this.value; nytGemKladde(); });
+  $('n-butik').addEventListener('input', function () { nyt.butik = this.value; nytGemKladde(); });
+  $('n-ordre').addEventListener('input', function () { nyt.ordre = this.value; nytGemKladde(); });
+  $('n-cb').addEventListener('input', function () { nyt.cb = this.value; nytGemKladde(); nytSum(); });
+  $('n-tilfoej').addEventListener('click', function () {
+    var ln = nytTomLinje(); nyt.linjer.push(ln); nytGemKladde();
+    var el = nytLavLinje(ln); $('n-linjer').appendChild(el); el.querySelector('input').focus();
+  });
+  function tegnNyt() {
+    if (!nyt.linjer.length) nyt.linjer.push(nytTomLinje());
+    var c = $('n-linjer'); c.innerHTML = '';
+    nyt.linjer.forEach(function (ln) { c.appendChild(nytLavLinje(ln)); });
+    nytSum();
+  }
+  function nytPct() { var p = B.tal(nyt.cb); return p > 0 && p < 100 ? p : 0; }
+  function nytTal(ln) { var f = ln.gave ? 0 : B.tal(ln.faktura) || 0, cb = Math.round(f * nytPct()) / 100; return { f: f, cb: cb, n: Math.round((f - cb) * 100) / 100 }; }
+  function nytSum() {
+    var t = { f: 0, cb: 0, n: 0 };
+    nyt.linjer.forEach(function (ln) { if (!ln.setnr) return; var x = nytTal(ln); t.f += x.f; t.cb += x.cb; t.n += x.n; });
+    $('n-sum-f').textContent = B.kr(t.f) + ' kr'; $('n-sum-cb').textContent = '− ' + B.kr(t.cb) + ' kr'; $('n-sum-n').textContent = B.kr(t.n) + ' kr';
+  }
+  function nytLavLinje(ln) {
+    var d = document.createElement('div'); d.className = 'linje nyt-linje';
+    d.innerHTML =
+      '<input inputmode="numeric" autocomplete="off" placeholder="Sæt nr." aria-label="Sætnummer" value="' + esc(ln.setnr) + '">' +
+      '<button type="button" class="slet" aria-label="Fjern sæt">×</button>' +
+      '<div class="navn"></div>' +
+      '<div class="nyt-priser">' +
+        '<input inputmode="decimal" autocomplete="off" placeholder="Faktura kr" aria-label="Fakturapris i kroner" data-f value="' + esc(ln.faktura) + '"' + (ln.gave ? ' disabled' : '') + '>' +
+        '<input inputmode="decimal" autocomplete="off" placeholder="Vejl. pris €" aria-label="Vejledende pris i euro" data-v value="' + esc(ln.vejl) + '">' +
+      '</div>' +
+      '<label class="chip"><input type="checkbox" data-g' + (ln.gave ? ' checked' : '') + '><span>Gave (GWP) – 0 kr</span></label>';
+    var inp = d.querySelector('input'), navn = d.querySelector('.navn'), f = d.querySelector('[data-f]');
+    navnEl.set(ln, navn);
+    visNavn(navn, ln);
+    inp.addEventListener('input', function () {
+      ln.setnr = inp.value.trim(); ln.opslag = null; visNavn(navn, ln); nytGemKladde(); nytSum();
+      clearTimeout(nytTimer.get(ln)); nytTimer.set(ln, setTimeout(function () { nytSlaaOp(ln); }, 450));
+    });
+    f.addEventListener('input', function () { ln.faktura = f.value; nytGemKladde(); nytSum(); });
+    d.querySelector('[data-v]').addEventListener('input', function () { ln.vejl = this.value; nytGemKladde(); });
+    d.querySelector('[data-g]').addEventListener('change', function () {
+      ln.gave = this.checked; f.disabled = ln.gave; if (ln.gave) { ln.faktura = ''; f.value = ''; }
+      nytGemKladde(); nytSum();
+    });
+    d.querySelector('.slet').addEventListener('click', function () {
+      nyt.linjer.splice(nyt.linjer.indexOf(ln), 1); d.remove(); if (!nyt.linjer.length) tegnNyt(); nytGemKladde(); nytSum();
+    });
+    return d;
+  }
+  async function nytSlaaOp(ln) {
+    var nr = ln.setnr; if (!nr) return;
+    var r;
+    if (Data.harDb()) r = Data.slaaOp(nr);
+    else { try { r = await Api.kald('slaaOp', { setnr: nr }, 3); } catch (e) { r = { fejl: 'Sæt-databasen er ikke hentet til telefonen endnu. Åbn appen med net én gang.' }; } }
+    if (ln.setnr !== nr) return;
+    ln.opslag = r; nytGemKladde();
+    var el = navnEl.get(ln); if (el && el.isConnected) visNavn(el, ln);
+  }
+  $('n-gem').addEventListener('click', async function () {
+    var fe = $('n-fejl'); fe.textContent = '';
+    var dato = B.batchId(nyt.iso), butik = String(nyt.butik || '').trim();
+    var saet = nyt.linjer.filter(function (l) { return l.setnr; });
+    if (!dato) { fe.textContent = 'Vælg købsdato.'; return; }
+    if (!butik) { fe.textContent = 'Skriv hvilken butik.'; return; }
+    if (!saet.length) { fe.textContent = 'Tilføj mindst ét sæt.'; return; }
+    var knap = this; knap.disabled = true;
+    try {
+      for (var i = 0; i < saet.length; i++) if (!saet[i].opslag || saet[i].opslag.fejl) await nytSlaaOp(saet[i]);
+    } finally { knap.disabled = false; }
+    tegnNyt();
+    var ukendt = saet.filter(function (l) { return !l.opslag || l.opslag.fejl || !l.opslag.fundet; });
+    if (ukendt.length) { fe.textContent = 'Ret disse sætnumre (findes ikke i DB eller opslag fejlede): ' + ukendt.map(function (l) { return l.setnr; }).join(', '); return; }
+    var udenPris = saet.filter(function (l) { return !l.gave && !(B.tal(l.faktura) > 0); });
+    if (udenPris.length) { fe.textContent = 'Skriv fakturapris (eller markér som gave) for: ' + udenPris.map(function (l) { return l.setnr; }).join(', '); return; }
+    if (!nyt.id) { nyt.id = 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); nytGemKladde(); }
+    knap.disabled = true;
+    try {
+      await Data.tilfoej('opretNytLego', {
+        id: nyt.id, dato: dato, butik: butik, ordrenr: String(nyt.ordre || '').trim(), cashbackPct: nytPct(),
+        saet: saet.map(function (l) { var v = B.tal(l.vejl); return { setnr: l.setnr, gave: !!l.gave, faktura: l.gave ? 0 : B.tal(l.faktura), vejlEur: v > 0 ? v : '' }; })
+      }, { navne: saet.map(function (l) { return l.opslag && l.opslag.navn; }) });
+      var foer = saet[0].setnr;
+      nyt = null; localStorage.removeItem(NYT_KLADDE);
+      var rk = Data.batch(dato).filter(function (r) { return r.nyt; });
+      var forste = rk.filter(function (r) { return r.setnr === foer; }).pop() || rk[0];
+      aabnKlargoering(dato, forste && forste.sku, 'forside');
+      toast(Data.status().online ? 'Gemmer i Sheets …' : 'Gemt på telefonen – sendes til Sheets, når der er net');
+    } catch (e) {
+      fe.textContent = 'Ikke gemt: ' + e.message;
+    } finally { knap.disabled = false; }
+  });
+
   // ================= Side 3: klargør =================
   var k3 = { dato: null, sku: null, fra: 'forside', stand: '' };
   function k3Saet() { return Data.batch(k3.dato); }
@@ -351,7 +458,8 @@
     tegnVaelger();
     $('k3-sku').textContent = s.sku;
     $('k3-navn').textContent = s.navn;
-    $('k3-info').textContent = (s.ovp ? 'Med æske (OVP)' : 'Uden æske') + ' · købspris ' + B.kr(s.koebspris) + ' kr' + (s.lagerstatus ? ' · ' + s.lagerstatus : '');
+    $('k3-info').textContent = (s.nyt ? 'Nyt, forseglet – tag fotos af kassen' : s.ovp ? 'Med æske (OVP)' : 'Uden æske') + ' · købspris ' + B.kr(s.koebspris) + ' kr' + (s.lagerstatus ? ' · ' + s.lagerstatus : '');
+    $('k3-sorter').hidden = !!s.nyt;
     k3.stand = s.stand === '' || s.stand == null ? '' : Number(s.stand);
     $('k3-stand').textContent = k3.stand === '' ? '–' : k3.stand + '/10';
     $('k3-platform').value = s.platform || 'eBay';
@@ -515,7 +623,7 @@
     visListing();
     tegnVaelger(); tegnFotos(); visKrav();
     var s = findSaet(k3.sku);
-    $('k3-info').textContent = (s.ovp ? 'Med æske (OVP)' : 'Uden æske') + ' · købspris ' + B.kr(s.koebspris) + ' kr' + (s.lagerstatus ? ' · ' + s.lagerstatus : '') + (s.ventende ? ' · venter på at blive sendt' : '');
+    $('k3-info').textContent = (s.nyt ? 'Nyt, forseglet – tag fotos af kassen' : s.ovp ? 'Med æske (OVP)' : 'Uden æske') + ' · købspris ' + B.kr(s.koebspris) + ' kr' + (s.lagerstatus ? ' · ' + s.lagerstatus : '') + (s.ventende ? ' · venter på at blive sendt' : '');
   }
 
   // ================= Ret køb: status, tilføj, ret, fjern =================
@@ -1467,7 +1575,7 @@
   });
 
   // ================= Udbakke =================
-  var TYPENAVN = { tilfoejDb: 'Nyt sæt i DB', opretBatch: 'Nyt køb', gemKlargoering: 'Klargøring', uploadFoto: 'Foto', registrerSalg: 'Salg', saetListet: 'Listet',
+  var TYPENAVN = { tilfoejDb: 'Nyt sæt i DB', opretBatch: 'Nyt køb', opretNytLego: 'Nyt LEGO', gemKlargoering: 'Klargøring', uploadFoto: 'Foto', registrerSalg: 'Salg', saetListet: 'Listet',
     retroOpretKoeb: 'Retro: nyt køb', retroGemTing: 'Retro: klargøring', retroUploadFoto: 'Retro: foto',
     pmGem: 'Playmobil', pmNytSaet: 'Playmobil: nyt sæt', pmUploadFoto: 'Playmobil: foto',
     lgGem: 'Lego-sortering', lgGemAlle: 'Lego: alt i orden', lgFaerdig: 'Lego: sorteret', lgUploadFoto: 'Lego: foto af del' };
@@ -1478,6 +1586,7 @@
     p.forEach(function (x) {
       var d = document.createElement('div'); d.className = 'post';
       var hvad = x.type === 'opretBatch' ? 'Batch ' + x.data.dato + ' · ' + x.data.saet.length + ' sæt · ' + B.kr(x.data.pris) + ' kr'
+        : x.type === 'opretNytLego' ? x.data.butik + ' · ' + x.data.dato + ' · ' + x.data.saet.length + ' sæt'
         : x.type === 'registrerSalg' ? x.data.koeber + ' · ' + x.data.varer.map(function (v) { return v.sku; }).join(', ')
         : x.type === 'tilfoejDb' ? x.data.setnr + ' ' + x.data.navn
         : x.type === 'pmGem' ? x.data.saet + ' · ' + (x.data.nr || 'note')

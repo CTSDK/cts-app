@@ -313,3 +313,8 @@ body.laast { overflow: hidden; }
 .lg-stort { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.75); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; }
 .lg-stort img { width: min(90vw, 420px); max-height: 65vh; background: #fff; border-radius: 12px; padding: 12px; object-fit: contain; }
 .lg-stort p { color: #fff; text-align: center; font-size: 15px; margin: 0; overflow-wrap: anywhere; }
+/* Nyt LEGO (v30) */
+.nyt-linje { grid-template-columns: 1fr auto; }
+.nyt-linje .nyt-priser { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.nyt-linje .nyt-priser input { min-height: 44px; font-family: inherit; }
+.nyt-linje .chip { grid-column: 1 / -1; justify-self: start; }

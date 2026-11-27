@@ -72,8 +72,11 @@
         set[k] = (set[k] || 0) + 1;
         r.sku = r.dato + '-' + r.setnr + (tael[k] > 1 ? '-' + String.fromCharCode(96 + set[k]) : '');
         var log = s.log.find(function (l) { return l.dato === r.dato; });
-        var sum = s.ind.filter(function (x) { return x.dato === r.dato; }).reduce(function (a, x) { return a + x.vaerdi; }, 0);
-        r.koebspris = log && sum ? Math.round(log.pris * r.vaerdi / sum * 100) / 100 : 0;
+        var iKoeb = s.ind.filter(function (x) { return x.dato === r.dato; });
+        var sum = iKoeb.filter(function (x) { return x.fast == null; }).reduce(function (a, x) { return a + x.vaerdi; }, 0);
+        var fastsum = iKoeb.reduce(function (a, x) { return a + (x.fast == null ? 0 : x.fast); }, 0);
+        r.koebspris = r.fast != null ? r.fast : log && sum ? Math.round((log.pris - fastsum) * r.vaerdi / sum * 100) / 100 : 0;
+        r.nyt = String(r.noter || '').indexOf('Ny, forseglet') === 0;
         r.navn = DB[r.setnr] ? DB[r.setnr][0] : 'Sæt findes ikke';
         r.lagerstatus = (s.salg || []).some(function (x) { return x.sku === r.sku; }) ? 'Solgt' : (r.klar ? 'På lager' : '');
         r.antalFotos = (s.fotos[r.sku] || []).length;
@@ -104,6 +107,25 @@
         s.ind = nye.concat(s.ind);
         genberegn(s); skriv(s);
         return H.hentBatch({ dato: d.dato });
+      },
+      opretNytLego: function (d) {
+        var s = laes(), dato = String(d.dato), pct = Number(d.cashbackPct) || 0;
+        if (!String(d.butik || '').trim()) throw srv('Skriv hvilken butik.');
+        s.nytIds = s.nytIds || [];
+        if (d.id && s.nytIds.indexOf(d.id) >= 0) return H.hentBatch({ dato: dato });
+        var nye = d.saet.map(function (x) {
+          var f = x.gave ? 0 : Number(x.faktura); if (!x.gave && !(f > 0)) throw srv('Sæt ' + x.setnr + ' mangler fakturapris (eller markér det som gave).');
+          var cb = Math.round(f * pct) / 100;
+          return { dato: dato, setnr: String(x.setnr), vaerdi: 0, fast: Math.round((f - cb) * 100) / 100, ovp: true, kilde: '', sorteret: true, fotos: false, klar: false, stand: '10', platform: '', noter: 'Ny, forseglet – ' + (x.gave ? 'Gave (GWP) til ' : '') + d.butik, vejledning: false, komplet: true, listet: false };
+        });
+        var netto = nye.reduce(function (a, x) { return a + x.fast; }, 0);
+        var log = s.log.find(function (l) { return l.dato === dato; });
+        if (log) log.pris = Math.round((log.pris + netto) * 100) / 100; else s.log.unshift({ dato: dato, pris: Math.round(netto * 100) / 100 });
+        var sidste = -1; s.ind.forEach(function (r, i) { if (r.dato === dato) sidste = i; });
+        if (sidste < 0) s.ind = nye.concat(s.ind); else s.ind.splice.apply(s.ind, [sidste + 1, 0].concat(nye));
+        s.nyt = (s.nyt || []).concat(nye.map(function (x) { return { setnr: x.setnr, butik: d.butik, ordrenr: d.ordrenr, netto: x.fast }; }));
+        if (d.id) s.nytIds.push(d.id);
+        genberegn(s); skriv(s); return H.hentBatch({ dato: dato });
       },
       hentBatch: function (d) {
         var s = laes(); genberegn(s);
