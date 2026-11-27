@@ -1,6 +1,6 @@
 # Område: Lego (CTS-appen + regnearket cts-app)
 
-Status pr. 22-11-2026: app **v29** lagt ud 22-11 (tydelige tilbage-knapper i Sortér dele – ikke bekræftet hos Thomas); v28 ✅ ("Alle" + "Alt i orden" virker hos Thomas 22-11) + maskinrum **2.5.3** ✅ (indkopieret + ny version 22-11). v25 (købsdato-vælger i Lager) ikke testet hos Thomas. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
+Status pr. 27-11-2026: app **v30** + maskinrum **2.6.0** lagt ud 27-11 (Nyt LEGO – se nedenfor; testet i browser, ikke bekræftet hos Thomas). v28/v29 (Lego-sortering) ✅. v25 (købsdato-vælger i Lager) ikke testet hos Thomas. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
 
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
@@ -32,6 +32,7 @@ Status pr. 22-11-2026: app **v29** lagt ud 22-11 (tydelige tilbage-knapper i Sor
   A, D, F, N er formler. SKU = ÅÅMMDD-setnr (+ -a/-b ved ens sæt i samme køb).
 - **Indkøbslog:** A dato, B pris, C skattepligt, D noter, E–L formler, M mappe-id.
 - **Salg 2025/2026:** data fra række 4. **DB:** A Lego number, B navn, C tema, D undertema, E år, F "Tilføjet i appen <dato>". Header række 2.
+- **Nyt LEGO køb** og **Nyt LEGO lager** (fra 27-11) – se afsnittet "Nyt LEGO".
 - Også: Lager, DB Salgspriser, eBay-afstemning, Kontrol, Foto-import, Ikke matchet. (Udgifter, Skat, Kontoplan → CTS Økonomi 08-11.)
 
 ## App-struktur
@@ -132,6 +133,32 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
   "Alle sæt"/"Alle SKU" er kun visning; sortering og noter kun under ét valgt sæt/SKU.
   Når testen er færdig, slettes testarket og testsiden.
 - **Senere idé (ikke bygget):** "Ny sorteringsliste" direkte i appen (indsæt BrickLink-tekst fra telefonen); i dag kopieres listen ind i samtalen.
+
+## Nyt LEGO – nye, forseglede sæt til videresalg (fra 27-11-2026)
+Thomas køber sæt, der er ved at udgå (LEGO.com, BR, Proshop, ToySpace, tulli …) for at sælge dem, når butikkerne er tømt. Mål: mindst 30 % over vejl. pris.
+- **Model (Thomas' ønske 27-11): ét lagernummer pr. sætnummer, `N-<sætnr>`** (fx N-21348), med antal på lager. Brugte sæt i Indkøb røres ikke.
+- **Fane "Nyt LEGO køb"** (én række pr. ordrelinje): A Linje (K001…), B Købsdato ÅÅMMDD, C Butik, D Ordrenr., E Fakturanr., F Lagernr., G Sæt nr., H Navn, I Antal,
+  J Stykpris, K Linjebeløb, L Fragt (andel), M Cashback, N Købspris i alt (=K+L−M), O Købspris pr. stk (=N/I), P Insiderpoint, Q Pointværdi (=P×5/100),
+  R Pris pr. stk efter point, S Gave, T Bilagsnr, U Noter. Række 1 har totaler.
+- **Fane "Nyt LEGO lager"** (én række pr. lagernummer, sorteret tema → sæt nr.): A Lagernr., B Sæt nr., C Navn, D Tema, E Undertema, F År, G Købt (SUMIF),
+  H Solgt (COUNTIF i Salg 2026 på "N-xxx.*"), I På lager, J/K laveste/højeste købspris pr. stk, L Vejl. pris DKK, M Vejl. pris € (Brickset), N/O mål-salgspris (+30 %),
+  P Anslået salgspris € (tom – Thomas), Q Udgår (Brickset), R Fotos (antal), S Noter/kilde. Formlerne skrives med `;` (arket er da_DK).
+- **Regler (Thomas 27-11):** købspris = faktura minus cashback (Visa Cashback 5 % på LEGO.com, cashback-beløbet fra mailen). Gaver (GWP 40914/40918) og point-gaver = 0 kr.
+  Proshop-faktura er ekskl. moms pr. linje → ×1,25. tulli-fragt 50 kr fordelt efter beløb. Insiderpoint = 1 point pr. kr × faktor (insider weekend 20.–22.11:
+  4x på D&D/juletræ/Herredet, ellers 2x; Black Friday 26.–27.11: 1x + rabat). **100 point = 5 kr (Thomas' tal, ikke tjekket)**. Pointværdi er kun oplysning –
+  skattemæssig behandling af point **ikke tjekket** (spørg SKAT/revisor). Mailtider er 1 time bagud → LEGO-ordrer kl. 23:xx hører til næste dag.
+- **Salg (først købt, først solgt):** appen sælger lagernummeret; maskinrummet vælger ældste købslinje med sæt tilbage og skriver SKU `N-21348.K015` i Salg.
+  Salg 2026 E (indkøbspris) slår op i "Nyt LEGO køb" via linje-id; N (skattepligtigt) = "Ja" for N-. (Formlerne rettet direkte i arket 27-11 + i Code.gs formlerSalg_.)
+- **Indhold 27-11:** 92 linjer, **154 sæt, 54 lagernumre** fra 20.–27.11: LEGO.com 14 ordrer (35.689,31 kr, cashback 1.784,26 afventer – op til 12 uger),
+  Proshop 70650451 (14.476), ToySpace ×4 (7.860), tulli DK12489117 (4.703 inkl. fragt), BR ×2 (11.900,80 + 3.101,80). I alt netto 75.946,65 kr.
+  Point-gaver (nr. fra kassen): 6607198 Retro Space Explorer (Rebrickable 5009806), 40786, 40910, 6671142 M-Tron, 6671145 Mini Santa's Workshop.
+  Vejl. pris DKK kun for 11377/10333/10354 (Thomas' skærmbilleder lego.com). Tema = Brickset (fx 40786 under Ideas, 40910 BrickHeadz, 6671145 Seasonal – Thomas: fint).
+  Alt til salg. DB: 50 sæt tilføjet 27-11 (F = "Tilføjet af Claude 27-11-2026 (Rebrickable navn/år, Brickset tema)").
+- **App v30:** Lego-forsiden → **"Nyt LEGO – køb"** (dato, butik, ordre-/fakturanr., cashback %, point-faktor; linjer med sæt nr., antal, stykpris, gave) og
+  **"Nyt LEGO – lager"** (antal på lager pr. lagernummer → tryk → fotos af kassen, gemmes i `CTS/Lager/Nyt LEGO/<lagernr>/<lagernr>.NN.jpg`).
+  Registrér salg: skriv `N-21348` (samme lagernr må stå flere gange, højst antal på lager). Maskinrum-kald: `nytKoeb`, `nytFoto`, `nytLager`; hentAlt giver `nyt`.
+  Test: `tests/nyt-e2e.js` (mock) ✅. **Ikke testet mod det rigtige ark** (maskinrum 2.6.0 skal være indkopieret).
+- **Bilag:** konto 2020 "Varekøb – nye sæt fra butikker". Claude henter selv faktura-PDF'er fra CTS-Gmailen (Thomas videresender). Se okonomi.md.
 
 ## Kendte forhold / næste i Lego
 - Tom række 12 i Salg 2026 (var række 5; sandsynligvis fra importen) – ikke rørt; spørg før sletning.

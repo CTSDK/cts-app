@@ -1,9 +1,8 @@
 # Område: CTS Web (hjemmeside)
 
-Status pr. 20-11-2026 (sen aften): **live på https://ctsdk.github.io/cts-web/** (EN; tysk under `/de/`). Seneste udgivelse `4450ade` grøn.
-To sæt til salg: **75135** (€60) og **3845** (€15). Testet her før udgivelse (computer + iPhone-bredde, ingen døde links, klikvej LEGO → tema → sæt på EN og DE).
-3845 er **ikke set live** (github.io kan ikke åbnes fra Claudes miljø) – Thomas tjekker.
-Thomas har set siden på pc. iPhone-hjemmeskærmsikon viste gammel udgave → slet ikon og tilføj igen fra Safari (ikke bekræftet virker).
+Status pr. 27-11-2026: **live på https://ctsdk.github.io/cts-web/** (EN; tysk under `/de/`). Seneste udgivelse `a068662` (27-11) grøn.
+Brugte sæt til salg: **75135** (€60), **3845** (€15), **70783** (€30). **54 nye, forseglede sæt** (lagernumre N-sætnr) uden pris og fotos, lagt ud 27-11.
+Testet her før udgivelse (build 146 sider, ingen sidefejl, skærmbilleder). Thomas har set LEGO-siden live 27-11 ("alt opdateret").
 
 ## Regler for webarbejdet (Thomas 20-11)
 - **Byg intet før Thomas har sagt ja. Læg intet ud (push til `main`) før Thomas har sagt "læg det ud".** Arbejd på arbejdsgrenen indtil da.
@@ -24,10 +23,12 @@ Thomas har set siden på pc. iPhone-hjemmeskærmsikon viste gammel udgave → sl
   **Copenhagen Services** nederst. Runde billedvinduer med hvid "+"-knap:
   LEGO = Thomas' foto af **borg 375** (æskens forside), Retro = Thomas' **teak-lampe** (vinduet retoucheret til tapet), Services = marineblå + by-ikon.
   Retro-tekst: "Lamps, furniture and other Scandinavian classics." Ingen "Choose a department".
-- **LEGO-siden** (`/lego/`): grå boks "Themes" med 11 runde tema-ikoner (opbygning som LEGO.com).
-  **Star Wars** = Thomas' foto af Obi-Wan i cockpittet, mærke "1 SET", fører til 75135. **Castle** = borg 375-fotoet, "Coming soon".
-  **Games** (DE "Spiele", 12. cirkel, nederst til højre) = Thomas' foto af Shave a Sheep-æsken (beskåret uden LEGO-logo), "1 SET", fører til 3845.
-  Øvrige (Pirates, Space, Town, Harry Potter, Western, Ninja, Boats, Train, Aquazone) = farvecirkel + forbogstaver, nedtonet.
+- **LEGO-siden** (`/lego/`): grå boks "Themes" med 25 runde tema-cirkler. Mærket viser antal sæt ("1 SET" / "13 SETS"); 1 sæt → sættets side,
+  flere → **temaside** `/lego/theme/<slug>/` (kort med nr., navn, stand-mærke, pris). Foto-cirkler: Castle (375), Star Wars (Obi-Wan), Games (3845), Bionicle (70783);
+  resten farve + forbogstaver. Tomme temaer nedtonet "Coming soon". Nye temaer 27-11: Ideas, Promotional, Icons, City, Speed Champions, Ninjago, DC Super Heroes,
+  Disney, Fortnite, Minecraft, Sonic, Seasonal, Technic, BrickHeadz. Teksten øverst siger stadig "Used, complete sets…" (Thomas spurgt 27-11, ikke ændret).
+- **Stand-mærke** på alle salgssider: "New, sealed" / "Neu & OVP" (sennep) eller "Used" / "Gebraucht". Nye sæt: "In stock – x copies", "Factory sealed – never opened",
+  felterne Dele/Minifigurer skjules, når de ikke kendes. Tekst kun fakta (ingen opfundet salgstekst).
 - **Salgsside 75135 Obi-Wan's Jedi Interceptor** (`/lego/75135/`), opbygning som LEGO.com-produktside:
   pris **€60** (Thomas 20-11), stand 9/10, 215 dele, 2016, minifigurer Obi-Wan Kenobi + R4-P17, SKU 261118-75135.
   Galleri med **9 fotos** (Drive 261118-75135.01–.09, æskens forside først, skæve drejet), salgstekst EN+DE, "What's included", specifikationer.
@@ -49,16 +50,16 @@ Thomas har set siden på pc. iPhone-hjemmeskærmsikon viste gammel udgave → sl
   1600 px + miniature 240 px, EXIF fjernet (PIL `exif_transpose`); objekt i `sets` + `set`/`photo` på temaet; kopiér `src/pages/lego/75135.astro` og `de/lego/75135.astro`
   med nyt nummer; `npm run build`; Playwright-skærmbilleder pc + iPhone; push arbejdsgren → "læg det ud" → push til `main`.
   Billeder: `public/img/lego/75135/`, `public/img/lego/3845/`, `public/img/lego/themes/`, `public/img/retro/`.
+- **Nye sæt (27-11):** data genereret i `src/data/nyt.ts` (fra arket "Nyt LEGO lager": Rebrickable navn/år/dele, Brickset tema, antal = købt) → lægges ind i `sets`
+  i `lego.ts`; sider via `src/pages/lego/[no].astro` + `de/lego/[no].astro`; temaside `LegoTheme.astro` + `lego/theme/[slug].astro`. Antal på lager opdateres
+  ikke automatisk – regenerér `nyt.ts`, når der sælges.
 - `cts-web` har sin egen korte kopi af disse noter (`CLAUDE.md` + `docs/noter/web.md`).
 
 ## NÆSTE (forslag – kræver Thomas' ja)
-1. **Thomas tjekker 3845 live** (Ctrl+Shift+R). Flere fotos af 3845 → galleriet.
-1. **Købsknapper 75135 + 3845:** link til eBay-opslag (Thomas sender links) eller vent på webshop. Indkøb siger "Listet: FALSE" for begge.
-2. **Flere sæt** på LEGO-siden (`src/data/lego.ts`). Når et tema får flere sæt → egen temaside med oversigt (som LEGO.com).
-3. **Egne fotos til tema-cirklerne** (fx minifigur pr. tema) → Drive "CTS - Webpage → Indbakke til Claude".
-4. **Retro Design-siden** i samme stil (Thomas' fotos af lamper/møbler).
-5. **CTS-mail** i kontakt + bund.
-6. Senere: Copenhagen Services, eget domæne, katalog fra arket automatisk, webshop (se plan).
+1. **Fotos af kasserne** til de nye sæt (Thomas tager dem i appen → Drive `CTS/Lager/Nyt LEGO/<lagernr>/`) → galleri på siderne.
+2. **Priser** på de nye sæt (mål ≥ vejl. pris +30 %) – først når de er udgået. Købsknapper (eBay-links eller webshop).
+3. Evt. ny tekst øverst på LEGO-siden (nu både nye og brugte sæt). Antal på lager automatisk fra arket (senere).
+4. Retro Design-siden, CTS-mail, egne tema-fotos, Copenhagen Services, eget domæne, webshop (se plan).
 
 ## Plan (langsigtet, uændret)
 - Katalog: LEGO + Retro fra arkene (kun offentlige kolonner – aldrig indkøbspris/noter). Fotos fra Drive kopieres til siden (Drive-fotos må ikke deles "alle med linket").

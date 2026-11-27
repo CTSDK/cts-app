@@ -1,6 +1,6 @@
 # Område: Økonomi (overordnet for hele CTS)
 
-Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.2.1 hos Thomas). 196 bilag. Bilag og fragt kører.
+Status pr. 27-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.6.0 lagt ud 27-11). Bilag til B178. Varekøb af nye sæt (konto 2020) startet 27-11.
 
 ## Sådan er det nu
 - **CTS Økonomi** (id `1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`, mappe `CTS/Økonomi`): Overblik, Bilag, Udgifter 2025/2026, Skat 2025/2026,
@@ -13,7 +13,10 @@ Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.2.1
 - **Moms:** CTS er ikke momsregistreret → hele beløbet inkl. moms er udgiften. Købsmoms bygges til, når CTS bliver momsregistreret.
 
 ## Bilag i Drive: `CTS/Økonomi/Bilag`
-- `Indbakke` (17xqS57VoqpSHcmY0AuKGmouoCnRiR-t7): alt nyt lander her (Thomas' eBay-PDF'er + maskinrummets fragtbilag). Tom pr. 07-11.
+- **`CTS/Indbakke til Claude`** (17xqS57VoqpSHcmY0AuKGmouoCnRiR-t7 – den gamle `Økonomi/Bilag/Indbakke`, flyttet + omdøbt 27-11; maskinrummet finder den på id):
+  alt nyt lander her. **Claude kan selv hente bilag fra CTS-Gmailen** (download_gmail_attachment → kopi under /home/user → Drive create_file med
+  `sha256:<hash>:<sti>`; virker ikke fra /root-stier). Mails uden PDF (BR, ToySpace) → Claude printer mailens HTML til PDF (Playwright).
+  Thomas skal derfor bare videresende købsmails til CTS-Gmailen.
 - `2025` (1tAEpFv5WH62PRmJEO4n_kpGLFBl1Olou) og `2026` (1PaUb_K1AwHbSDeC3A9VNOauzqLzJhoZR), hver med Salg, Fragt, Udgifter, eBay-rapporter (afregningsbilag slettet 08-11 – bruges ikke)
   + Bilagsjournal <år>.csv (gammel journal – kun arkiv). 2025 har også `Privat før CTS` (fragt før 07-07-2025, intet nr).
   2026 Fragt 12itNKTOELmSr1TNIQR3V2oy4NRPLzLAE · 2026 Salg 1wsJRYQnIQpmh5jCKQxhDnqRcqEB1gRST · 2025 Fragt 1pFhj2wAjespGcBo43wHQM_qs7WT41xfq.
@@ -27,7 +30,7 @@ Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.2.1
 
 ## Bilagsnumre
 - **B001, B002 …, én serie pr. år, starter forfra.** Fælles for salg, fragt, udgifter, varekøb. Salg: kolonne P (fx "B155, B159" = eBay + fragt). Udgifter: kolonne A.
-- 2025: B001–B028 brugt → næste **B029**. 2026: B001–B168 brugt (B166–B168 = MobilePay-varekøb 260916/261015/261028 + samtaler, ✅ udført 08-11) → næste **B169**. Alle salg 2026 har bilagsnr (pr. 07-11).
+- 2025: B001–B028 brugt → næste **B029**. 2026: B001–B178 brugt (B169–B178 = varekøb af nye sæt 27-11: LEGO 1246808182/1246664993, Proshop, tulli, ToySpace ×4, BR ×2; ✅ Udfør bilagsplan kørt af Thomas 27-11) → næste **B179**. Alle salg 2026 har bilagsnr (pr. 07-11).
 - Uafklaret: kalenderår eller regnskabsår (spørg revisor).
 
 ## Sådan arbejder vi (testet 07-11)
@@ -54,6 +57,15 @@ Status pr. 08-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.2.1
 - **San Martino jan. 2026:** 3 salg à 169,85 (P167–169), kun 1 CoolRunner-kvittering (B135 på P168 – gæt). 2 kvitteringer mangler (Thomas' private mail?).
 - **CoolRunner-mail 08-09-2026:** pakke ikke hentet 17.–26. aug., på vej retur → der kan komme en returregning.
 - Siltakylä 2025: 3 GLS-ordrer på 3 ens salgsrækker – fordelingen er vilkårlig (private, før CTS).
+
+## Varekøb af nye sæt (fra 27-11)
+- Konto **2020 "Varekøb – nye sæt fra butikker"** (Kontoplan række 6). Ét bilag pr. faktura/ordre, mappe `2026/Udgifter`, Celle = `Nyt LEGO køb!T<række>`.
+  Beløb = fakturabeløb inkl. moms (CTS ikke momsregistreret); cashback bogføres først, når den er udbetalt (fradrag på samme køb – ikke bygget).
+- ToySpace har kun sendt ordrebekræftelser (B173–B176) – skift til faktura, hvis den kommer. BR-PDF'erne (B177/B178) er lavet fra mailen; beløbene er tjekket.
+- **Mangler:** 12 LEGO.com-fakturaer (kun 2 af 14 modtaget) – Claude laver bilag, når Thomas videresender dem.
+- **Fejl at undersøge:** Udfør bilagsplan 27-11 omdøbte/flyttede filer og skrev bilagsnr i cellerne, men tilføjede **ikke** rækkerne i fanen Bilag
+  (alert "Udført 10, Fejl 0"). Claude skrev B169–B178 i Bilag direkte. Årsag ukendt (tilfoejTilBilag_ i Code.gs) – tjek ved næste bilagsplan.
+- CVR senere: CTS ApS køber lageret af Thomas til kostpris → "Nyt LEGO køb" er grundlaget.
 
 ## Næste i Økonomi
 - Thomas gennemgår Område i fanen Bilag (gamle bilag "Ukendt").

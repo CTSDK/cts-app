@@ -52,37 +52,31 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - **Del aldrig regneark/mapper med "alle med linket"** – id'erne står på GitHub (offentligt).
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
-## Næste (pr. 22-11-2026, opdateret aften)
-00. **CTS Web:** live med 2 sæt: 75135 (€60) og **3845 Shave a Sheep (€15, ny tema-cirkel Games – lagt ud 20-11, Thomas tjekker live)**.
-   Næste: flere fotos af 3845, købsknapper (eBay-links?), flere sæt (fast måde i web.md → Teknik), egne tema-fotos, Retro-side. Se web.md.
-0. **Lego-sortering: app v29 + maskinrum 2.5.3 ✅** (22-11: knapperne "Alle" pr. del og "Alt i orden – kryds resten af" virker hos Thomas;
-   v29 = tydelige tilbage-knapper i Sortér dele + blå "Sortér dele i sættet →", lagt ud 22-11 – **Thomas bekræfter, at v29 ses/virker**).
-   Køb 261118 (8 sæt): Thomas sorterer i appen (Klargør → "Sortér dele" → Færdig).
-   **Første rigtige "Færdig – overfør" mangler** – tjek Indkøb (Sorteret/Komplet/Noter) bagefter. Nye sæt: Thomas kopierer BrickLink-listen ind i samtalen →
-   Claude laver ren liste + billedadresser fra Rebrickable (kolonne F) – fremgangsmåde i lego.md → Sortering. App v25 (Lager: vælger "Alle købsdatoer") ikke testet hos Thomas.
-0. **Playmobil (nu under Retro):** ét ark "Playmobil alle sæt" (11 sæt inkl. 5149, 5150, 5154 tilføjet 21-11 – de sidste; 729 rækker, PlaymoDB-navne). **App v23 + maskinrum 2.4.0** (Retro → Playmobil:
-   sortering, sætnavne, "+ Nyt sæt" fx Div, fotos pr. sæt og pr. del via kamera-ikon ved noten). ✅ Alt virker hos Thomas (15-11).
-   **Lot 1 (5149+5150+5154 Space) ✅ afsluttet 22-11:** salgstekst DE+EN i Doc "Playmobil 5149 5150 5154 Listing" + fotos i Playmobil-mappen; ikke lagt på eBay endnu (Thomas).
-   Resten (8 sæt) → lot 2: Thomas sorterer videre, så laves annonce på samme måde. Lilla side virker stadig. Se retro.md.
-   Thomas 20-11: Playmobil var en engangsopgave – **måden det ligger i appen skal laves om** (tages senere, spørg Thomas hvordan).
-1. **Retro:** Thomas tester et rigtigt køb i appen (Retro → Registrér nyt køb → Klargør med fotos) → Claude tjekker arket "CTS Retro" og fotomappen.
-   Derefter Retro trin 2: Lager + annoncer (DE/EN, Raadvad-skabelon). Se retro.md.
-2. **Løbende bilag:** nyt i `Bilag/Indbakke` (Gmail → Gem bilag, eller direkte i Drive; samtaler via GoFullPage) → Claude laver Bilagsplan → Thomas kører Udfør bilagsplan.
-3. **Thomas, når der er tid:** Område for gamle bilag i CTS Økonomi → Bilag; 2 manglende San Martino-kvitteringer.
-4. Senere: "Salg fra eBay-PDF i appen" + kolonne Q Sporingsnr (okonomi.md); webshop (web.md trin 4).
-5. **Ikke hastende – repoet er offentligt:** noterne (mails, id'er, bilag/skat) kan læses af alle på GitHub. Ingen nøgler/koder ligger der (tjekket 09-11),
-   og alle 15 Drive-id'er er kun delt med ctsdanmark (tjekket 09-11). Plan, når Thomas vil: noter → nyt privat repo `cts-noter` (app-repo forbliver
-   offentligt pga. gratis Pages) + ren historik i app-repoet. Obs: `synkNoter` henter fra offentlig GitHub-adresse (Code.gs linje 83) → skal have
-   GitHub-nøgle i Apps Script. Ikke tjekket: om en samtale læser hovednoten fra et andet repo end appen. Senere ideer: del Code.gs (161 KB) og app.js
-   (65 KB) op efter emne; slank hovednoten.
+## Næste (pr. 27-11-2026)
+00. **Nyt LEGO (nye, forseglede sæt til videresalg) – startet 27-11, se lego.md → "Nyt LEGO".** Arket har fanerne "Nyt LEGO køb" (92 linjer, 154 sæt)
+   og "Nyt LEGO lager" (54 lagernumre N-sætnr). App **v30** + maskinrum **2.6.0** lagt ud 27-11 (testet i browser; **Thomas bekræfter, at 2.6.0 er indkopieret
+   og at "Nyt LEGO – lager" viser 54 lagernumre**). Næste: Thomas videresender de **12 manglende LEGO-fakturaer** → Claude henter PDF fra CTS-Gmail, laver
+   bilag (konto 2020, B179…) og fylder Fakturanr. i "Nyt LEGO køb". Cashback 1.784,26 kr afventer (op til 12 uger) → bogføres ved udbetaling.
+   **Fejl at undersøge:** Udfør bilagsplan tilføjede ikke rækker i Bilag-fanen 27-11 (Claude skrev B169–B178 direkte) – se okonomi.md.
+   Senere: fotos af kasser (appen), salgspriser (≥ vejl. +30 %), anslået salgspris.
+0. **CTS Web:** live; 3 brugte sæt med pris + 54 nye sæt uden pris/fotos, 25 tema-cirkler (lagt ud 27-11). Næste i web.md.
+1. **Lego-sortering:** app v29 ✅. Køb 261118: Thomas sorterer i appen. **Første rigtige "Færdig – overfør" mangler** – tjek Indkøb bagefter.
+   App v25 (Lager: "Alle købsdatoer") ikke testet hos Thomas.
+2. **Playmobil (Retro):** Lot 1 afsluttet 22-11 (ikke på eBay endnu). Resten (8 sæt) → lot 2. Måden i appen skal laves om (spørg Thomas). Se retro.md.
+3. **Retro:** Thomas tester et rigtigt køb i appen → Claude tjekker "CTS Retro". Derefter Lager + annoncer. Se retro.md.
+4. **Løbende bilag:** Thomas videresender til CTS-Gmail (eller lægger i Drive `CTS/Indbakke til Claude`) → Claude henter selv + laver Bilagsplan → Thomas kører Udfør bilagsplan.
+5. **Thomas, når der er tid:** gamle bilag (Område) i CTS Økonomi → Bilag; 2 manglende San Martino-kvitteringer.
+6. Senere: "Salg fra eBay-PDF i appen" + kolonne Q Sporingsnr (okonomi.md); webshop (web.md).
+7. **Ikke hastende – repoet er offentligt:** noterne (mails, id'er, bilag/skat) kan læses af alle. Plan: noter → privat repo `cts-noter` (se tidligere aftale i git-historik 22-11).
 
-## Status pr. 22-11-2026
-- ✅ **App v28** (hurtig-knapper i Lego-sortering, 22-11); **v29** lagt ud 22-11 (tilbage-knapper, ikke bekræftet); v25-vælgeren i Lager ikke testet. Versionen står nederst under Mere.
-- ✅ Appen virker også på **iPad** og **computer** (installeret 20-11, ingen ny kode; link https://ctsdk.github.io/cts-app/). Bredt layout ikke nødvendigt. Retro: nyt køb, klargør, **Playmobil-sortering**.
-- ✅ **Maskinrum 2.5.3** hos Thomas (22-11): Gem bilag fra Gmail, Udfør bilagsplan, økonomi-ark, Opret Retro-ark, Playmobil (pm*), Lego-sortering, Hent billeder af Lego-dele.
-- ✅ Netværk: Rebrickable (API-nøgle som netværkshemmelighed) + img.bricklink.com tilladt i miljøet "Default" (20-11).
-- ✅ **CTS Økonomi** (`1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (196), Udgifter, Skat, Kontoplan, Bilagsplan. Lego-arket = priser/lager/salg.
-- ✅ **CTS Retro** (`1FQh_UuorscBSh59KYfhB4x6ufyJT5nNeRyA1renVpbc`) oprettet; ingen rigtige køb endnu.
-- ✅ Alle salg 2026 har bilagsnr (næste B169; 2025 næste B029). Frisk start: gamle regler (afregningsbilag m.m.) gælder ikke.
-- ✅ **CTS Web** live 20-11: https://ctsdk.github.io/cts-web/ (EN+DE). Forside med segl + rombe (LEGO=borg 375, Retro=lampe), LEGO-side med 12 temaer, salgssider 75135 (€60, 9 fotos) og 3845 (€15, 4 fotos, tema Games). Testet her før udgivelse; 3845 ikke set live endnu. iPhone-ikon: slet og tilføj igen (web.md).
+## Status pr. 27-11-2026
+- ✅ **App v30 + maskinrum 2.6.0** lagt ud 27-11 (Nyt LEGO køb/lager/fotos/salg af N-lagernumre). Testet i browser (mock, alle tests grønne); ikke testet mod rigtigt ark.
+  Versionen står nederst under Mere. Appen virker på iPhone, iPad og computer (https://ctsdk.github.io/cts-app/).
+- ✅ **Maskinrum** (Code.gs): Gem bilag fra Gmail, Udfør bilagsplan, økonomi-ark, Retro, Playmobil, Lego-sortering, Nyt LEGO.
+- ✅ Netværk: Rebrickable (API-nøgle som netværkshemmelighed) + img.bricklink.com tilladt. Brickset-sider kan læses via web-fetch-agent.
+- ✅ **CTS Økonomi** (`1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (til B178), Udgifter, Skat, Kontoplan (ny konto 2020), Bilagsplan.
+- ✅ Drive: `CTS/Indbakke til Claude` (flyttet/omdøbt 27-11, samme id). Claude kan selv hente bilag fra CTS-Gmailen og lægge dem i Drive.
+- ✅ **CTS Retro** (`1FQh_UuorscBSh59KYfhB4x6ufyJT5nNeRyA1renVpbc`); ingen rigtige køb endnu.
+- ✅ Bilagsnr: 2026 næste **B179**; 2025 næste B029.
+- ✅ **CTS Web** live: https://ctsdk.github.io/cts-web/ (EN+DE). Thomas har set LEGO-siden 27-11.
 - ✅ Noter kopieres til Drive CTS/Noter hver nat. Gmail-forbindelse virker.
