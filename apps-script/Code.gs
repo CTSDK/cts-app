@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '2.6.1';
+var VERSION = '2.6.2';
 
 // ---------- Faner ----------
 var FANE = {
@@ -1922,7 +1922,8 @@ function tilfoejSaet_(d) {
 // og skriver SKU'en "N-<sætnr>.K012" i Salg, så indkøbsprisen kan slås op i købs-fanen.
 var NK_FANE = 'Nyt LEGO køb', NL_FANE = 'Nyt LEGO lager', NYT_MAPPE = 'Nyt LEGO';
 var NK = { ID: 1, DATO: 2, BUTIK: 3, ORDRE: 4, FAKTURA: 5, LAGERNR: 6, SETNR: 7, NAVN: 8, ANTAL: 9, STYK: 10, LINJE: 11, FRAGT: 12,
-  CB: 13, IALT: 14, PRSTK: 15, POINT: 16, PVAERDI: 17, EFTERPOINT: 18, GAVE: 19, BILAG: 20, NOTER: 21 };
+  CB: 13, IALT: 14, PRSTK: 15, POINT: 16, PVAERDI: 17, EFTERPOINT: 18, GAVE: 19, BILAG: 20, NOTER: 21,
+  PBRUGT: 22, PBETALT: 23 };   // 2.6.2: V Point brugt, W Betalt med point (DKK) – købspris N = K + L − M + W
 var NL = { LAGERNR: 1, SETNR: 2, NAVN: 3, TEMA: 4, UNDERTEMA: 5, AAR: 6, KOEBT: 7, SOLGT: 8, PAALAGER: 9, LAV: 10, HOEJ: 11,
   VEJLDKK: 12, VEJLEUR: 13, FOTOS: 18, NOTER: 19 };
 function erNytSku_(sku) { return /^N-/i.test(String(sku || '')); }
@@ -1998,10 +1999,11 @@ function nytKoeb_(d) {
     var r = r0 + j, pts = faktor && !l.gave ? Math.round(l.belob) * faktor : '';
     return ['K' + ('00' + (naeste + j)).slice(-3), Number(dato), butik, /^\d+$/.test(ordre) ? "'" + ordre : ordre, /^0/.test(faktura) ? "'" + faktura : faktura,
       'N-' + l.nr, /^\d+$/.test(l.nr) ? Number(l.nr) : l.nr, db[l.nr].navn, l.antal, l.styk, l.belob, '', l.cb || '',
-      '=K' + r + '+L' + r + '-M' + r, '=N' + r + '/I' + r, pts, pts === '' ? '' : '=P' + r + '*5/100', pts === '' ? '' : '=(N' + r + '-Q' + r + ')/I' + r,
-      l.gave ? 'Ja' : 'Nej', '', (l.gave ? 'Gave til ' + (ordre || butik) + '. ' : '') + note];
+      '=K' + r + '+L' + r + '-M' + r + '+N(W' + r + ')', '=N' + r + '/I' + r, pts, pts === '' ? '' : '=P' + r + '*5/100', pts === '' ? '' : '=(N' + r + '-Q' + r + ')/I' + r,
+      l.gave ? 'Ja' : 'Nej', '', (l.gave ? 'Gave til ' + (ordre || butik) + '. ' : '') + note,
+      '', '=IF(V' + r + '="","",V' + r + '*5/100)'];
   });
-  kSh.getRange(r0, 1, n, NK.NOTER).setValues(rows);
+  kSh.getRange(r0, 1, n, NK.PBETALT).setValues(rows);
   kSh.getRange(r0, NK.DATO, n, 1).setNumberFormat('0');
   kSh.getRange(r0, NK.SETNR, n, 1).setNumberFormat('0');
   kSh.getRange(r0, NK.STYK, n, 6).setNumberFormat('#,##0.00');
