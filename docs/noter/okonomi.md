@@ -1,6 +1,6 @@
 # Område: Økonomi (overordnet for hele CTS)
 
-Status pr. 27-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.6.0 lagt ud 27-11). Bilag til B178. Varekøb af nye sæt (konto 2020) startet 27-11.
+Status pr. 28-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.6.2 hos Thomas 28-11). Bilag til B183. Varekøb af nye sæt (konto 2020) startet 27-11.
 
 ## Sådan er det nu
 - **CTS Økonomi** (id `1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`, mappe `CTS/Økonomi`): Overblik, Bilag, Udgifter 2025/2026, Skat 2025/2026,
@@ -30,7 +30,7 @@ Status pr. 27-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.6.0
 
 ## Bilagsnumre
 - **B001, B002 …, én serie pr. år, starter forfra.** Fælles for salg, fragt, udgifter, varekøb. Salg: kolonne P (fx "B155, B159" = eBay + fragt). Udgifter: kolonne A.
-- 2025: B001–B028 brugt → næste **B029**. 2026: B001–B178 brugt (B169–B178 = varekøb af nye sæt 27-11: LEGO 1246808182/1246664993, Proshop, tulli, ToySpace ×4, BR ×2; ✅ Udfør bilagsplan kørt af Thomas 27-11) → næste **B179**. Alle salg 2026 har bilagsnr (pr. 07-11).
+- 2025: B001–B028 brugt → næste **B029**. 2026: B001–B178 brugt (B169–B178 = varekøb af nye sæt 27-11: LEGO 1246808182/1246664993, Proshop, tulli, ToySpace ×4, BR ×2; ✅ Udfør bilagsplan kørt af Thomas 27-11); B179–B183 = LEGO-fakturaer 1246918723/24/25 (27-11), 1242396252 (13-03), 1244279515 (13-07); ✅ kørt 28-11 → næste **B184**. Alle salg 2026 har bilagsnr (pr. 07-11).
 - Uafklaret: kalenderår eller regnskabsår (spørg revisor).
 
 ## Sådan arbejder vi (testet 07-11)
@@ -62,9 +62,14 @@ Status pr. 27-11-2026: **økonomi-arket "CTS Økonomi" kører** (maskinrum 2.6.0
 - Konto **2020 "Varekøb – nye sæt fra butikker"** (Kontoplan række 6). Ét bilag pr. faktura/ordre, mappe `2026/Udgifter`, Celle = `Nyt LEGO køb!T<række>`.
   Beløb = fakturabeløb inkl. moms (CTS ikke momsregistreret); cashback bogføres først, når den er udbetalt (fradrag på samme køb – ikke bygget).
 - ToySpace har kun sendt ordrebekræftelser (B173–B176) – skift til faktura, hvis den kommer. BR-PDF'erne (B177/B178) er lavet fra mailen; beløbene er tjekket.
-- **Mangler:** 12 LEGO.com-fakturaer (kun 2 af 14 modtaget) – Claude laver bilag, når Thomas videresender dem.
-- **Fejl at undersøge:** Udfør bilagsplan 27-11 omdøbte/flyttede filer og skrev bilagsnr i cellerne, men tilføjede **ikke** rækkerne i fanen Bilag
-  (alert "Udført 10, Fejl 0"). Claude skrev B169–B178 i Bilag direkte. Årsag ukendt (tilfoejTilBilag_ i Code.gs) – tjek ved næste bilagsplan.
+- **Mangler:** 9 LEGO.com-fakturaer (5 af 14 modtaget – liste i lego.md) – Claude laver bilag, når Thomas videresender dem.
+- Bilag fra point-køb: beløb = fakturabeløb (betalt i kroner). Pointværdien står kun i "Nyt LEGO køb" (kolonne V/W).
+- **Fejl at undersøge:** Udfør bilagsplan omdøber/flytter filer og skriver bilagsnr i cellerne, men tilføjer **ikke** rækkerne i fanen Bilag
+  (27-11 og 28-11, "Fejl 0"). Claude skrev B169–B183 i Bilag selv. Version var 2.6.0 (tjekket). En simulering af `tilfoejTilBilag_` med de rigtige data
+  tilføjer rækken korrekt → årsagen er noget i det rigtige ark/miljø. **2.6.1+ viser "Fanen Bilag: X tilføjet" + grund** (fx "står allerede", "mangler dato",
+  hvilken række der skrives fra) → bed Thomas om skærmbillede ved næste kørsel og ret ud fra det.
+- **Skat af insiderpoint:** venter (Thomas 28-11). Spørg revisor ved CVR: er optjente point rabat/indkomst, og er kostprisen for point-køb 0, pointværdien
+  eller betalt beløb? Claudes søgning 28-11 nåede ikke skat.dk (blokeret); intet sikkert svar fundet.
 - CVR senere: CTS ApS køber lageret af Thomas til kostpris → "Nyt LEGO køb" er grundlaget.
 
 ## Næste i Økonomi

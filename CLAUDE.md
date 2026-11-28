@@ -52,12 +52,13 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 - **Del aldrig regneark/mapper med "alle med linket"** – id'erne står på GitHub (offentligt).
 - Flag-emojis ser forkerte ud, når Claude læser Docs via forbindelsen – de er rigtige i dokumentet.
 
-## Næste (pr. 27-11-2026)
-00. **Nyt LEGO (nye, forseglede sæt til videresalg) – startet 27-11, se lego.md → "Nyt LEGO".** Arket har fanerne "Nyt LEGO køb" (92 linjer, 154 sæt)
-   og "Nyt LEGO lager" (54 lagernumre N-sætnr). App **v30** + maskinrum **2.6.0** lagt ud 27-11 (testet i browser; **Thomas bekræfter, at 2.6.0 er indkopieret
-   og at "Nyt LEGO – lager" viser 54 lagernumre**). Næste: Thomas videresender de **12 manglende LEGO-fakturaer** → Claude henter PDF fra CTS-Gmail, laver
-   bilag (konto 2020, B179…) og fylder Fakturanr. i "Nyt LEGO køb". Cashback 1.784,26 kr afventer (op til 12 uger) → bogføres ved udbetaling.
-   **Fejl at undersøge:** Udfør bilagsplan tilføjede ikke rækker i Bilag-fanen 27-11 (Claude skrev B169–B178 direkte) – se okonomi.md.
+## Næste (pr. 28-11-2026)
+00. **Nyt LEGO (nye, forseglede sæt til videresalg) – se lego.md → "Nyt LEGO".** "Nyt LEGO køb" 97 linjer (K001–K097), **160 sæt, 59 lagernumre**.
+   Maskinrum **2.6.2** ✅ indkopieret hos Thomas 28-11. Næste: Thomas videresender de **9 manglende LEGO.com-fakturaer** (ordrer i lego.md) → Claude henter PDF
+   fra CTS-Gmail, laver bilag (konto 2020, **B184…**) og fylder Fakturanr. **Første køb fra appen med 2.6.2: tjek at ny række får formler i V/W og N.**
+   **Fejl at undersøge:** Udfør bilagsplan tilføjer ikke rækker i fanen Bilag (27-11 og 28-11; Claude skrev B169–B183 selv). 2.6.2 viser nu
+   "Fanen Bilag: X tilføjet" + grund → bed Thomas om skærmbillede ved næste kørsel. Se okonomi.md.
+   Cashback 1.784,26 kr afventer (op til 12 uger) → bogføres ved udbetaling. Skat af insiderpoint: venter (Thomas 28-11) – revisor senere.
    Senere: fotos af kasser (appen), salgspriser (≥ vejl. +30 %), anslået salgspris.
 0. **CTS Web:** live; 3 brugte sæt med pris + 54 nye sæt uden pris/fotos, 25 tema-cirkler (lagt ud 27-11). Næste i web.md.
 1. **Lego-sortering:** app v29 ✅. Køb 261118: Thomas sorterer i appen. **Første rigtige "Færdig – overfør" mangler** – tjek Indkøb bagefter.
@@ -69,14 +70,14 @@ hver nat kl. ~3 og ved CTS → Kopiér noter til Drive. Kopiér ikke noterne gen
 6. Senere: "Salg fra eBay-PDF i appen" + kolonne Q Sporingsnr (okonomi.md); webshop (web.md).
 7. **Ikke hastende – repoet er offentligt:** noterne (mails, id'er, bilag/skat) kan læses af alle. Plan: noter → privat repo `cts-noter` (se tidligere aftale i git-historik 22-11).
 
-## Status pr. 27-11-2026
-- ✅ **App v30 + maskinrum 2.6.0** lagt ud 27-11 (Nyt LEGO køb/lager/fotos/salg af N-lagernumre). Testet i browser (mock, alle tests grønne); ikke testet mod rigtigt ark.
+## Status pr. 28-11-2026
+- ✅ **App v30** (27-11) + **maskinrum 2.6.2** (28-11, indkopieret og versionen tjekket af Thomas). Nyt LEGO i appen testet i browser (mock); ikke testet mod rigtigt ark.
   Versionen står nederst under Mere. Appen virker på iPhone, iPad og computer (https://ctsdk.github.io/cts-app/).
 - ✅ **Maskinrum** (Code.gs): Gem bilag fra Gmail, Udfør bilagsplan, økonomi-ark, Retro, Playmobil, Lego-sortering, Nyt LEGO.
 - ✅ Netværk: Rebrickable (API-nøgle som netværkshemmelighed) + img.bricklink.com tilladt. Brickset-sider kan læses via web-fetch-agent.
-- ✅ **CTS Økonomi** (`1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (til B178), Udgifter, Skat, Kontoplan (ny konto 2020), Bilagsplan.
+- ✅ **CTS Økonomi** (`1hZYLXBu1lneLP0l5JD09HI2ah1_-k4sZSxRDi-HtxLM`): Overblik, Bilag (til B183), Udgifter, Skat, Kontoplan (ny konto 2020), Bilagsplan.
 - ✅ Drive: `CTS/Indbakke til Claude` (flyttet/omdøbt 27-11, samme id). Claude kan selv hente bilag fra CTS-Gmailen og lægge dem i Drive.
 - ✅ **CTS Retro** (`1FQh_UuorscBSh59KYfhB4x6ufyJT5nNeRyA1renVpbc`); ingen rigtige køb endnu.
-- ✅ Bilagsnr: 2026 næste **B179**; 2025 næste B029.
+- ✅ Bilagsnr: 2026 næste **B184**; 2025 næste B029.
 - ✅ **CTS Web** live: https://ctsdk.github.io/cts-web/ (EN+DE). Thomas har set LEGO-siden 27-11.
 - ✅ Noter kopieres til Drive CTS/Noter hver nat. Gmail-forbindelse virker.

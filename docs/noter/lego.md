@@ -1,6 +1,6 @@
 # Område: Lego (CTS-appen + regnearket cts-app)
 
-Status pr. 27-11-2026: app **v30** + maskinrum **2.6.0** lagt ud 27-11 (Nyt LEGO – se nedenfor; testet i browser, ikke bekræftet hos Thomas). v28/v29 (Lego-sortering) ✅. v25 (købsdato-vælger i Lager) ikke testet hos Thomas. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
+Status pr. 28-11-2026: app **v30** + maskinrum **2.6.2** (✅ indkopieret hos Thomas 28-11; Nyt LEGO – se nedenfor). v28/v29 (Lego-sortering) ✅. v25 (købsdato-vælger i Lager) ikke testet hos Thomas. Beskriver hvordan det ER nu. Brugervejledning: `docs/GUIDE.md`.
 
 ## Arkitektur
 - **App:** statisk webapp i roden (`index.html`, `css/`, `js/`) på GitHub Pages: https://ctsdk.github.io/cts-app/ (testtilstand `?mock=1`).
@@ -8,7 +8,7 @@ Status pr. 27-11-2026: app **v30** + maskinrum **2.6.0** lagt ud 27-11 (Nyt LEGO
   (ASUS, Chrome/Edge → Installér): virker uden ny kode; første åbning på ny enhed skal hente alt, før Lager virker. Bredt layout ikke nødvendigt
   (Thomas 20-11). Find computer-appen igen (ikke tjekket – Googles hjælpeside kunne ikke åbnes): Windows-knap → skriv CTS, eller chrome://apps; højreklik på ikonet → Fastgør til proceslinjen. Fotos tages kun med telefonen; computeren bruges til almindeligt arbejde. Offline: service worker (`sw.js`), lokal kopi + udbakke i IndexedDB (`js/lokal.js`, `js/data.js`).
   Cache-version i `sw.js` og `?v=` i index.html hæves ved hver app-ændring (nu **v29**, lagt ud 22-11; versionen står nederst under Mere). v25 (Lager: vælger "Alle købsdatoer") ikke testet hos Thomas.
-- **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.5.3** ✅ hos Thomas 22-11: `lgGemAlle` til "Alt i orden"; indeholder også 2.5.2's små fremdriftsbeskeder; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
+- **Maskinrum:** Google Apps Script bundet til regnearket **cts-app** (Drive-mappen `CTS`). Kode: `apps-script/Code.gs`, version i `VERSION` (nu **2.6.2** ✅ hos Thomas 28-11; Udgifter/Skat/Kontoplan/Bilagsplan ligger i økonomi-arket – se okonomi.md).
   Webapp "Udfør som: Mig", adgang "Alle"; alle kald kræver API-nøgle (Script Properties).
 - **Faste kodetrin (altid sådan):** (1) åbn https://raw.githubusercontent.com/CTSDK/cts-app/main/apps-script/Code.gs, (2) Ctrl+Shift+R og tjek versionen,
   (3) Ctrl+A → Ctrl+C → Apps Script → Ctrl+A → Ctrl+V → Ctrl+S, (4) Implementer → Administrer implementeringer → blyanten → Ny version → Implementer,
@@ -138,26 +138,36 @@ Samme måde som Playmobil (antal, −/+, ✓, note pr. del) – til sidst **inde
 Thomas køber sæt, der er ved at udgå (LEGO.com, BR, Proshop, ToySpace, tulli …) for at sælge dem, når butikkerne er tømt. Mål: mindst 30 % over vejl. pris.
 - **Model (Thomas' ønske 27-11): ét lagernummer pr. sætnummer, `N-<sætnr>`** (fx N-21348), med antal på lager. Brugte sæt i Indkøb røres ikke.
 - **Fane "Nyt LEGO køb"** (én række pr. ordrelinje): A Linje (K001…), B Købsdato ÅÅMMDD, C Butik, D Ordrenr., E Fakturanr., F Lagernr., G Sæt nr., H Navn, I Antal,
-  J Stykpris, K Linjebeløb, L Fragt (andel), M Cashback, N Købspris i alt (=K+L−M), O Købspris pr. stk (=N/I), P Insiderpoint, Q Pointværdi (=P×5/100),
-  R Pris pr. stk efter point, S Gave, T Bilagsnr, U Noter. Række 1 har totaler.
+  J Stykpris og K Linjebeløb (**kun betalt i kroner**), L Fragt (andel), M Cashback, N Købspris i alt (=K+L−M+N(W)), O Købspris pr. stk (=N/I),
+  P Insiderpoint **optjent**, Q Pointværdi optjent (=P×5/100), R Pris pr. stk efter optjente point (=(N−Q)/I), S Gave, T Bilagsnr, U Noter,
+  **V Point brugt, W Betalt med point (DKK, =V×5/100)** (V/W fra 28-11, Thomas' ønske: to betalingsformer i hver sin kolonne). Række 1 har totaler.
+  Maskinrummet (2.6.2, `nytKoeb_`) skriver A–W for køb fra appen.
 - **Fane "Nyt LEGO lager"** (én række pr. lagernummer, sorteret tema → sæt nr.): A Lagernr., B Sæt nr., C Navn, D Tema, E Undertema, F År, G Købt (SUMIF),
   H Solgt (COUNTIF i Salg 2026 på "N-xxx.*"), I På lager, J/K laveste/højeste købspris pr. stk, L Vejl. pris DKK, M Vejl. pris € (Brickset), N/O mål-salgspris (+30 %),
   P Anslået salgspris € (tom – Thomas), Q Udgår (Brickset), R Fotos (antal), S Noter/kilde. Formlerne skrives med `;` (arket er da_DK).
-- **Regler (Thomas 27-11):** købspris = faktura minus cashback (Visa Cashback 5 % på LEGO.com, cashback-beløbet fra mailen). Gaver (GWP 40914/40918) og point-gaver = 0 kr.
+- **Regler (Thomas 27-11/28-11):** købspris = betalt i kroner + betalt med point − cashback (Visa Cashback 5 % på LEGO.com, beløbet fra mailen).
+  Almindelige købsgaver (GWP, fx 40914/40918/40916/40912) = 0 kr. **Point-gaver og pointrabat (28-11):** værdien af de brugte point (V/W) er købsprisen
+  (fx 2.400 point = 120 kr; Great Deku Tree 1.599,95 kr + 15.000 point = 2.349,95). Pointpriser fra Thomas' skærmbilleder af lego.com/pointhistorik.
   Proshop-faktura er ekskl. moms pr. linje → ×1,25. tulli-fragt 50 kr fordelt efter beløb. Insiderpoint = 1 point pr. kr × faktor (insider weekend 20.–22.11:
-  4x på D&D/juletræ/Herredet, ellers 2x; Black Friday 26.–27.11: 1x + rabat). **100 point = 5 kr (Thomas' tal, ikke tjekket)**. Pointværdi er kun oplysning –
-  skattemæssig behandling af point **ikke tjekket** (spørg SKAT/revisor). Mailtider er 1 time bagud → LEGO-ordrer kl. 23:xx hører til næste dag.
+  4x på D&D/juletræ/Herredet, ellers 2x; Black Friday 26.–27.11: 1x + rabat). **100 point = 5 kr (Thomas' tal, ikke tjekket)**. Optjent pointværdi er kun oplysning.
+  Skattemæssig behandling af point **ikke tjekket** – venter (Thomas 28-11); spørg revisor ved CVR. Thomas: point har værdi og er en del af økonomien. Mailtider er 1 time bagud → LEGO-ordrer kl. 23:xx hører til næste dag.
 - **Salg (først købt, først solgt):** appen sælger lagernummeret; maskinrummet vælger ældste købslinje med sæt tilbage og skriver SKU `N-21348.K015` i Salg.
   Salg 2026 E (indkøbspris) slår op i "Nyt LEGO køb" via linje-id; N (skattepligtigt) = "Ja" for N-. (Formlerne rettet direkte i arket 27-11 + i Code.gs formlerSalg_.)
-- **Indhold 27-11:** 92 linjer, **154 sæt, 54 lagernumre** fra 20.–27.11: LEGO.com 14 ordrer (35.689,31 kr, cashback 1.784,26 afventer – op til 12 uger),
+- **Indhold pr. 28-11:** 97 linjer, **160 sæt, 59 lagernumre**. Tilføjet 28-11 (til videresalg, Thomas): K093–K095 køb 260311 (T499812804, faktura 1242396252, B182:
+  77092 Great Deku Tree, point-gave 40789 Flying Moon Car 2.500 point, GWP 40916; +1.600 point optjent) og K096–K097 køb 260707 (T501880732, faktura 1244279515,
+  B183: 21350 Jaws ×2, GWP 40912; +2.080 point). Ingen cashback på dem. Nye lagernumre N-40916 (nyt tema Botanicals), N-21350, N-40789, N-40912, N-77092.
+  Første indhold 27-11 (20.–27.11): LEGO.com 14 ordrer (35.689,31 kr, cashback 1.784,26 afventer – op til 12 uger),
   Proshop 70650451 (14.476), ToySpace ×4 (7.860), tulli DK12489117 (4.703 inkl. fragt), BR ×2 (11.900,80 + 3.101,80). I alt netto 75.946,65 kr.
-  Point-gaver (nr. fra kassen): 6607198 Retro Space Explorer (Rebrickable 5009806), 40786, 40910, 6671142 M-Tron, 6671145 Mini Santa's Workshop.
+  Point-gaver (nr. fra kassen): 6607198 Retro Space Explorer (Rebrickable 5009806) 2.400 p, 40786 2.250 p, 40910 2.500 p, 6671142 M-Tron (faktura: 5010880) 2.400 p,
+  6671145 Mini Santa's Workshop (faktura: 5010881) 2.400 p.
+  **Fakturaer modtaget** (5 af 14 LEGO.com-ordrer i nov.): T522734486, T522729146, T524151800, T524241833, T524254323. **Mangler 9:** T521830819, T522732263,
+  T522735353, T522736079, T523197322 + T523317188 (restordrer Arkham Asylum), T524109835, T524149664, T524151417.
   Vejl. pris DKK kun for 11377/10333/10354 (Thomas' skærmbilleder lego.com). Tema = Brickset (fx 40786 under Ideas, 40910 BrickHeadz, 6671145 Seasonal – Thomas: fint).
   Alt til salg. DB: 50 sæt tilføjet 27-11 (F = "Tilføjet af Claude 27-11-2026 (Rebrickable navn/år, Brickset tema)").
 - **App v30:** Lego-forsiden → **"Nyt LEGO – køb"** (dato, butik, ordre-/fakturanr., cashback %, point-faktor; linjer med sæt nr., antal, stykpris, gave) og
   **"Nyt LEGO – lager"** (antal på lager pr. lagernummer → tryk → fotos af kassen, gemmes i `CTS/Lager/Nyt LEGO/<lagernr>/<lagernr>.NN.jpg`).
   Registrér salg: skriv `N-21348` (samme lagernr må stå flere gange, højst antal på lager). Maskinrum-kald: `nytKoeb`, `nytFoto`, `nytLager`; hentAlt giver `nyt`.
-  Test: `tests/nyt-e2e.js` (mock) ✅. **Ikke testet mod det rigtige ark** (maskinrum 2.6.0 skal være indkopieret).
+  Test: `tests/nyt-e2e.js` (mock) ✅. **Køb fra appen ikke testet mod det rigtige ark** – første gang: tjek at rækken får V/W og N=K+L−M+N(W).
 - **Bilag:** konto 2020 "Varekøb – nye sæt fra butikker". Claude henter selv faktura-PDF'er fra CTS-Gmailen (Thomas videresender). Se okonomi.md.
 
 ## Kendte forhold / næste i Lego
