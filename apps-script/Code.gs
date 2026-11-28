@@ -12,7 +12,7 @@
  * Formler skrives med engelsk syntaks; arket sættes midlertidigt til en_US imens.
  */
 
-var VERSION = '2.6.0';
+var VERSION = '2.6.1';
 
 // ---------- Faner ----------
 var FANE = {
@@ -343,7 +343,9 @@ var BILAGSPLAN = 'Bilagsplan';
 
 function udfoerBilagsplanMenu() {
   var r = udfoerBilagsplan();
-  SpreadsheetApp.getUi().alert('Bilagsplan', 'Udført: ' + r.ok + '\nFejl: ' + r.fejl.length + (r.mere ? '\n\nDer er mere – kør igen.' : '') +
+  SpreadsheetApp.getUi().alert('Bilagsplan', 'Udført: ' + r.ok + '\nFejl: ' + r.fejl.length +
+    (r.ok ? '\nFanen Bilag: ' + (r.bilag || 0) + ' tilføjet' + (r.bilagInfo && r.bilagInfo.length ? '\n– ' + r.bilagInfo.slice(0, 10).join('\n– ') : '') : '') +
+    (r.mere ? '\n\nDer er mere – kør igen.' : '') +
     (r.fejl.length ? '\n\n' + r.fejl.slice(0, 10).join('\n') : ''), SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
@@ -372,15 +374,18 @@ function udfoerBilagsplan() {
       sh.getRange(i + 2, 6).setValue('FEJL: ' + e.message); res.fejl.push(nr + ': ' + e.message);
     }
   }
+  res.bilagInfo = [];   // 2.6.1: forklaring, når et bilag ikke kommer i fanen Bilag
+  if (!oss && udfoert.length) res.bilagInfo.push('økonomi-arket blev ikke fundet');
   if (oss && udfoert.length) {   // nye bilag kommer også i fanen Bilag (hvis de ikke står der)
-    try { res.bilag = tilfoejTilBilag_(ss, oss, udfoert); } catch (e) { res.fejl.push('Fanen Bilag: ' + e.message); }
+    try { res.bilag = tilfoejTilBilag_(ss, oss, udfoert, res.bilagInfo); } catch (e) { res.fejl.push('Fanen Bilag: ' + e.message); }
   }
   return res;
 }
 
-function tilfoejTilBilag_(lego, oss, planRaekker) {
+function tilfoejTilBilag_(lego, oss, planRaekker, info) {
+  info = info || [];
   var b = oss.getSheetByName(BILAG_FANE);
-  if (!b) return 0;
+  if (!b) { info.push('fanen "' + BILAG_FANE + '" findes ikke i ' + oss.getName()); return 0; }
   var findes = {};
   if (b.getLastRow() > 1) b.getRange(2, 1, b.getLastRow() - 1, 2).getDisplayValues().forEach(function (r) { findes[r[1] + r[0]] = true; });
   var kp = {};
@@ -388,10 +393,13 @@ function tilfoejTilBilag_(lego, oss, planRaekker) {
   var kobling = bilagKoblinger_(lego, oss), nye = [];
   planRaekker.forEach(function (p) {
     var r = bilagFraPlan_(lego, p, kp, kobling);
-    if (r && !findes[r[1] + r[0]]) { nye.push(r); findes[r[1] + r[0]] = true; }
+    if (!r) info.push(String(p[0]) + ': mangler bilagsnr eller dato (dato: "' + p[6] + '")');
+    else if (findes[r[1] + r[0]]) info.push(r[0] + ' står allerede i fanen Bilag (' + r[1] + ')');
+    else { nye.push(r); findes[r[1] + r[0]] = true; }
   });
   if (!nye.length) return 0;
   var start = b.getLastRow() + 1;
+  info.push('skrevet fra række ' + start + ' i ' + oss.getName() + ' → ' + BILAG_FANE);
   sikrRaekker_(b, start + nye.length + 10);
   b.getRange(start, 5, nye.length, 1).setNumberFormat('@');
   b.getRange(start, 1, nye.length, BILAG_KOL.length).setValues(nye);
